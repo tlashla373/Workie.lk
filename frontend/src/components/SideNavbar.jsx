@@ -17,10 +17,12 @@ import profileImage from '../assets/profile.jpeg';
 import Logo from '../assets/Logo.png'
 import { NavLink } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { useDarkMode } from '../contexts/DarkModeContext';
 
 
 const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const { isDarkMode } = useDarkMode();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
@@ -32,7 +34,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: 2 },
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work History', href: '/workhistory' },
-    { icon: Video, label: 'Video', href: '/games' },
+    { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
     { icon: LogOut, label: 'Log Out', href: '/authform', danger: true },
   ];
@@ -40,23 +42,23 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   return (
     <>
       {/* Sidebar */}
-      <div className="h-full bg-violet-600 backdrop-blur-xl border-r border-gray-700/50 flex flex-col">
+      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-violet-600 border-gray-700/50'}`}>
         {/* Sidebar Header */}
-        <div className="p-4 border-b-2 border-white">
+        <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div
                 onClick={toggleSidebar}
-                className="w-8 h-8 bg-white rounded-lg flex items-center justify-center cursor-pointer"
+                className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer ${isDarkMode ? 'bg-white' : 'bg-white'}`}
               >
-                {isCollapsed ? < PanelRightClose className="w-5 h-5 text-blue-500" /> : <img src={Logo}  className="w-7 h-7 text-blue-500" />}
+                {isCollapsed ? <PanelRightClose className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} /> : <img src={Logo} className="w-7 h-7" />}
               </div>
-              {!isCollapsed && <span className="text-xl font-bold text-white">Workie.LK</span>}
+              {!isCollapsed && <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>Workie.LK</span>}
             </div>
             {!isCollapsed && (
               <button
                 onClick={toggleSidebar}
-                className="p-2 rounded-lg text-gray-100 hover:text-white hover:bg-gray-700/50 transition-all duration-200"
+                className={`p-2 rounded-lg transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-100 hover:text-white hover:bg-gray-700/50'}`}
               >
                 <PanelRightOpen className="w-5 h-5" />
               </button>
@@ -65,38 +67,34 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
         </div>
 
         {/* User Info */}
-        <div className="p-4 border-b-2 border-white">
+        <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
           <Link to='/workerprofile'>
-          <button
-            onClick={toggleProfileDropdown}
-            className="w-full flex items-center space-x-3 p-3 rounded-xl bg-gray-200/30 hover:bg-gray-700/50 transition-all duration-200 cursor-pointer"
-            href='/workerprofile'
-          >
-            <div className="relative">
-              
+            <button
+              onClick={toggleProfileDropdown}
+              className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-200/30 hover:bg-gray-700/50'}`}
+            >
+              <div className="relative">
                 <img
                   className="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100"
                   src={profileImage}
                   alt="Profile"
-                  href='/workerprofile'
                 />
-              
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-300"></div>
-            </div>
-            {!isCollapsed && (
-              <div className="text-left">
-                <p className="text-white font-medium text-sm">Supun Hashintha</p>
-                <p className="text-gray-300 text-xs">My Account</p>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-300"></div>
               </div>
-            )}
-          </button>
-        </Link>
+              {!isCollapsed && (
+                <div className="text-left">
+                  <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-white'}`}>Supun Hashintha</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-300'}`}>My Account</p>
+                </div>
+              )}
+            </button>
+          </Link>
         </div>
 
         {/* Navigation */}
         {!isCollapsed && (
           <div className="px-6 py-3">
-            <span className="text-xs font-semibold text-white uppercase tracking-wider">Menu</span>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-white'}`}>Menu</span>
           </div>
         )}
 
@@ -111,9 +109,15 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
                 className={({ isActive }) =>
                   `relative flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
-                      ? 'bg-gray-700/20 text-white border border-blue-500/30'
+                      ? isDarkMode
+                        ? 'bg-gray-700/20 text-white border border-blue-500/30'
+                        : 'bg-gray-700/20 text-white border border-blue-500/30'
                       : link.danger
-                      ? 'text-gray-100 hover:text-red-400 hover:bg-gray-700/10'
+                      ? isDarkMode
+                        ? 'text-gray-300 hover:text-red-400 hover:bg-gray-700/30'
+                        : 'text-gray-100 hover:text-red-400 hover:bg-gray-700/10'
+                      : isDarkMode
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-700/50'
                       : 'text-gray-100 hover:text-white hover:bg-gray-700/30'
                   }`
                 }
@@ -128,9 +132,9 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
                 </div>
                 {!isCollapsed && <span className="font-medium">{link.label}</span>}
                 {isCollapsed && (
-                  <div className="absolute left-full ml-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-100">
+                  <div className={`absolute left-full ml-2 px-3 py-2 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-1000 ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-900 text-white'}`}>
                     {link.label}
-                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45 z-100"></div>
+                    <div className={`absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-2 h-2 rotate-45 z-100 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-900'}`}></div>
                   </div>
                 )}
               </NavLink>

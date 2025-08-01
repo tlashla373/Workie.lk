@@ -1,29 +1,61 @@
+/** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        maroon: {
-          50: 'oklch(96.54% 0.016 274.87)',
-          100: 'oklch(92.45% 0.036 273.72)',
-          200: 'oklch(83.9% 0.079 271.26)',
-          300: 'oklch(75.27% 0.126 268.33)',
-          400: 'oklch(67.04% 0.174 263.27)',
-          500: 'oklch(57.48% 0.208 257.51)',
-          600: 'oklch(48.74% 0.177 257.6)',
-          700: 'oklch(40.2% 0.145 257.39)',
-          800: 'oklch(31.35% 0.114 257.49)',
-          900: 'oklch(22.64% 0.082 257.37)',
-          950: 'oklch(17.96% 0.064 257.25)',
-        }
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+        },
       },
       fontFamily: {
-        alatsi: ['"Alatsi"', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      width: {
+        '85': '21.25rem',
+        '90': '22.5rem',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.scrollbar-hide': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        },
+      };
+      addUtilities(newUtilities);
+    },
+  ],
 };
