@@ -10,6 +10,7 @@ import PostJob from './pages/JobPosting/postJob';
 import WorkHistory from './pages/WorkHistory/WorkHistory';
 import AuthForm from './pages/Authentication/AuthForm';
 import { Settings } from 'lucide-react';
+import WorkerProfile from './pages/Profile/WorkerProfile';
 
 const App = () => {
   const [count, setCount] = useState(0)
@@ -46,12 +47,16 @@ const App = () => {
     element: <Login />,
   },
   {
-    path: '/signin',
+    path: '/signup',
     element: <SignUp />,
   },
   {
     path: '/authform',
     element: <AuthForm />,
+  },
+  {
+    path: '/workerprofile',
+    element: <WorkerProfile />,
   },
   ]);
 
