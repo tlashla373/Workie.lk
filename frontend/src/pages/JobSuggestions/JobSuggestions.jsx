@@ -30,7 +30,7 @@ const JobSuggestion = ({ suggestions = [] }) => {
 
   return (
     <div className={`w-90 p-6 space-y-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-      <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)] ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-gray-100'}`}>
+      <div className={`backdrop-blur-xl rounded-2xl border p-6 shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)] ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFF] border-gray-100'}`}>
         <div className="flex items-center justify-between mb-4 ">
           <h3 className={`text-lg font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Job Suggestions</h3>
           <button 

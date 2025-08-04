@@ -30,7 +30,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   const navigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
-    { icon: Users, label: 'Friends', href: '/friends' },
+    { icon: Users, label: 'Friends', href: '/clientprofile' },
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: 2 },
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work History', href: '/workhistory' },
@@ -42,7 +42,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   return (
     <>
       {/* Sidebar */}
-      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#8B5DFF] border-gray-700/50'}`}>
+      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5] border-gray-700/50'}`}>
         {/* Sidebar Header */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
           <div className="flex items-center justify-between">
@@ -68,9 +68,9 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
 
         {/* User Info */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
-          <Link to='/workerprofile'>
+          <Link to='/clientprofile'>
             <button
-              onClick={toggleProfileDropdown}
+              
               className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-200/30 hover:bg-gray-700/50'}`}
             >
               <div className="relative">

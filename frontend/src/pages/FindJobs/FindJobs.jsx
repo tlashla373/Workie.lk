@@ -30,55 +30,55 @@ const FindJobs = () => {
     },
     {
       id: 2,
-      title: 'UX/UI Designer',
-      company: 'Creative Studio',
+      title: 'Painter',
+      company: 'Individual',
       location: 'Kandy, Sri Lanka',
       type: 'Part Time',
-      salary: '$40,000 - $55,000',
+      salary: 'Rs 40,000 - Rs 55,000',
       posted: '1 week ago',
-      description: 'Join our creative team to design beautiful and intuitive user experiences...',
-      tags: ['Figma', 'Adobe XD', 'Prototyping'],
+      description: 'We are looking for an Skilled Painters to join our project...',
+      tags: ['Painter', 'Nipollac', 'Haris'],
       logo: Painter
     },
     {
       id: 3,
-      title: 'Full Stack Developer',
-      company: 'StartupHub',
-      location: 'Remote',
+      title: 'Skilled Carpenter',
+      company: 'Individual',
+      location: 'Nugegoda, Sri Lanka',
       type: 'Contract',
-      salary: '$70,000 - $90,000',
+      salary: 'Rs 70,000 - Rs 90,000',
       posted: '3 days ago',
-      description: 'Looking for a versatile developer to work on exciting projects...',
-      tags: ['Node.js', 'React', 'MongoDB'],
+      description: 'Looking for a versatile Carpenter to work on exciting projects...',
+      tags: ['Furniture','Door','Window'],
       logo: Carpenter
     },
     {
       id: 4,
-      title: 'Digital Marketing Specialist',
-      company: 'Marketing Pro',
+      title: 'Plumber',
+      company: 'Individual',
       location: 'Galle, Sri Lanka',
       type: 'Full Time',
-      salary: '$35,000 - $50,000',
+      salary: 'Rs 35,000 - Rs 50,000',
       posted: '5 days ago',
-      description: 'Drive our digital marketing campaigns and grow our online presence...',
-      tags: ['SEO', 'Social Media', 'Analytics'],
+      description: 'We are looking for an Skilled Plumbers to join our project...',
+      tags: ['Bathroom', 'Kitchen', 'Garden'],
       logo: Plumber
     },
     {
       id: 5,
-      title: 'Data Scientist',
-      company: 'DataTech Inc',
+      title: 'Skilled Welders',
+      company: 'Individual',
       location: 'Colombo, Sri Lanka',
       type: 'Full Time',
-      salary: '$80,000 - $100,000',
+      salary: 'Rs 80,000 - Rs 100,000',
       posted: '1 day ago',
-      description: 'Analyze complex data sets and provide actionable insights...',
-      tags: ['Python', 'Machine Learning', 'SQL'],
+      description: 'We are looking for an Skilled Welders to join our project...',
+      tags: ['Aluminium', 'TIG Welding', 'Gas Welding'],
       logo: Welder
     }
   ];
 
-  const jobTypes = ['Full Time', 'Part Time', 'Contract', 'Freelance', 'Internship'];
+  const jobTypes = ['Full Time', 'Part Time', 'Contract'];
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

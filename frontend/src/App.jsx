@@ -15,6 +15,7 @@ import WorkerProfile from './pages/Profile/WorkerProfile';
 
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import Video from './pages/Video/Video';
+import ClientProfile from './pages/Profile/ClientProfile';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -31,6 +32,10 @@ const App = () => {
         {
           path: 'findjobs',
           element: <FindJobs />,
+        },
+        {
+          path: 'clientprofile',
+          element: <ClientProfile />,
         },
         {
           path: 'postjob',
