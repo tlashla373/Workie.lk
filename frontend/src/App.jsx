@@ -7,7 +7,7 @@ import Login from './pages/Authentication/Login';
 import SignUp from './pages/Authentication/SignUp';
 import AppLayout from './pages/Profile/AppLayout';
 import FindJobs from './pages/FindJobs/findJobs';
-import PostJob from './pages/JobPosting/postJob';
+import PostJob from './pages/JobPosting/PostJob';
 import WorkHistory from './pages/WorkHistory/WorkHistory';
 import AuthForm from './pages/Authentication/AuthForm';
 import Settings from './pages/Settings';

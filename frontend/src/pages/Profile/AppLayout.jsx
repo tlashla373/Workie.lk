@@ -27,7 +27,7 @@ const AppLayout = () => {
         <div className="flex-1 flex overflow-hidden lg:gap-1.5">
           {/* Main Content - Scrollable Area */}
           <main className="flex-1  overflow-y-auto overflow-x-hidden no-scrollbar">
-            <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300/5'} backdrop-blur-xl shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)] border p-8`}>
+            <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300/5'} backdrop-blur-xl shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)] border p-4`}>
               <Outlet />
             </div>
           </main>

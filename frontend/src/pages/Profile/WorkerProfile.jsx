@@ -13,7 +13,7 @@ const WorkerProfile = () => {
   const [rating, setRating] = useState(4);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex overflow-hidden">
+    <div className="h-screen bg-gray-100 flex overflow-hidden">
       {/* Sidebar */}
       <div
         className={`${isCollapsed ? 'w-20' : 'w-60'} 
@@ -24,11 +24,11 @@ const WorkerProfile = () => {
 
       {/* Main Content */}
       <div
-        className={`flex flex-col flex-1 transition-all duration-300 
+        className={`flex flex-col flex-1 overflow-hidden duration-300 
         ${isCollapsed ? 'ml-20' : 'ml-61'} min-h-screen`}
       >
         {/* Upper Navbar */}
-        <div className=" flex-shrink-0  top-0 bg-white shadow">
+        <div className=" flex-shrink-0  bg-white shadow">
           <UpperNavbar isCollapsed={isCollapsed} />
         </div>
 

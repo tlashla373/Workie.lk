@@ -1,24 +1,32 @@
 import React, { useState } from 'react';
 import { Search, MapPin, DollarSign, Clock, Building, Heart, ExternalLink, Filter } from 'lucide-react';
+import { useDarkMode } from '../../contexts/DarkModeContext';
+import Mason from '../../assets/mason.svg'
+import Welder from '../../assets/welder.svg'
+import Plumber from '../../assets/plumber.svg'
+import Carpenter from '../../assets/carpenter.svg'
+import Painter from '../../assets/painter.svg'
+
 
 const FindJobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [jobTypeFilter, setJobTypeFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const { isDarkMode } = useDarkMode();
 
   const jobs = [
     {
       id: 1,
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp Solutions',
+      title: 'Skilled Masons',
+      company: 'Individual',
       location: 'Colombo, Sri Lanka',
       type: 'Full Time',
-      salary: '$60,000 - $80,000',
+      salary: 'Rs 60,000 - Rs 80,000',
       posted: '2 days ago',
-      description: 'We are looking for an experienced Frontend Developer to join our dynamic team...',
-      tags: ['React', 'TypeScript', 'Tailwind CSS'],
-      logo: '🚀'
+      description: 'We are looking for an Skilled Mason Bass to join our project...',
+      tags: ['Mason', 'Bricks', 'Tile work'],
+      logo: Mason
     },
     {
       id: 2,
@@ -30,7 +38,7 @@ const FindJobs = () => {
       posted: '1 week ago',
       description: 'Join our creative team to design beautiful and intuitive user experiences...',
       tags: ['Figma', 'Adobe XD', 'Prototyping'],
-      logo: '🎨'
+      logo: Painter
     },
     {
       id: 3,
@@ -42,7 +50,7 @@ const FindJobs = () => {
       posted: '3 days ago',
       description: 'Looking for a versatile developer to work on exciting projects...',
       tags: ['Node.js', 'React', 'MongoDB'],
-      logo: '💻'
+      logo: Carpenter
     },
     {
       id: 4,
@@ -54,7 +62,7 @@ const FindJobs = () => {
       posted: '5 days ago',
       description: 'Drive our digital marketing campaigns and grow our online presence...',
       tags: ['SEO', 'Social Media', 'Analytics'],
-      logo: '📈'
+      logo: Plumber
     },
     {
       id: 5,
@@ -66,7 +74,7 @@ const FindJobs = () => {
       posted: '1 day ago',
       description: 'Analyze complex data sets and provide actionable insights...',
       tags: ['Python', 'Machine Learning', 'SQL'],
-      logo: '📊'
+      logo: Welder
     }
   ];
 
@@ -74,8 +82,8 @@ const FindJobs = () => {
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+                          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesLocation = !locationFilter || job.location.toLowerCase().includes(locationFilter.toLowerCase());
     const matchesType = !jobTypeFilter || job.type === jobTypeFilter;
     
@@ -85,12 +93,12 @@ const FindJobs = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">Find Your Dream Job</h1>
-        <p className="text-gray-400">Discover opportunities that match your skills and interests</p>
+        <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Find Your Dream Job</h1>
+        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Discover opportunities that match your skills and interests</p>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-gray-700/30 rounded-xl p-6 space-y-4">
+      <div className={`rounded-xl p-6 space-y-4 ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search Bar */}
           <div className="flex-1 relative">
@@ -100,7 +108,7 @@ const FindJobs = () => {
               placeholder="Search jobs, companies, or skills..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200"
+              className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
             />
           </div>
 
@@ -112,7 +120,7 @@ const FindJobs = () => {
               placeholder="Location"
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
-              className="w-full lg:w-48 pl-10 pr-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200"
+              className={`w-full lg:w-48 pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
             />
           </div>
 
@@ -120,11 +128,11 @@ const FindJobs = () => {
           <select
             value={jobTypeFilter}
             onChange={(e) => setJobTypeFilter(e.target.value)}
-            className="w-full lg:w-48 px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200"
+            className={`w-full lg:w-48 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
           >
-            <option value="" className="bg-gray-700">All Job Types</option>
+            <option value="" className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>All Job Types</option>
             {jobTypes.map(type => (
-              <option key={type} value={type} className="bg-gray-700">{type}</option>
+              <option key={type} value={type} className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>{type}</option>
             ))}
           </select>
 
@@ -138,7 +146,7 @@ const FindJobs = () => {
         </div>
 
         {/* Results Count */}
-        <div className="text-gray-400 text-sm">
+        <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>
           Found {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -146,27 +154,33 @@ const FindJobs = () => {
       {/* Job Listings */}
       <div className="space-y-4">
         {filteredJobs.map(job => (
-          <div key={job.id} className="bg-gray-700/30 rounded-xl p-6 hover:bg-gray-700/40 transition-all duration-200 border border-gray-600/30">
+          <div key={job.id} className={`rounded-xl p-6 hover:transition-all duration-200 border ${isDarkMode ? 'bg-gray-700/30 hover:bg-gray-700/40 border-gray-600/30' : 'bg-white hover:bg-gray-100 border-gray-300'}`}>
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-start space-x-4">
-                  <div className="text-3xl">{job.logo}</div>
+                  <div className="w-12 h-12">
+                    {typeof job.logo === 'string' && job.logo.endsWith('.svg') ? (
+                      <img src={job.logo} alt={job.title} className="w-full h-full object-contain rounded-md" />
+                    ) : (
+                      <span className="text-3xl">{job.logo}</span>
+                    )}
+                  </div>
                   <div className="flex-1">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-2">
-                      <h3 className="text-xl font-semibold text-white hover:text-blue-400 cursor-pointer transition-colors duration-200">
+                      <h3 className={`text-xl font-semibold hover:text-blue-400 cursor-pointer transition-colors duration-200 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         {job.title}
                       </h3>
                       <div className="flex items-center space-x-2 mt-2 lg:mt-0">
-                        <button className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200">
+                        <button className={`p-2 rounded-lg transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-red-600 hover:bg-red-100'}`}>
                           <Heart className="w-5 h-5" />
                         </button>
-                        <button className="p-2 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-200">
+                        <button className={`p-2 rounded-lg transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-100'}`}>
                           <ExternalLink className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-3">
+                    <div className={`flex flex-wrap items-center gap-4 text-sm mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       <div className="flex items-center space-x-1">
                         <Building className="w-4 h-4" />
                         <span>{job.company}</span>
@@ -185,7 +199,7 @@ const FindJobs = () => {
                       </div>
                     </div>
 
-                    <p className="text-gray-300 mb-3 line-clamp-2">{job.description}</p>
+                    <p className={`mb-3 line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{job.description}</p>
 
                     <div className="flex flex-wrap gap-2 mb-3">
                       {job.tags.map(tag => (
@@ -196,9 +210,9 @@ const FindJobs = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <span className="text-sm text-gray-500">Posted {job.posted}</span>
+                      <span className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Posted {job.posted}</span>
                       <div className="flex space-x-3">
-                        <button className="px-4 py-2 bg-gray-600/50 text-gray-300 rounded-lg hover:bg-gray-600 transition-all duration-200">
+                        <button className={`px-4 py-2 rounded-lg transition-all duration-200 ${isDarkMode ? 'bg-gray-600/50 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
                           Save for Later
                         </button>
                         <button className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200">
@@ -216,9 +230,9 @@ const FindJobs = () => {
 
       {filteredJobs.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold text-white mb-2">No jobs found</h3>
-          <p className="text-gray-400">Try adjusting your search criteria or filters</p>
+          <div className={`text-6xl mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>🔍</div>
+          <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>No jobs found</h3>
+          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Try adjusting your search criteria or filters</p>
         </div>
       )}
     </div>

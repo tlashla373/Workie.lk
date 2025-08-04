@@ -7,7 +7,7 @@ const ProfileViews = ({ views = 150, percentage = 35, period = "last month" }) =
   const { isDarkMode } = useDarkMode();
   
   return (
-    <div className={`rounded-xl p-6 shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-blue-50'}`}>
+    <div className={`rounded-xl p-6 border shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)]  ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-gray-100'}`}>
       <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Profile Views</h3>
       <div className="text-center">
         <div className={`text-3xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>+ {views}</div>

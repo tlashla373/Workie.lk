@@ -11,4 +11,15 @@
   scrollbar-width: none;     /* Firefox */
 }
 
+.audiowide-regular {
+  font-family: "Audiowide", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
 
+
+.alatsi-regular {
+  font-family: "Alatsi", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}

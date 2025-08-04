@@ -42,7 +42,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   return (
     <>
       {/* Sidebar */}
-      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-violet-600 border-gray-700/50'}`}>
+      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#8B5DFF] border-gray-700/50'}`}>
         {/* Sidebar Header */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
           <div className="flex items-center justify-between">
@@ -53,7 +53,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
               >
                 {isCollapsed ? <PanelRightClose className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} /> : <img src={Logo} className="w-7 h-7" />}
               </div>
-              {!isCollapsed && <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>Workie.LK</span>}
+              {!isCollapsed && <span className={`text-xl audiowide-regular  font-bold ${isDarkMode ? 'text-white' : 'text-white'}`}>Workie.LK</span>}
             </div>
             {!isCollapsed && (
               <button

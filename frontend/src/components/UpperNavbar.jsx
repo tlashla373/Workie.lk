@@ -32,20 +32,20 @@ const UpperNavbar = ({ isCollapsed = false }) => {
   return (
     <>
       {/* Top Bar */}
-      <header className={`h-full px-6 py-2 flex items-center border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-gray-700/50'}`}>
+      <header className={`h-full px-6 py-2 flex items-center border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFFFF] border-gray-700/50'}`}>
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-4">
-            <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{currentPageTitle}</h1>
+            <h1 className={`text-xl alatsi-regular font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{currentPageTitle}</h1>
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
+          <div className="flex-1 max-w-md mx-8 ">
             <div className="relative">
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
               <input
                 type="text"
                 placeholder="Search for people, posts, or topics..."
-                className={`w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-cyan-100 border-gray-400/50 text-white placeholder-gray-400'}`}
+                className={`w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-[#F0F3FF] border-gray-400/50 text-white placeholder-gray-400'}`}
               />
             </div>
           </div>
@@ -56,7 +56,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             <div className="relative">
               <button
                 onClick={toggleProfileDropdown}
-                className={`w-full flex items-center space-x-3 p-2 rounded-xl transition-all duration-200 group ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-700/30 hover:bg-gray-700/50'}`}
+                className={`w-full flex items-center space-x-3 p-2 rounded-xl transition-all border duration-200 group ${isDarkMode ? 'bg-gray-700 border-gray-800 hover:bg-gray-600' : 'bg-[#F0F3FF] border-gray-300 hover:bg-gray-400/50'}`}
               >
                 <div className="relative">
                   <img

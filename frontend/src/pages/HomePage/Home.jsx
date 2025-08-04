@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import Welder from '../../assets/welder.svg'
+import Plumber from '../../assets/plumber.svg'
+import Carpenter from '../../assets/carpenter.svg'
+import Painter from '../../assets/painter.svg'
+import Mason from '../../assets/mason.svg'
+
+
 
 export default function MainFeed() {
   const [selectedPost, setSelectedPost] = useState(null);
@@ -25,11 +32,11 @@ export default function MainFeed() {
   ];
 
   const categories = [
-    { name: "Carpenter", icon: "👷", color: "bg-orange-100" },
-    { name: "Mason", icon: "🧱", color: "bg-red-100" },
-    { name: "Plumber", icon: "🔧", color: "bg-blue-100" },
-    { name: "Welder", icon: "⚡", color: "bg-yellow-100" },
-    { name: "Painter", icon: "🎨", color: "bg-green-100" }
+    { name: "Carpenter", icon: Carpenter , color: "bg-[#F0F3FF]" },
+    { name: "Mason", icon: Mason, color: "bg-[#F0F3FF]" },
+    { name: "Plumber", icon: Plumber , color: "bg-[#F0F3FF]" },
+    { name: "Welder", icon: Welder, color: "bg-[#F0F3FF]" },
+    { name: "Painter", icon: Painter, color: "bg-[#F0F3FF]" }
   ];
 
   const posts = [
@@ -80,16 +87,28 @@ export default function MainFeed() {
       description: "Custom metal gate fabrication. Strong, secure, and beautiful! 🔥",
       likes: 15,
       timeAgo: "8 hours ago"
+    },
+    {
+      id: 5,
+      author: "Brand Lee",
+      profession: "Welder",
+      location: "Matara 10",
+      avatar: mockAvatars[3],
+      images: [mockImages[3], mockImages[2], mockImages[0], mockImages[2], mockImages[1], mockImages[3]],
+      imageAlt: "Welding work",
+      description: "Custom metal gate fabrication. Strong, secure, and beautiful! 🔥",
+      likes: 15,
+      timeAgo: "8 hours ago"
     }
   ];
 
   const CategoryCard = ({ category, index }) => (
     <div
       key={index}
-      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} items-center p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}
+      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} items-center p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}
     >
-      <div className={`w-16 h-16 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-2 group-hover:scale-110 transition-transform duration-300`}>
-        <span className="text-2xl">{category.icon}</span>
+      <div className={`w-16 h-16 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-2 w-20 h-20 group-hover:scale-110 transition-transform duration-300`}>
+        <img src={category.icon} alt={category.name} className="w-15 h-15" />
       </div>
       <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300 text-sm`}>{category.name}</span>
     </div>
@@ -293,8 +312,8 @@ export default function MainFeed() {
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-black'}`}>
       {/* Category Section */}
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-6 mb-5 shadow-sm border`}>
-        <h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Categories</h2>
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-2 mb-2 shadow-sm border`}>
+        {/*<h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Categories</h2>*/}
         <div className="grid grid-cols-5 gap-4">
           {categories.map((category, index) => (
             <CategoryCard key={index} category={category} index={index} />
