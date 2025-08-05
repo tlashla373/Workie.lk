@@ -1,19 +1,35 @@
 import React, { useState } from 'react';
-import { 
-  Moon, 
-  Sun, 
-  Bell, 
-  Shield, 
-  User, 
-  Eye, 
-  EyeOff, 
-  Save, 
-  RefreshCw 
+import {
+  Moon,
+  Sun,
+  Bell,
+  Shield,
+  User,
+  Eye,
+  EyeOff,
+  Save,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Globe,
+  CreditCard,
+  HelpCircle,
 } from 'lucide-react';
-import { useDarkMode } from '../contexts/DarkModeContext';
+
+// Assuming you have a DarkModeContext defined and a useDarkMode hook
+import { useDarkMode } from '../contexts/DarkModeContext'; 
 
 const Settings = () => {
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { isDarkMode, themeMode, setThemeMode } = useDarkMode();
+
+  const [expandedSections, setExpandedSections] = useState({
+    appearance: false,
+    notifications: false,
+    privacy: false,
+    account: false,
+    billing: false,
+    support: false
+  });
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -21,6 +37,9 @@ const Settings = () => {
     sms: true,
     jobAlerts: true,
     messages: true,
+    newsletters: false,
+    promotions: true,
+    security: true
   });
 
   const [privacy, setPrivacy] = useState({
@@ -28,10 +47,19 @@ const Settings = () => {
     showEmail: false,
     showPhone: false,
     allowMessages: true,
+    searchable: true,
+    analytics: false
   });
 
   const [language, setLanguage] = useState('english');
   const [showPassword, setShowPassword] = useState(false);
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const handleNotificationChange = (key) => {
     setNotifications((prev) => ({
@@ -47,6 +75,36 @@ const Settings = () => {
     }));
   };
 
+  const SettingSection = ({ id, title, description, icon, iconBg, children, isExpanded }) => (
+    <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} transition-all duration-300 overflow-hidden`}>
+      <button
+        onClick={() => toggleSection(id)}
+        className="w-full p-6 flex items-center justify-between hover:bg-opacity-50 transition-colors"
+      >
+        <div className="flex items-center space-x-3">
+          <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center`}>
+            {icon}
+          </div>
+          <div className="text-left">
+            <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h2>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{description}</p>
+          </div>
+        </div>
+        <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+          <ChevronDown className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+        </div>
+      </button>
+
+      <div className={`transition-all duration-300 ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="px-6 pb-6">
+          <div className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} pt-6`}>
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <div className="max-w-4xl mx-auto p-6">
@@ -57,34 +115,64 @@ const Settings = () => {
           </p>
         </div>
 
-        <div className="grid gap-6">
-
+        <div className="grid gap-4">
           {/* Appearance */}
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-                {isDarkMode ? <Moon className="w-5 h-5 text-white" /> : <Sun className="w-5 h-5 text-white" />}
-              </div>
+          <SettingSection
+            id="appearance"
+            title="Appearance"
+            description="Customize how Workie.LK looks and feels"
+            icon={isDarkMode ? <Moon className="w-5 h-5 text-white" /> : <Sun className="w-5 h-5 text-white" />}
+            iconBg="bg-blue-500"
+            isExpanded={expandedSections.appearance}
+          >
+            <div className="space-y-6">
               <div>
-                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Appearance</h2>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Customize how Workie.LK looks</p>
-              </div>
-            </div>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                  Adjust the appearance of Workie.LK to reduce glare and give your eyes a break.
+                </p>
+                <p className="text-xs text-gray-500 mb-4">
+                  Current mode: {themeMode === 'system' ? 'Automatic' : themeMode === 'dark' ? 'Dark' : 'Light'}
+                </p>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Dark Mode</h3>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Switch between light and dark themes</p>
+                <div className="space-y-3">
+                  {['light', 'dark', 'system'].map(mode => (
+                    <div
+                      key={mode}
+                      onClick={() => setThemeMode(mode)}
+                      className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                        themeMode === mode
+                          ? isDarkMode
+                            ? 'border-blue-500 bg-blue-900/20'
+                            : 'border-blue-500 bg-blue-50'
+                          : isDarkMode
+                            ? 'border-gray-600 hover:border-gray-500'
+                            : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {mode === 'light' ? 'Light' : mode === 'dark' ? 'Dark' : 'Automatic'}
+                          </h4>
+                          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {mode === 'light'
+                              ? 'Use light mode'
+                              : mode === 'dark'
+                                ? 'Use dark mode'
+                                : "We'll adjust based on your system settings"}
+                          </p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          themeMode === mode ? 'border-blue-500 bg-blue-500' : isDarkMode ? 'border-gray-500' : 'border-gray-300'
+                        }`}>
+                          {themeMode === mode && (
+                            <div className="w-2 h-2 bg-white rounded-full" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <button
-                  onClick={toggleDarkMode}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDarkMode ? 'bg-blue-500' : 'bg-gray-300'}`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
-                </button>
               </div>
 
               <div className="flex items-center justify-between">
@@ -98,38 +186,56 @@ const Settings = () => {
                   className={`px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 >
                   <option value="english">English</option>
-                  <option value="sinhala">Sinhala</option>
-                  <option value="tamil">Tamil</option>
+                  <option value="sinhala">සිංහල</option>
+                  <option value="tamil">தமிழ்</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Font Size</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Adjust text size for better readability</p>
+                </div>
+                <select
+                  className={`px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
                 </select>
               </div>
             </div>
-          </div>
+          </SettingSection>
 
           {/* Notifications */}
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-                <Bell className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h2>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Control what notifications you receive</p>
-              </div>
-            </div>
-
+          <SettingSection
+            id="notifications"
+            title="Notifications"
+            description="Control what notifications you receive and how"
+            icon={<Bell className="w-5 h-5 text-white" />}
+            iconBg="bg-green-500"
+            isExpanded={expandedSections.notifications}
+          >
             <div className="space-y-4">
               {Object.entries(notifications).map(([key, value]) => (
                 <div key={key} className="flex items-center justify-between">
                   <div>
                     <h3 className={`font-medium capitalize ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {key === 'jobAlerts' ? 'Job Alerts' : key === 'sms' ? 'SMS' : key}
+                      {key === 'jobAlerts' ? 'Job Alerts' :
+                        key === 'sms' ? 'SMS' :
+                        key === 'newsletters' ? 'Newsletters' :
+                        key === 'promotions' ? 'Promotions' :
+                        key === 'security' ? 'Security Alerts' : key}
                     </h3>
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       {key === 'email' && 'Receive notifications via email'}
                       {key === 'push' && 'Browser push notifications'}
                       {key === 'sms' && 'Text message notifications'}
-                      {key === 'jobAlerts' && 'New job opportunities'}
+                      {key === 'jobAlerts' && 'New job opportunities matching your profile'}
                       {key === 'messages' && 'Direct messages from employers'}
+                      {key === 'newsletters' && 'Weekly job market updates'}
+                      {key === 'promotions' && 'Special offers and premium features'}
+                      {key === 'security' && 'Login attempts and security updates'}
                     </p>
                   </div>
                   <button
@@ -143,20 +249,17 @@ const Settings = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </SettingSection>
 
-          {/* Privacy */}
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Privacy & Security</h2>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Manage your privacy preferences</p>
-              </div>
-            </div>
-
+          {/* Privacy & Security */}
+          <SettingSection
+            id="privacy"
+            title="Privacy & Security"
+            description="Manage your privacy preferences and security settings"
+            icon={<Shield className="w-5 h-5 text-white" />}
+            iconBg="bg-purple-500"
+            isExpanded={expandedSections.privacy}
+          >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -169,6 +272,7 @@ const Settings = () => {
                   className={`px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 >
                   <option value="public">Public</option>
+                  <option value="registered">Registered Users</option>
                   <option value="friends">Friends Only</option>
                   <option value="private">Private</option>
                 </select>
@@ -203,22 +307,72 @@ const Settings = () => {
                   />
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Account */}
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-300`}>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Searchable Profile</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Allow your profile to appear in search results</p>
+                </div>
+                <button
+                  onClick={() => handlePrivacyChange('searchable', !privacy.searchable)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${privacy.searchable ? 'bg-blue-500' : 'bg-gray-300'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${privacy.searchable ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
               </div>
-              <div>
-                <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Account</h2>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Manage your account information</p>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Analytics</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Help improve our service with usage data</p>
+                </div>
+                <button
+                  onClick={() => handlePrivacyChange('analytics', !privacy.analytics)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${privacy.analytics ? 'bg-blue-500' : 'bg-gray-300'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${privacy.analytics ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
               </div>
             </div>
+          </SettingSection>
 
+          {/* Account Information */}
+          <SettingSection
+            id="account"
+            title="Account Information"
+            description="Update your personal information and credentials"
+            icon={<User className="w-5 h-5 text-white" />}
+            iconBg="bg-orange-500"
+            isExpanded={expandedSections.account}
+          >
             <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    defaultValue="Supun"
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    defaultValue="Perera"
+                    className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -240,6 +394,17 @@ const Settings = () => {
                     className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                  Location
+                </label>
+                <input
+                  type="text"
+                  defaultValue="Colombo, Sri Lanka"
+                  className={`w-full px-3 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
               </div>
 
               <div>
@@ -273,8 +438,76 @@ const Settings = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </SettingSection>
 
+          {/* Billing & Subscription */}
+          <SettingSection
+            id="billing"
+            title="Billing & Subscription"
+            description="Manage your subscription and payment methods"
+            icon={<CreditCard className="w-5 h-5 text-white" />}
+            iconBg="bg-indigo-500"
+            isExpanded={expandedSections.billing}
+          >
+            <div className="space-y-6">
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} border ${isDarkMode ? 'border-gray-600' : 'border-blue-200'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Current Plan</h3>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Free Plan - Basic job search features</p>
+                  </div>
+                  <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Upgrade
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Payment Methods</h3>
+                <button className={`w-full p-4 border-2 border-dashed ${isDarkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-600'} rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors`}>
+                  + Add Payment Method
+                </button>
+              </div>
+
+              <div>
+                <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Billing History</h3>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>No billing history available</p>
+              </div>
+            </div>
+          </SettingSection>
+
+          {/* Help & Support */}
+          <SettingSection
+            id="support"
+            title="Help & Support"
+            description="Get help and contact our support team"
+            icon={<HelpCircle className="w-5 h-5 text-white" />}
+            iconBg="bg-pink-500"
+            isExpanded={expandedSections.support}
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button className={`p-4 text-left rounded-lg border ${isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'} transition-colors`}>
+                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>FAQ</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Find answers to common questions</p>
+                </button>
+                
+                <button className={`p-4 text-left rounded-lg border ${isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'} transition-colors`}>
+                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Contact Us</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Get in touch with our support team</p>
+                </button>
+              </div>
+
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>App Version</h3>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Workie.LK v2.1.0</p>
+              </div>
+
+              <button className="w-full p-3 text-red-500 border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                Delete Account
+              </button>
+            </div>
+          </SettingSection>
         </div>
       </div>
     </div>

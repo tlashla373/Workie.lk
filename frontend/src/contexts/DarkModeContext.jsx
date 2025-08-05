@@ -1,36 +1,87 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const DarkModeContext = createContext();
+const DarkModeContext = createContext(undefined);
 
 export const DarkModeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('darkMode');
-      return saved ? JSON.parse(saved) : false;
-    }
-    return false;
+  const [themeMode, setThemeMode] = useState(() => {
+    const saved = localStorage.getItem('themeMode');
+    return saved || 'system';
   });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const getSystemPreference = () => {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  };
+
+  const applyTheme = (mode) => {
+    let shouldBeDark = false;
+    
+    switch (mode) {
+      case 'dark':
+        shouldBeDark = true;
+        break;
+      case 'light':
+        shouldBeDark = false;
+        break;
+      case 'system':
+        shouldBeDark = getSystemPreference();
+        break;
+      default:
+        break;
     }
 
-    const root = document.documentElement;
+    setIsDarkMode(shouldBeDark);
 
-    if (isDarkMode) {
-      root.classList.add('dark');
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
     } else {
-      root.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
     }
-  }, [isDarkMode]);
+  };
+
+  useEffect(() => {
+    localStorage.setItem('themeMode', themeMode);
+    applyTheme(themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      const handleChange = (e) => {
+        if (themeMode === 'system') {
+          setIsDarkMode(e.matches);
+          if (e.matches) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      applyTheme('system');
+
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [themeMode]);
+
+  useEffect(() => {
+    applyTheme(themeMode);
+  }, []);
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
+    setThemeMode(isDarkMode ? 'light' : 'dark');
   };
 
   return (
-    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+    <DarkModeContext.Provider value={{ 
+      isDarkMode, 
+      themeMode, 
+      setThemeMode, 
+      toggleDarkMode 
+    }}>
       {children}
     </DarkModeContext.Provider>
   );
