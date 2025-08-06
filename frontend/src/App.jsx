@@ -17,6 +17,7 @@ import Video from './pages/Video/Video';
 import ClientProfile from './pages/Profile/ClientProfile';
 import LoginPage from './pages/Authentication/LoginPage';
 import SignUpPage from './pages/Authentication/SignUpPage';
+import RoleSelection from './pages/Authentication/RoleSelection';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -63,6 +64,10 @@ const App = () => {
     {
       path: '/signuppage',
       element: <SignUpPage/>,
+    },
+    {
+      path: '/roleselection',
+      element: <RoleSelection/>,
     },
     {
       path: '/workerprofile',

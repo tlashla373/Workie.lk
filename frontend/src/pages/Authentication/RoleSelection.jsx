@@ -1,8 +1,12 @@
+// src/components/auth/RoleSelection.jsx
 import React, { useState } from 'react';
-import { User, Briefcase, ArrowRight, CheckCircle } from 'lucide-react';
+import { User, Briefcase, ArrowRight, CheckCircle, Users, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import Logo from '../../assets/Logo.png';
 
 const RoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState('');
+  const navigate = useNavigate();
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
@@ -10,10 +14,21 @@ const RoleSelection = () => {
 
   const handleContinue = () => {
     if (selectedRole) {
-      // Handle navigation based on selected role
-      console.log(`Selected role: ${selectedRole}`);
-      // You can add navigation logic here
+      // Save role to localStorage (you can also send to backend)
+      localStorage.setItem('userRole', selectedRole);
+      
+      // Navigate based on selected role
+      if (selectedRole === 'worker') {
+        navigate('/workerprofile'); // Worker Profile Navigation
+      } else if (selectedRole === 'client') {
+        navigate('/'); // Client Profile navigation
+      }
     }
+  };
+
+  const handleSkip = () => {
+    // Navigate to a Home 
+    navigate('/'); // Go to home
   };
 
   return (
@@ -38,7 +53,7 @@ const RoleSelection = () => {
 
           {/* Bottom Section */}
           <div className="mt-12 text-white relative z-10">
-            <h3 className="text-2xl font-bold mb-4">Almost there!</h3>
+            <h3 className="text-2xl alatsi-regular mb-4">Almost there!</h3>
             <p className="text-white/90 leading-relaxed">
               Just one more step to personalize your Workie.LK experience and unlock the right features for you.
             </p>
@@ -59,12 +74,10 @@ const RoleSelection = () => {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center">
-                <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">W</span>
-                </div>
-              </div>
-              <span className="text-xl font-bold text-gray-800">Workie.LK</span>
+              <Link to='/' className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
+                <img className="w-8 h-8" src={Logo} alt="Workie.LK Logo" />
+              </Link>
+              <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
             </div>
           </div>
 
@@ -89,32 +102,19 @@ const RoleSelection = () => {
                 <CheckCircle className="absolute top-4 right-4 w-6 h-6 text-blue-500" />
               )}
               <div className="flex items-start space-x-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  selectedRole === 'worker' ? 'bg-blue-500' : 'bg-gray-100'
-                }`}>
-                  <User className={`w-6 h-6 ${
-                    selectedRole === 'worker' ? 'text-white' : 'text-gray-600'
-                  }`} />
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <User className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Worker</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm looking for work</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Find work opportunities, showcase your skills, and connect with potential clients. Perfect for freelancers and job seekers.
+                    Find opportunities that match your skills. Get hired by clients who need your expertise.
                   </p>
-                  <ul className="mt-3 space-y-1">
-                    <li className="text-xs text-gray-500 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                      Create professional profile
-                    </li>
-                    <li className="text-xs text-gray-500 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                      Browse and apply for jobs
-                    </li>
-                    <li className="text-xs text-gray-500 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                      Get hired by clients
-                    </li>
-                  </ul>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Find Jobs</span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Build Profile</span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Earn Money</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -132,62 +132,51 @@ const RoleSelection = () => {
                 <CheckCircle className="absolute top-4 right-4 w-6 h-6 text-blue-500" />
               )}
               <div className="flex items-start space-x-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  selectedRole === 'client' ? 'bg-blue-500' : 'bg-gray-100'
-                }`}>
-                  <Briefcase className={`w-6 h-6 ${
-                    selectedRole === 'client' ? 'text-white' : 'text-gray-600'
-                  }`} />
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Briefcase className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Client</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm looking to hire</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Post jobs, find talented workers, and manage your projects. Ideal for businesses and individuals looking to hire.
+                    Post jobs and find qualified workers. Connect with professionals who can help grow your business.
                   </p>
-                  <ul className="mt-3 space-y-1">
-                    <li className="text-xs text-gray-500 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                      Post job opportunities
-                    </li>
-                    <li className="text-xs text-gray-500 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                      Browse worker profiles
-                    </li>
-                    <li className="text-xs text-gray-500 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                      Manage your projects
-                    </li>
-                  </ul>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Post Jobs</span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Find Talent</span>
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Manage Projects</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Continue Button */}
-          <button
-            onClick={handleContinue}
-            disabled={!selectedRole}
-            className={`w-full py-3 px-4 rounded-md font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-              selectedRole 
-                ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm hover:shadow-md' 
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <span>Continue</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button
+              onClick={handleContinue}
+              disabled={!selectedRole}
+              className={`w-full flex items-center justify-center px-6 py-3 rounded-md font-medium transition-all duration-200 ${
+                selectedRole
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md hover:shadow-lg'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Continue
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </button>
 
-          {/* Skip Option */}
-          <div className="mt-4 text-center">
-            <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200">
-              I'll choose later
+            <button
+              onClick={handleSkip}
+              className="w-full px-6 py-3 border border-gray-300 rounded-md font-medium text-gray-600 hover:bg-gray-50 transition-colors duration-200"
+            >
+              Skip for now
             </button>
           </div>
 
           {/* Help Text */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 text-center leading-relaxed">
-              Don't worry, you can always switch roles or create additional accounts later from your dashboard.
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500">
+              Don't worry, you can change this later in your profile settings.
             </p>
           </div>
         </div>

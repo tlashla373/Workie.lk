@@ -1,16 +1,64 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import Login from '../../assets/login.svg'
 import Logo from '../../assets/Logo.png'
 import Facebook from '../../assets/facebook.svg'
 import Google from '../../assets/google.svg'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import InfiniteSlider from "../../components/ui/InfiniteSlider";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
- 
+  const [email, setEmail] = useState(''); // Added missing state
+  const [password, setPassword] = useState(''); // Added missing state
+
+  // Form submission handler
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Your login API call here
+      const loginData = {
+        email,
+        password,
+        rememberMe
+      };
+
+      // Example API call (replace with your actual endpoint)
+      // const response = await fetch('/api/login', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(loginData)
+      // });
+
+      // if (response.ok) {
+      //   const userData = await response.json();
+      //   // Check if user has selected a role
+      //   if (userData.role) {
+      //     // Navigate to appropriate dashboard
+      //     if (userData.role === 'worker') {
+      //       navigate('/worker-dashboard');
+      //     } else if (userData.role === 'client') {
+      //       navigate('/client-dashboard');
+      //     }
+      //   } else {
+      //     // User hasn't selected a role yet
+      //     navigate('/select-role');
+      //   }
+      // } else {
+      //   throw new Error('Login failed');
+      // }
+
+      // For demo purposes, navigate to role selection
+      console.log('Login data:', loginData);
+      navigate('/roleselection');
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Login failed. Please check your credentials.');
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
@@ -20,11 +68,9 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center space-x-2">
-              <a className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
-                <Link to='/'>
-                  <img className="w-8 h-8" src={Logo} alt="" href='/' />
-                </Link>
-              </a>
+              <Link to='/' className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
+                <img className="w-8 h-8" src={Logo} alt="Workie.LK Logo" />
+              </Link>
               <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
             </div>
           </div>
@@ -33,39 +79,27 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign in</h1>
           <p className="text-gray-600 mb-8">
             Don't have an account?
-            <a href="./signuppage" className="text-blue-600 hover:underline ml-1">Create now</a>
+            <Link to="/signuppage" className="text-blue-600 hover:underline ml-1">Create now</Link>
           </p>
 
           {/* Form */}
-          <div className="space-y-4 items-center">
+          <form onSubmit={handleSubmit} className="space-y-4 items-center">
             {/* Email Field */}
             <div className="flex justify-center items-center">
               <label htmlFor="email" className="relative">
                 <input 
-                required 
-                type="text"
-                id="email"
-                onChange={(e) => setEmail(e.target.value)} 
-                className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"/>
-                <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
-                 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  required 
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                />
+                <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   email address
                 </span>
               </label>
             </div>
-
-            {/*<div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                E-mail
-              </label>
-              <input
-                type="email"
-                id="email"  
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="example@email.com"
-              />
-            </div>*/}
 
             {/* Password Field */}
             <div className="flex justify-center items-center">
@@ -74,11 +108,11 @@ export default function LoginPage() {
                   required
                   type={showPassword ? "text" : "password"}
                   id="password"
+                  value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-80 px-2 py-2 text-sm  border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                 />
-                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
-                 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   password
                 </span>
                 <button
@@ -112,12 +146,12 @@ export default function LoginPage() {
 
             {/* Sign In Button */}
             <div className="flex justify-center items-center"> 
-            <button
-              type="submit"
-              className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
-            >
-              Sign in
-            </button>
+              <button
+                type="submit"
+                className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+              >
+                Sign in
+              </button>
             </div>
 
             {/* Divider */}
@@ -136,8 +170,8 @@ export default function LoginPage() {
                 type="button"
                 className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200"
               >
-                <div className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
-                  <img className="h-6 w-6" viewBox="0 0 24 24" src={Google} alt=""/>
+                <div className="w-5 h-5 mr-3">
+                  <img className="h-6 w-6" src={Google} alt="Google"/>
                 </div>
                 Continue with Google
               </button>
@@ -146,18 +180,18 @@ export default function LoginPage() {
                 type="button"
                 className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200"
               >
-                <div className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
-                  <img className="h-6 w-6" viewBox="0 0 24 24" src={Facebook} alt=""/>
+                <div className="w-5 h-5 mr-3">
+                  <img className="h-6 w-6" src={Facebook} alt="Facebook"/>
                 </div>
                 Continue with Facebook
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
       {/* Right Side - Feature Card */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-r from-blue-700 to-blue-300  items-center justify-center p-8 relative overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-gradient-to-r from-blue-700 to-blue-300 items-center justify-center p-8 relative overflow-hidden">
         <div className="max-w-md w-full relative z-0">
           {/* Feature Card */}
           <div className="rounded-2xl shadow-xl relative z-10">
@@ -167,8 +201,8 @@ export default function LoginPage() {
           {/* Bottom Section */}
           <div className="mt-12 text-white relative z-10">
             <h3 className="text-2xl alatsi-regular mb-4">Welcome to our community</h3>
-            <p className="text-green-100 leading-relaxed">
-               Whether you're looking for work or hiring talent, we match you with the right opportunities and professionals in seconds.
+            <p className="text-white leading-relaxed">
+               Whether you're looking for work or hiring talent, we match you with the right opportunities and professionals in seconds.
             </p>
 
             {/* Navigation Dots */}
