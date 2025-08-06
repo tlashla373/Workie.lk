@@ -3,19 +3,20 @@ import './App.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import Home from './pages/HomePage/Home';
-import Login from './pages/Authentication/Login';
-import SignUp from './pages/Authentication/SignUp';
+
 import AppLayout from './pages/Profile/AppLayout';
 import FindJobs from './pages/FindJobs/findJobs';
 import PostJob from './pages/JobPosting/PostJob';
 import WorkHistory from './pages/WorkHistory/WorkHistory';
-import AuthForm from './pages/Authentication/AuthForm';
+
 import Settings from './pages/Settings';
 import WorkerProfile from './pages/Profile/WorkerProfile';
 
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import Video from './pages/Video/Video';
 import ClientProfile from './pages/Profile/ClientProfile';
+import LoginPage from './pages/Authentication/LoginPage';
+import SignUpPage from './pages/Authentication/SignUpPage';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -56,16 +57,12 @@ const App = () => {
       ],
     },
     {
-      path: '/login',
-      element: <Login />,
+      path: '/loginpage',
+      element: <LoginPage/> ,
     },
     {
-      path: '/signup',
-      element: <SignUp />,
-    },
-    {
-      path: '/authform',
-      element: <AuthForm />,
+      path: '/signuppage',
+      element: <SignUpPage/>,
     },
     {
       path: '/workerprofile',

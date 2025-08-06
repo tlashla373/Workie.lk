@@ -1,7 +1,6 @@
 import React from 'react'
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import CreateAccount from '../../assets/create account.svg'
 import Logo from '../../assets/Logo.png'
 import Facebook from '../../assets/facebook.svg'
 import Google from '../../assets/google.svg'
@@ -9,8 +8,9 @@ import Google from '../../assets/google.svg'
 import { Link } from 'react-router-dom'
 import InfiniteSlider from '../../components/ui/InfiniteSlider';
 
-const  SignUp = () => {
+const  SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -25,7 +25,7 @@ const  SignUp = () => {
     
             <div className="max-w-md w-full relative z-0">
               {/* Feature Card */}
-              <div className="bg-white rounded-2xl p-6 shadow-xl relative z-10">
+              <div className="rounded-2xl shadow-xl relative z-10">
                 <InfiniteSlider />
               </div>
     
@@ -48,16 +48,16 @@ const  SignUp = () => {
     
           {/* Right Side - Create account form */}
           <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
-            <div className="max-w-md w-full mx-auto">
+            <div className="max-w-md mx-auto">
               {/* Logo */}
               <div className="mb-8">
                 <div className="flex items-center space-x-2">
-                  <a className="w-12 h-12 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
+                  <a className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
                     <Link to='/'>
-                      <img className="w-10 h-10" src={Logo} alt="" href='/' />
+                      <img className="w-8 h-8" src={Logo} alt="" href='/' />
                     </Link>
                   </a>
-                  <span className="text-xl font-bold text-gray-800">Workie.LK</span>
+                  <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
                 </div>
               </div>
     
@@ -69,92 +69,131 @@ const  SignUp = () => {
               </p>
     
               {/* Form */}
-            <div className="space-y-2">
+            <div className="space-y-4">
                 {/* Personal Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstname" className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name
-                  </label>
-                  <input 
+
+                <div className="flex justify-center items-center">
+                  <label htmlFor="firstname" className="relative">
+                  <input
+                    required 
                     type="text"
                     id="firstname"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    placeholder="Avishka"
+                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   />
+                  <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  First Name
+                </span>
+                  </label>
                 </div>
 
-                <div>
-                  <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name 
-                  </label>
-                  <input 
+                <div className="flex justify-center items-center">
+                  <label htmlFor="lastname" className="relative">
+                  <input
+                    required
                     type="text"
                     id="lastname"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    placeholder="Madhushan"
+                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                    
                   />
+                    <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                    bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                    Last Name
+                    </span>
+                  </label>
                 </div>
                 </div>
 
                 {/* Email Field */}
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    E-mail
-                  </label>
+
+                <div className="flex justify-center items-center">
+                  <label htmlFor="email" className="relative">
                   <input
+                    required
                     type="email"
                     id="email"  
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    placeholder="example@email.com"
+                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   />
+                    <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                    bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                    E-mail
+                    </span>
+                  </label>
                 </div>
 
                 {/* Mobile Number Field */}
-                <div>
-                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-2">
-                    Mobile Number
-                  </label>
+                <div className="flex justify-center items-center">
+                  <label htmlFor="mobile" className="relative"> 
                   <input
+                    required
                     type="tel"
                     id="mobile"
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    placeholder="+94 77 123 4567"
+                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                    
                   />
+                    <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                    bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                    Mobile
+                    </span>
+                  </label>
                 </div>
                 </div>
     
                 {/* Password Field */}
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="flex justify-center items-center">
+                <label className="relative">
+                  <input
+                    required
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-105 px-2 py-2 text-sm  border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  />
+                  <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                  bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                     Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                    </button>
-                  </div>
-                </div>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </label>
+              </div>
+            {/*Confirm password*/}
+              <div className="flex justify-center items-center">
+                <label className="relative">
+                  <input
+                    required
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmpassword"
+                    onChange={(e) => setShowConfirmPassword(e.target.value)}
+                    className="w-105 px-2 py-2 text-sm  border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  />
+                  <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                  bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                    Confirm Password
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                  </button>
+                </label>
+              </div>
     
                 {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between space-y-3">
@@ -178,7 +217,7 @@ const  SignUp = () => {
                 {/* Sign In Button */}
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+                  className="w-105 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
                 >
                   Sign up
                 </button>
@@ -223,4 +262,4 @@ const  SignUp = () => {
   )
 }
 
-export default SignUp
+export default SignUpPage;

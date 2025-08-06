@@ -7,7 +7,7 @@ import Google from '../../assets/google.svg'
 import { Link } from 'react-router-dom'
 import InfiniteSlider from "../../components/ui/InfiniteSlider";
 
-export default function AuthForm() {
+export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
  
@@ -16,16 +16,16 @@ export default function AuthForm() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
       {/* Left Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
-        <div className="max-w-md w-full mx-auto">
+        <div className="max-w-md mx-auto">
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center space-x-2">
-              <a className="w-12 h-12 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
+              <a className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
                 <Link to='/'>
-                  <img className="w-10 h-10" src={Logo} alt="" href='/' />
+                  <img className="w-8 h-8" src={Logo} alt="" href='/' />
                 </Link>
               </a>
-              <span className="text-xl font-bold text-gray-800">Workie.LK</span>
+              <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
             </div>
           </div>
 
@@ -33,13 +33,28 @@ export default function AuthForm() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign in</h1>
           <p className="text-gray-600 mb-8">
             Don't have an account?
-            <a href="./signup" className="text-blue-600 hover:underline ml-1">Create now</a>
+            <a href="./signuppage" className="text-blue-600 hover:underline ml-1">Create now</a>
           </p>
 
           {/* Form */}
-          <div className="space-y-4">
+          <div className="space-y-4 items-center">
             {/* Email Field */}
-            <div>
+            <div className="flex justify-center items-center">
+              <label htmlFor="email" className="relative">
+                <input 
+                required 
+                type="text"
+                id="email"
+                onChange={(e) => setEmail(e.target.value)} 
+                className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"/>
+                <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  email address
+                </span>
+              </label>
+            </div>
+
+            {/*<div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 E-mail
               </label>
@@ -50,22 +65,22 @@ export default function AuthForm() {
                 className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="example@email.com"
               />
-            </div>
+            </div>*/}
 
             {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
+            <div className="flex justify-center items-center">
+              <label className="relative">
                 <input
+                  required
                   type={showPassword ? "text" : "password"}
                   id="password"
-                  
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Password"
+                  className="w-80 px-2 py-2 text-sm  border border-gray-300 rounded-lg  border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                 />
+                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5
+                 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  password
+                </span>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -73,7 +88,7 @@ export default function AuthForm() {
                 >
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
-              </div>
+              </label>
             </div>
 
             {/* Remember Me & Forgot Password */}
@@ -96,12 +111,14 @@ export default function AuthForm() {
             </div>
 
             {/* Sign In Button */}
+            <div className="flex justify-center items-center"> 
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+              className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
             >
               Sign in
             </button>
+            </div>
 
             {/* Divider */}
             <div className="relative my-6">

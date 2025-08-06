@@ -36,7 +36,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
     { icon: History, label: 'Work History', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
-    { icon: LogOut, label: 'Log Out', href: '/authform', danger: true },
+    { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
   ];
 
   return (
