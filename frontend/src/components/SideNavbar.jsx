@@ -8,10 +8,9 @@ import {
   BriefcaseBusiness,
   History,
   Video,
-  Hash,
   PanelRightOpen,
   PanelRightClose,
-  Bell,
+  Bell
 } from 'lucide-react';
 import profileImage from '../assets/profile.jpeg';
 import Logo from '../assets/Logo.png'
@@ -30,7 +29,7 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   const navigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
-    { icon: Users, label: 'Friends', href: '/clientprofile' },
+    { icon: Users, label: 'Friends', href: '/friends' },
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: 2 },
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work History', href: '/workhistory' },

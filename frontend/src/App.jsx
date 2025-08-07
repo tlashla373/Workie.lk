@@ -18,6 +18,7 @@ import ClientProfile from './pages/Profile/ClientProfile';
 import LoginPage from './pages/Authentication/LoginPage';
 import SignUpPage from './pages/Authentication/SignUpPage';
 import RoleSelection from './pages/Authentication/RoleSelection';
+import Friends from './pages/Friend/Friends';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -34,6 +35,10 @@ const App = () => {
         {
           path: 'findjobs',
           element: <FindJobs />,
+        },
+        {
+          path: 'friends',
+          element: <Friends />,
         },
         {
           path: 'clientprofile',
@@ -72,7 +77,7 @@ const App = () => {
     {
       path: '/workerprofile',
       element: <WorkerProfile />,
-    },
+    }
   ]);
 
   return (
