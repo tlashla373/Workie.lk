@@ -19,9 +19,9 @@ const RoleSelection = () => {
       
       // Navigate based on selected role
       if (selectedRole === 'worker') {
-        navigate('/workerprofile'); // Worker Profile Navigation
+        navigate('/workerverification'); // Worker Profile Navigation
       } else if (selectedRole === 'client') {
-        navigate('/'); // Client Profile navigation
+        navigate('/clientsetup'); // Client Profile navigation
       }
     }
   };

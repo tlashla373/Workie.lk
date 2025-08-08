@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import './App.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
 import Home from './pages/HomePage/Home';
-
 import AppLayout from './pages/Profile/AppLayout';
-import FindJobs from './pages/FindJobs/findJobs';
+import FindJobs from './pages/FindJobs/FindJobs';
 import PostJob from './pages/JobPosting/PostJob';
 import WorkHistory from './pages/WorkHistory/WorkHistory';
-
 import Settings from './pages/Settings';
 import WorkerProfile from './pages/Profile/WorkerProfile';
-
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import Video from './pages/Video/Video';
 import ClientProfile from './pages/Profile/ClientProfile';
@@ -19,6 +15,8 @@ import LoginPage from './pages/Authentication/LoginPage';
 import SignUpPage from './pages/Authentication/SignUpPage';
 import RoleSelection from './pages/Authentication/RoleSelection';
 import Friends from './pages/Friend/Friends';
+import WorkerVerification from './pages/Authentication/WorkerVerificatio';
+import ClientSetup from './pages/Authentication/ClientSetup';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -73,6 +71,14 @@ const App = () => {
     {
       path: '/roleselection',
       element: <RoleSelection/>,
+    },
+    {
+      path: '/workerverification',
+      element: <WorkerVerification/>,
+    },
+    {
+      path: '/clientsetup',
+      element: <ClientSetup/>,
     },
     {
       path: '/workerprofile',
