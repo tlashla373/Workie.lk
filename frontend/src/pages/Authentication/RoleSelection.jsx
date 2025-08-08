@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { User, Briefcase, ArrowRight, CheckCircle, Users, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
+import InfiniteSlider from '../../components/ui/InfiniteSlider';
 
 const RoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState('');
@@ -37,15 +38,10 @@ const RoleSelection = () => {
       <div className="hidden lg:flex w-1/2 bg-gradient-to-r from-blue-700 to-blue-300 items-center justify-center p-8 relative overflow-hidden">
         <div className="max-w-md w-full relative z-10">
           {/* Feature Card */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl relative z-10">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-2 shadow-xl relative z-10">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-white" />
-              </div>
+              <InfiniteSlider/>
             </div>
-            <h2 className="text-2xl font-bold text-white text-center mb-4">
-              Choose Your Path
-            </h2>
             <p className="text-white/90 text-center leading-relaxed">
               Select your role to customize your experience and connect with the right opportunities.
             </p>
