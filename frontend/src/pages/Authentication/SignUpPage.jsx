@@ -1,5 +1,6 @@
 import React from 'react'
 import { useState } from "react";
+import useAuth from '../../hooks/useAuth.js';
 import { Eye, EyeOff } from "lucide-react";
 import Logo from '../../assets/Logo.png'
 import Facebook from '../../assets/facebook.svg'
@@ -19,54 +20,67 @@ const SignUpPage = () => {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState(''); // Added missing state
   const [confirmPassword, setConfirmPassword] = useState(''); // Added missing state
+  const { register, authLoading } = useAuth();
+  const [formError, setFormError] = useState(null);
+
+  // Validation regex patterns
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+  // Fixed phone validation - accepts +94771234567 (12), 0771234567 (10), 771234567 (9)
+  const phoneRegex = /^(\+94[0-9]{9}|0[0-9]{9}|[0-9]{9})$/;
 
   // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    setFormError(null);
+    
     // Basic validation
+    if (!firstName.trim() || firstName.length < 2) {
+      setFormError('First name must be at least 2 characters long');
+      return;
+    }
+
+    if (!lastName.trim() || lastName.length < 2) {
+      setFormError('Last name must be at least 2 characters long');
+      return;
+    }
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match!');
+      setFormError('Passwords do not match!');
       return;
     }
 
     if (password.length < 6) {
-      alert('Password must be at least 6 characters long!');
+      setFormError('Password must be at least 6 characters long!');
       return;
     }
 
+    // Check password complexity (backend requirement)
+    if (!passwordRegex.test(password)) {
+      setFormError('Password must contain at least one lowercase letter, one uppercase letter, and one number');
+      return;
+    }
+
+    // Validate phone number format if provided
+    if (mobile && mobile.trim()) {
+      if (!phoneRegex.test(mobile.replace(/\s+/g, ''))) {
+        setFormError('Please provide a valid phone number (e.g., +94771234567, 0771234567, or 771234567)');
+        return;
+      }
+    }
+
     try {
-      // Your registration API call here
-      const userData = {
-        firstName,
-        lastName,
-        email,
-        mobile,
+      await register({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
         password,
-        rememberMe
-      };
-
-      // Example API call (replace with your actual endpoint)
-      // const response = await fetch('/api/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(userData)
-      // });
-
-      // if (response.ok) {
-      //   // Registration successful, navigate to role selection
-      //   navigate('/select-role');
-      // } else {
-      //   throw new Error('Registration failed');
-      // }
-
-      // For demo purposes, just navigate to role selection
-      console.log('Registration data:', userData);
+        phone: mobile.trim() || undefined, // Send undefined if empty to make it truly optional
+        userType: 'worker' // Valid userType accepted by backend
+      });
       navigate('/roleselection');
-      
     } catch (error) {
-      console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      setFormError(error.message || 'Registration failed');
     }
   };
 
@@ -119,6 +133,11 @@ const SignUpPage = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {formError && (
+              <div className="w-105 text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded">
+                {formError}
+              </div>
+            )}
             {/* Personal Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex justify-center items-center">
@@ -260,9 +279,10 @@ const SignUpPage = () => {
             {/* Sign Up Button */}
             <button
               type="submit"
-              className="w-105 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+              disabled={authLoading}
+              className={`w-105 bg-blue-500 text-white py-3 px-4 rounded-md font-medium transition duration-200 ${authLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
             >
-              Sign up
+              {authLoading ? 'Creating account...' : 'Sign up'}
             </button>
 
             {/* Divider */}
