@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useAuth from '../../hooks/useAuth.js';
 import { Eye, EyeOff } from "lucide-react";
 import Logo from '../../assets/Logo.png'
 import Facebook from '../../assets/facebook.svg'
@@ -12,51 +13,20 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState(''); // Added missing state
   const [password, setPassword] = useState(''); // Added missing state
+  const { login, authLoading } = useAuth();
+  const [formError, setFormError] = useState(null);
 
   // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    setFormError(null);
     try {
-      // Your login API call here
-      const loginData = {
-        email,
-        password,
-        rememberMe
-      };
-
-      // Example API call (replace with your actual endpoint)
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(loginData)
-      // });
-
-      // if (response.ok) {
-      //   const userData = await response.json();
-      //   // Check if user has selected a role
-      //   if (userData.role) {
-      //     // Navigate to appropriate dashboard
-      //     if (userData.role === 'worker') {
-      //       navigate('/worker-dashboard');
-      //     } else if (userData.role === 'client') {
-      //       navigate('/client-dashboard');
-      //     }
-      //   } else {
-      //     // User hasn't selected a role yet
-      //     navigate('/select-role');
-      //   }
-      // } else {
-      //   throw new Error('Login failed');
-      // }
-
-      // For demo purposes, navigate to role selection
-      console.log('Login data:', loginData);
+      await login(email, password);
+      // After successful login, decide where to go (role not stored yet)
       navigate('/roleselection');
-      
     } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Please check your credentials.');
+      setFormError(error.message || 'Login failed');
     }
   };
 
@@ -84,6 +54,11 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 items-center">
+            {formError && (
+              <div className="w-80 text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded">
+                {formError}
+              </div>
+            )}
             {/* Email Field */}
             <div className="flex justify-center items-center">
               <label htmlFor="email" className="relative">
@@ -148,9 +123,10 @@ export default function LoginPage() {
             <div className="flex justify-center items-center"> 
               <button
                 type="submit"
-                className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+                disabled={authLoading}
+                className={`w-80 bg-blue-500 text-white py-3 px-4 rounded-md transition duration-200 font-medium ${authLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
               >
-                Sign in
+                {authLoading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
 
