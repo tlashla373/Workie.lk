@@ -10,7 +10,8 @@ import {
   Video,
   PanelRightOpen,
   PanelRightClose,
-  Bell
+  Bell,
+  ImagePlus
 } from 'lucide-react';
 import profileImage from '../assets/profile.jpeg';
 import Logo from '../assets/Logo.png'
@@ -18,25 +19,42 @@ import { NavLink } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
-
-const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
+const SideNavbar = ({ 
+  isCollapsed = false, 
+  setIsCollapsed = () => {},
+  userType = 'worker' // 'worker' or 'client'
+}) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const { isDarkMode } = useDarkMode();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
 
-  const navigationLinks = [
+  // Navigation links for workers
+  const workerNavigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
     { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: Bell, label: 'Notifications', href: '/notifications', badge: 2 },
+    { icon: ImagePlus, label: 'Photo/video', href: '/addpost'},
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work History', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
     { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
   ];
+
+  // Navigation links for clients
+  const clientNavigationLinks = [
+    { icon: Home, label: 'Home', href: '/' },
+    { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
+    { icon: Users, label: 'Friends', href: '/friends' },
+    { icon: ImagePlus, label: 'Photo/video', href: '/addpost'},
+    { icon: Video, label: 'Video', href: '/video' },
+    { icon: Settings, label: 'Settings', href: '/settings' },
+    { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
+  ];
+
+  // Select navigation links based on user type
+  const navigationLinks = userType === 'client' ? clientNavigationLinks : workerNavigationLinks;
 
   return (
     <>
@@ -67,9 +85,8 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
 
         {/* User Info */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
-          <Link to='/clientprofile'>
+          <Link to={userType === 'client' ? '/clientprofile' : '/workerprofile'}>
             <button
-              
               className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-200/30 hover:bg-gray-700/50'}`}
             >
               <div className="relative">
@@ -83,7 +100,9 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
               {!isCollapsed && (
                 <div className="text-left">
                   <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-white'}`}>Supun Hashintha</p>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-300'}`}>My Account</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-300'}`}>
+                    {userType === 'client' ? 'Client Account' : 'Worker Account'}
+                  </p>
                 </div>
               )}
             </button>
@@ -93,7 +112,9 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
         {/* Navigation */}
         {!isCollapsed && (
           <div className="px-6 py-3">
-            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-white'}`}>Menu</span>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-white'}`}>
+              {userType === 'client' ? 'Client Menu' : 'Worker Menu'}
+            </span>
           </div>
         )}
 
@@ -123,11 +144,6 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
               >
                 <div className="relative">
                   <Icon className="w-5 h-5" />
-                  {link.badge && (
-                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                      {link.badge}
-                    </span>
-                  )}
                 </div>
                 {!isCollapsed && <span className="font-medium">{link.label}</span>}
                 {isCollapsed && (

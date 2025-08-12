@@ -17,6 +17,7 @@ import RoleSelection from './pages/Authentication/RoleSelection';
 import Friends from './pages/Friend/Friends';
 import WorkerVerification from './pages/Authentication/WorkerVerificatio';
 import ClientSetup from './pages/Authentication/ClientSetup';
+import AddPostPage from './pages/AddPostPage/AddPostPage';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -53,6 +54,10 @@ const App = () => {
         {
           path: 'video',
           element: <Video/>,
+        },
+        {
+          path: 'addpost',
+          element: <AddPostPage/>,
         },
         {
           path: 'settings',

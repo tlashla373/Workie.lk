@@ -130,13 +130,13 @@ const Friends = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
-      <div className="max-w-7xl mx-auto p-2">
+      <div className="max-w-7xl mx-auto p-1">
         {/* Header */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Friends & Connections
+                Connections
               </h1>
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 Connect with skilled professionals in your network
@@ -144,12 +144,12 @@ const Friends = () => {
             </div>
             <button className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
               <UserPlus className="w-5 h-5" />
-              <span>Add Friend</span>
+              <span>New Connection</span>
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-6">
             {/* Total Friends */}
             <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 border shadow-sm`}>
               <div className="flex items-center space-x-3">
@@ -219,7 +219,6 @@ const Friends = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Filter className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                 <select
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value)}
@@ -252,7 +251,7 @@ const Friends = () => {
         </div>
 
         {/* Friends Grid */}
-        <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'} gap-6`}>
+        <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3' : 'grid-cols-1'} gap-4`}>
           {filteredFriends.map((friend) => (
             <FriendCard
               key={friend.id}
