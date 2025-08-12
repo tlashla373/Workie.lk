@@ -18,13 +18,14 @@ import Logo from '../assets/Logo.png'
 import { NavLink } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
+import { useUserRole } from '../components/hooks/UserRole'; // Import the custom hook
 
 const SideNavbar = ({ 
   isCollapsed = false, 
-  setIsCollapsed = () => {},
-  userType = 'worker' // 'worker' or 'client'
+  setIsCollapsed = () => {}
 }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const { userRole: userType, clearUserRole } = useUserRole();
   const { isDarkMode } = useDarkMode();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
@@ -55,6 +56,14 @@ const SideNavbar = ({
 
   // Select navigation links based on user type
   const navigationLinks = userType === 'client' ? clientNavigationLinks : workerNavigationLinks;
+
+  // Handle logout - clear localStorage and user data
+  const handleLogout = () => {
+    clearUserRole();
+    // Clear other user-related data here
+    // localStorage.removeItem('authToken');
+    // localStorage.removeItem('userData');
+  };
 
   return (
     <>
@@ -121,11 +130,14 @@ const SideNavbar = ({
         <nav className="flex-1 px-4 py-2 space-y-1">
           {navigationLinks.map((link) => {
             const Icon = link.icon;
+            const isLogout = link.danger;
+            
             return (
               <NavLink
                 key={link.label}
                 to={link.href}
                 end={link.href === '/'}
+                onClick={isLogout ? handleLogout : undefined}
                 className={({ isActive }) =>
                   `relative flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                     isActive

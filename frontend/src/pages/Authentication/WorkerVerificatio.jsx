@@ -21,8 +21,8 @@ import { useDarkMode } from '../../contexts/DarkModeContext';
 const WorkerVerification = () => {
   // Mock navigation and dark mode for demo
   const navigate = (path) => {
-    if (path === '/workerprofile') {
-      window.location.href = '/workerprofile'; 
+    if (path === '/clientprofile') {
+      window.location.href = '/clientprofile'; 
     } else {
       window.location.href = '/roleselection';
     }
@@ -106,7 +106,7 @@ const WorkerVerification = () => {
 
   const handleComplete = () => {
     if (isAllStepsComplete()) {
-      navigate('/workerprofile');
+      navigate('/clientprofile');
     }
   };
 

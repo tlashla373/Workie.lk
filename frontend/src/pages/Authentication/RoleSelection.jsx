@@ -4,9 +4,11 @@ import { User, Briefcase, ArrowRight, CheckCircle, Users, Search } from 'lucide-
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import InfiniteSlider from '../../components/ui/InfiniteSlider';
+import { useUserRole } from '../../components/hooks/UserRole'; // Import the hook
 
 const RoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState('');
+  const { setUserRole } = useUserRole(); // Use the hook
   const navigate = useNavigate();
 
   const handleRoleSelect = (role) => {
@@ -15,8 +17,8 @@ const RoleSelection = () => {
 
   const handleContinue = () => {
     if (selectedRole) {
-      // Save role to localStorage (you can also send to backend)
-      localStorage.setItem('userRole', selectedRole);
+      // Save role using the hook
+      setUserRole(selectedRole);
       
       // Navigate based on selected role
       if (selectedRole === 'worker') {
