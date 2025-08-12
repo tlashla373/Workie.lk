@@ -93,7 +93,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
     '/friends': 'Friends',
     '/notifications': 'Notifications',
     '/findjobs': 'Find Jobs',
-    '/workhistory': 'Work History',
+    '/workhistory': 'Work Status',
     '/games': 'Video',
     '/settings': 'Settings',
     '/logout': 'Log Out',
@@ -200,7 +200,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                   </div>
 
                   {/* Notifications List */}
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-96 overflow-y-auto no-scrollbar">
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}

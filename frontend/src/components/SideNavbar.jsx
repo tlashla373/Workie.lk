@@ -36,7 +36,7 @@ const SideNavbar = ({
     { icon: Users, label: 'Friends', href: '/friends' },
     { icon: ImagePlus, label: 'Photo/video', href: '/addpost'},
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
-    { icon: History, label: 'Work History', href: '/workhistory' },
+    { icon: History, label: 'Work Status', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
     { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
