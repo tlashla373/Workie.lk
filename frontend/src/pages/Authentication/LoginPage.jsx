@@ -114,9 +114,12 @@ export default function LoginPage() {
                   Remember me
                 </label>
               </div>
-              <a href="#" className="text-sm text-blue-600 hover:underline">
+              <Link
+                to={"/otppage"}
+                className="text-sm text-blue-600 hover:underline"
+              >
                 Forgot Password?
-              </a>
+              </Link>
             </div>
 
             {/* Sign In Button */}

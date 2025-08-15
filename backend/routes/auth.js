@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const { auth } = require('../middleware/auth');
 const { validateRegister, validateLogin } = require('../middleware/validation');
+const { sendEmailVerificationCode } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -14,6 +15,74 @@ const generateToken = (id) => {
     expiresIn: process.env.JWT_EXPIRE || '30d'
   });
 };
+
+// @route   POST /api/auth/validate-token
+// @desc    Validate JWT token and return user data
+// @access  Public
+router.post('/validate-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided'
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Find user and populate profile
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token - user not found'
+      });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated'
+      });
+    }
+
+    // Get user profile
+    const profile = await Profile.findOne({ user: user._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Token is valid',
+      data: {
+        user,
+        profile
+      }
+    });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Server error during token validation',
+      error: error.message
+    });
+  }
+});
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -44,12 +113,24 @@ router.post('/register', validateRegister, async (req, res) => {
     // Create empty profile for the user
     await Profile.create({ user: user._id });
 
+    // Generate 5-digit verification code
+    const verificationCode = Math.floor(10000 + Math.random() * 90000).toString();
+
+    // Store code and expiry in user
+    user.emailVerificationToken = verificationCode;
+    user.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Send verification code email (do not block response on error)
+    sendEmailVerificationCode(user.email, user.firstName, verificationCode)
+      .catch(err => console.error('Failed to send verification code email:', err));
+
     // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully. Verification code sent to email.',
       data: {
         user,
         token

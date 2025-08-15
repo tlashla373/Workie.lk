@@ -271,9 +271,6 @@ const SignUpPage = () => {
                   Remember me
                 </label>
               </div>
-              <a href="#" className="text-sm text-blue-600 hover:underline">
-                Forgot Password?
-              </a>
             </div>
 
             {/* Sign Up Button */}

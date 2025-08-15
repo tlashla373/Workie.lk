@@ -18,6 +18,8 @@ import Friends from './pages/Friend/Friends';
 import WorkerVerification from './pages/Authentication/WorkerVerificatio';
 import ClientSetup from './pages/Authentication/ClientSetup';
 import AddPostPage from './pages/AddPostPage/AddPostPage';
+import OTPPage from './pages/Authentication/OtpPage';
+import ForgotPasswordPage from './pages/Authentication/ForgotPasswordPage';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -80,6 +82,14 @@ const App = () => {
     {
       path: '/workerverification',
       element: <WorkerVerification/>,
+    },
+    {
+      path: '/forgotpasswordpage',
+      element: <ForgotPasswordPage/>,
+    },
+    {
+      path: '/otppage',
+      element: <OTPPage/>,
     },
     {
       path: '/clientsetup',
