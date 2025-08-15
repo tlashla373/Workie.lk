@@ -6,6 +6,7 @@ import Facebook from '../../assets/facebook.svg'
 import Google from '../../assets/google.svg'
 import { Link, useNavigate } from 'react-router-dom'
 import InfiniteSlider from "../../components/ui/InfiniteSlider";
+import { toast } from 'react-toastify';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -14,19 +15,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState(''); // Added missing state
   const [password, setPassword] = useState(''); // Added missing state
   const { login, authLoading } = useAuth();
-  const [formError, setFormError] = useState(null);
+  
 
   // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    setFormError(null);
+    toast.error(null);
     try {
       await login(email, password);
       // After successful login, decide where to go (role not stored yet)
       navigate('/roleselection');
     } catch (error) {
-      setFormError(error.message || 'Login failed');
+      toast.error(error.message || 'Login failed');
     }
   };
 
@@ -54,11 +55,7 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 items-center">
-            {formError && (
-              <div className="w-80 text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded">
-                {formError}
-              </div>
-            )}
+            
             {/* Email Field */}
             <div className="flex justify-center items-center">
               <label htmlFor="email" className="relative">

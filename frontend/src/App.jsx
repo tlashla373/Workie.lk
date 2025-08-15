@@ -20,6 +20,7 @@ import ClientSetup from './pages/Authentication/ClientSetup';
 import AddPostPage from './pages/AddPostPage/AddPostPage';
 import OTPPage from './pages/Authentication/OtpPage';
 import ForgotPasswordPage from './pages/Authentication/ForgotPasswordPage';
+import { ToastContainer } from 'react-toastify';
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -104,6 +105,7 @@ const App = () => {
   return (
     <DarkModeProvider>
       <RouterProvider router={router} />
+      <ToastContainer />
     </DarkModeProvider>
   );
 };

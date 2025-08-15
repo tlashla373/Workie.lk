@@ -8,6 +8,7 @@ import Google from '../../assets/google.svg'
 
 import { Link, useNavigate } from 'react-router-dom'
 import InfiniteSlider from '../../components/ui/InfiniteSlider';
+import { toast } from 'react-toastify';
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -21,7 +22,6 @@ const SignUpPage = () => {
   const [password, setPassword] = useState(''); // Added missing state
   const [confirmPassword, setConfirmPassword] = useState(''); // Added missing state
   const { register, authLoading } = useAuth();
-  const [formError, setFormError] = useState(null);
 
   // Validation regex patterns
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
@@ -32,39 +32,38 @@ const SignUpPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    setFormError(null);
     
     // Basic validation
     if (!firstName.trim() || firstName.length < 2) {
-      setFormError('First name must be at least 2 characters long');
+      toast.error('First name must be at least 2 characters long');
       return;
     }
 
     if (!lastName.trim() || lastName.length < 2) {
-      setFormError('Last name must be at least 2 characters long');
+      toast.error('Last name must be at least 2 characters long');
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
 
     if (password.length < 6) {
-      setFormError('Password must be at least 6 characters long!');
+      toast.error('Password must be at least 6 characters long!');
       return;
     }
 
     // Check password complexity (backend requirement)
     if (!passwordRegex.test(password)) {
-      setFormError('Password must contain at least one lowercase letter, one uppercase letter, and one number');
+      toast.error('Password must contain at least one lowercase letter, one uppercase letter, and one number');
       return;
     }
 
     // Validate phone number format if provided
     if (mobile && mobile.trim()) {
       if (!phoneRegex.test(mobile.replace(/\s+/g, ''))) {
-        setFormError('Please provide a valid phone number (e.g., +94771234567, 0771234567, or 771234567)');
+        toast.error('Please provide a valid phone number (e.g., +94771234567, 0771234567, or 771234567)');
         return;
       }
     }
@@ -80,7 +79,7 @@ const SignUpPage = () => {
       });
       navigate('/roleselection');
     } catch (error) {
-      setFormError(error.message || 'Registration failed');
+      toast.error(error.message || 'Registration failed');
     }
   };
 
@@ -133,11 +132,6 @@ const SignUpPage = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {formError && (
-              <div className="w-105 text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded">
-                {formError}
-              </div>
-            )}
             {/* Personal Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex justify-center items-center">
