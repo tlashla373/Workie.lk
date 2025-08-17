@@ -35,7 +35,7 @@ const SideNavbar = ({
   const workerNavigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: ImagePlus, label: 'Photo/video', href: '/addpost'},
+    { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work Status', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },
@@ -46,9 +46,10 @@ const SideNavbar = ({
   // Navigation links for clients
   const clientNavigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
+    { icon: Edit3, label: 'Post Jobs', href: '/post-job' },
     { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: ImagePlus, label: 'Photo/video', href: '/addpost'},
+    { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
+    { icon: History, label: 'Work Status', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
     { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },

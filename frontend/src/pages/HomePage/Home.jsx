@@ -301,7 +301,24 @@ export default function MainFeed() {
             <MessageSquare className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
             <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Comment</span>
           </button>
-          <button className={`flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
+          <button 
+          className={`flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+          onClick={() => {
+                      if (navigator.share) {
+                        navigator
+                          .share({
+                            title: "Check this out!",
+                            text: "Here’s a cool thing I wanted to share with you.",
+                            url: window.location.href, // current page link
+                          })
+                          .then(() => console.log("Shared successfully"))
+                          .catch((error) => console.log("Error sharing:", error));
+                      } else {
+                        // fallback for browsers without Web Share API
+                        navigator.clipboard.writeText(window.location.href);
+                        alert("Link copied to clipboard!");
+                      }
+                    }}>
             <Share2 className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
             <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
           </button>
@@ -334,7 +351,7 @@ export default function MainFeed() {
       {selectedPost && (
         <div className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
           {/* Header Bar */}
-          <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
             <div className="flex items-center space-x-3">
               <img
                 src={selectedPost.avatar}
@@ -429,7 +446,24 @@ export default function MainFeed() {
                     <Heart className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
                     <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
                   </button>
-                  <button className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <button 
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                  onClick={() => {
+                      if (navigator.share) {
+                        navigator
+                          .share({
+                            title: "Check this out!",
+                            text: "Here’s a cool thing I wanted to share with you.",
+                            url: window.location.href, // current page link
+                          })
+                          .then(() => console.log("Shared successfully"))
+                          .catch((error) => console.log("Error sharing:", error));
+                      } else {
+                        // fallback for browsers without Web Share API
+                        navigator.clipboard.writeText(window.location.href);
+                        alert("Link copied to clipboard!");
+                      }
+                    }}>
                     <Share2 className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
                     <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
                   </button>

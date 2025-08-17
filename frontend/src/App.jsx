@@ -21,6 +21,9 @@ import AddPostPage from './pages/AddPostPage/AddPostPage';
 import OTPPage from './pages/Authentication/OtpPage';
 import ForgotPasswordPage from './pages/Authentication/ForgotPasswordPage';
 import { ToastContainer } from 'react-toastify';
+import JobApplicationPage from './pages/JobApplicationPage/JobApplicationPage';
+import JobProgressPage from './pages/WorkHistory/JobProgressPage';
+
 
 const App = () => {
   const [count, setCount] = useState(0);
@@ -47,24 +50,32 @@ const App = () => {
           element: <ClientProfile />,
         },
         {
-          path: 'postjob',
+          path: 'post-job',
           element: <PostJob />,
         },
         {
           path: 'workhistory',
-          element: <WorkHistory />,
+          element: <WorkHistory/>,
+        },
+        {
+          path: 'job-progress/:jobId',
+          element: <JobProgressPage/>,
         },
         {
           path: 'video',
           element: <Video/>,
         },
         {
-          path: 'addpost',
+          path: 'add-post',
           element: <AddPostPage/>,
         },
         {
           path: 'settings',
           element: <Settings />,
+        },
+        {
+          path: 'job-application-page',
+          element: <JobApplicationPage />,
         },
       ],
     },
