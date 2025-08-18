@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     ME: `${API_BASE_URL}/auth/me`,
     FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+    VERIFY_RESET_PIN: `${API_BASE_URL}/auth/verify-reset-pin`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
   },

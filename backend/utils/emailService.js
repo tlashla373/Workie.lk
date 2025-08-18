@@ -7,8 +7,8 @@ const createTransporter = () => {
     port: 587,
     secure: false, // Use TLS
     auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
     },
     tls: {
       rejectUnauthorized: false
@@ -35,7 +35,7 @@ const sendEmail = async (options) => {
     });
 
     const mailOptions = {
-      from: `"Workie.lk" <${process.env.GMAIL_USER}>`,
+      from: `"Workie.lk" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
       text: options.text,
@@ -184,6 +184,25 @@ const emailTemplates = {
         <p>Best regards,<br>Workie.lk Team</p>
       </div>
     `
+  }),
+
+  // Password reset PIN verification
+  passwordResetPin: (firstName, pin) => ({
+    subject: 'Password Reset PIN - Workie.lk',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
+        <h2 style="color: #dc2626;">Password Reset Request</h2>
+        <p>Hi ${firstName},</p>
+        <p>You requested to reset your password for your Workie.lk account. Please use the PIN below to verify your identity:</p>
+        <div style="font-size: 2.5em; font-weight: bold; letter-spacing: 10px; margin: 30px 0; color: #dc2626; text-align: center; background-color: #fef2f2; padding: 20px; border-radius: 8px; border: 2px dashed #dc2626;">
+          ${pin}
+        </div>
+        <p><strong>This PIN will expire in 10 minutes.</strong></p>
+        <p>If you did not request a password reset, please ignore this email or contact our support team.</p>
+        <br>
+        <p>Best regards,<br>The Workie.lk Team</p>
+      </div>
+    `
   })
 };
 
@@ -252,6 +271,16 @@ const sendEmailVerificationCode = async (email, firstName, code) => {
   });
 };
 
+// Send password reset PIN
+const sendPasswordResetPin = async (email, firstName, pin) => {
+  const template = emailTemplates.passwordResetPin(firstName, pin);
+  return await sendEmail({
+    to: email,
+    subject: template.subject,
+    html: template.html
+  });
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
@@ -260,5 +289,6 @@ module.exports = {
   sendApplicationAcceptedEmail,
   sendJobCompletedEmail,
   sendReviewReceivedEmail,
-  sendEmailVerificationCode
+  sendEmailVerificationCode,
+  sendPasswordResetPin
 };

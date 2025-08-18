@@ -80,6 +80,17 @@ export class AuthService {
     }
   }
 
+  // Verify reset PIN
+  async verifyResetPin(email, pin) {
+    try {
+      const response = await apiService.post('/auth/verify-reset-pin', { email, pin }, { includeAuth: false });
+      return response;
+    } catch (error) {
+      console.error('Verify reset PIN error:', error);
+      throw error;
+    }
+  }
+
   // Reset password
   async resetPassword(token, password) {
     try {

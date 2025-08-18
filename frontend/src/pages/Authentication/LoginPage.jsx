@@ -111,12 +111,19 @@ export default function LoginPage() {
                   Remember me
                 </label>
               </div>
-              <Link
-                to={"/otppage"}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!email.trim()) {
+                    alert('Please enter your email address first before requesting password reset.');
+                    return;
+                  }
+                  navigate(`/forgotpasswordpage?email=${encodeURIComponent(email)}`);
+                }}
                 className="text-sm text-blue-600 hover:underline"
               >
                 Forgot Password?
-              </Link>
+              </button>
             </div>
 
             {/* Sign In Button */}

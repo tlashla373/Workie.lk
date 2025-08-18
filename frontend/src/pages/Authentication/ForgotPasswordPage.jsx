@@ -1,65 +1,384 @@
-import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, Mail, Lock, Shield } from "lucide-react";
 import Logo from '../../assets/Logo.png'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import InfiniteSlider from "../../components/ui/InfiniteSlider";
+import authService from '../../services/authService';
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState(1); // 1: email + PIN, 2: password reset
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState(''); // Added missing state
-  const [password, setPassword] = useState(''); // Added missing state
-  const [confirmPassword, setConfirmPassword] = useState(''); // Added missing state
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [pinSent, setPinSent] = useState(false);
+  const [sendingPin, setSendingPin] = useState(false);
+  
+  // Form data
+  const [email, setEmail] = useState('');
+  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
-  // Form submission handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Get email from URL parameters when component mounts
+  useEffect(() => {
+    const emailFromUrl = searchParams.get('email');
+    if (emailFromUrl) {
+      const decodedEmail = decodeURIComponent(emailFromUrl);
+      setEmail(decodedEmail);
+      // Automatically send PIN if email is provided from login page
+      if (decodedEmail && !pinSent && !sendingPin) {
+        handleSendPin(decodedEmail);
+      }
+    } else {
+      // If no email is provided, redirect back to login page
+      alert('Please enter your email on the login page first.');
+      navigate('/loginpage');
+    }
+  }, [searchParams, navigate]);
+
+  // Step 1: Send PIN to email
+  const handleSendPin = async (emailToUse = email) => {
+    if (!emailToUse) {
+      alert('Please enter your email address first.');
+      return;
+    }
+
+    setSendingPin(true);
     
     try {
-      // Your login API call here
-      const loginData = {
-        email,
-        password
-      };
-
-      // Example API call (replace with your actual endpoint)
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(loginData)
-      // });
-
-      // if (response.ok) {
-      //   const userData = await response.json();
-      //   // Check if user has selected a role
-      //   if (userData.role) {
-      //     // Navigate to appropriate dashboard
-      //     if (userData.role === 'worker') {
-      //       navigate('/worker-dashboard');
-      //     } else if (userData.role === 'client') {
-      //       navigate('/client-dashboard');
-      //     }
-      //   } else {
-      //     // User hasn't selected a role yet
-      //     navigate('/select-role');
-      //   }
-      // } else {
-      //   throw new Error('Login failed');
-      // }
-
-      // For demo purposes, navigate to role selection
-        navigate('/clientprofile');
+      const response = await authService.forgotPassword(emailToUse);
       
+      if (response.success) {
+        setPinSent(true);
+        // Only show alert if not auto-sending from login page
+        if (!searchParams.get('email')) {
+          alert('A 6-digit PIN has been sent to your email address.');
+        }
+      } else {
+        alert(response.message || 'Failed to send PIN. Please try again.');
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Please check your credentials.');
+      console.error('Error sending PIN:', error);
+      alert(error.message || 'Network error. Please check your connection and try again.');
+    } finally {
+      setSendingPin(false);
+    }
+  };
+
+  // Step 1: Verify PIN and proceed
+  const handleVerifyPin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!email) {
+      alert('Please enter your email address.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (pin.length !== 6) {
+      alert('Please enter a valid 6-digit PIN.');
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const response = await authService.verifyResetPin(email, pin);
+      
+      if (response.success) {
+        setResetToken(response.resetToken);
+        setStep(2);
+      } else {
+        alert(response.message || 'Invalid PIN. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error verifying PIN:', error);
+      alert(error.message || 'Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Step 2: Reset password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (password !== confirmPassword) {
+      alert('Passwords do not match.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters long.');
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      const response = await authService.resetPassword(resetToken, password);
+      
+      if (response.success) {
+        alert('Password reset successfully! You can now login with your new password.');
+        navigate('/loginpage');
+      } else {
+        alert(response.message || 'Failed to reset password. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      alert(error.message || 'Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle PIN input formatting
+  const handlePinChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Only digits
+    if (value.length <= 6) {
+      setPin(value);
+    }
+  };
+
+  const renderStepContent = () => {
+    const emailFromLogin = searchParams.get('email');
+    
+    // Only show content if email came from login page
+    if (!emailFromLogin) {
+      return (
+        <div className="text-center">
+          <div className="bg-red-50 p-4 rounded-lg mb-6">
+            <p className="text-red-600 text-sm">
+              ❌ Access denied. Please go back to login page and enter your email first.
+            </p>
+          </div>
+          <Link 
+            to="/loginpage" 
+            className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium inline-block"
+          >
+            Go to Login Page
+          </Link>
+        </div>
+      );
+    }
+    
+    switch (step) {
+      case 1:
+        return (
+          <form onSubmit={handleVerifyPin} className="space-y-6">
+            {/* Email confirmation message */}
+            <div className="text-center mb-6">
+              {sendingPin ? (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-blue-600 text-sm">
+                    📧 Sending PIN to <strong>{email}</strong>...
+                  </p>
+                </div>
+              ) : pinSent ? (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="text-green-600 text-sm">
+                    ✅ A 6-digit PIN has been sent to <strong>{email}</strong>
+                  </p>
+                  <p className="text-gray-500 text-xs mt-1">
+                    Please check your email and enter the PIN below
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <p className="text-yellow-600 text-sm">
+                    🔄 Preparing to send PIN to <strong>{email}</strong>...
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* PIN Input - Show if PIN is sent or being sent */}
+            {(pinSent || sendingPin) && (
+              <div className="flex justify-center items-center">
+                <label htmlFor="pin" className="relative">
+                  <input
+                    required
+                    type="text"
+                    id="pin"
+                    value={pin}
+                    onChange={handlePinChange}
+                    disabled={sendingPin}
+                    className="w-80 px-4 py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer text-center text-2xl tracking-widest disabled:bg-gray-100"
+                    placeholder="000000"
+                    maxLength={6}
+                    autoFocus
+                  />
+                  <span className="absolute left-0 top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                    Enter 6-digit PIN
+                  </span>
+                  <Shield className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                </label>
+              </div>
+            )}
+
+            {/* Verify PIN Button - Only show if PIN is sent */}
+            {pinSent && (
+              <div className="flex justify-center items-center">
+                <button
+                  type="submit"
+                  disabled={isLoading || pin.length !== 6}
+                  className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Verifying PIN...' : 'Verify PIN & Continue'}
+                </button>
+              </div>
+            )}
+
+            {/* Resend PIN - Only show if PIN was sent */}
+            {pinSent && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPinSent(false);
+                    setPin('');
+                    handleSendPin();
+                  }}
+                  className="text-blue-500 hover:text-blue-700 text-sm"
+                  disabled={sendingPin}
+                >
+                  Resend PIN
+                </button>
+              </div>
+            )}
+          </form>
+        );
+
+      case 2:
+        return (
+          <form onSubmit={handleResetPassword} className="space-y-6">
+            <div className="text-center mb-4">
+              <p className="text-gray-600 text-sm">
+                PIN verified for <strong>{email}</strong>. Enter your new password below.
+              </p>
+            </div>
+
+            <div className="flex justify-center items-center">
+              <label htmlFor="newPassword" className="relative">
+                <input
+                  required
+                  type={showPassword ? "text" : "password"}
+                  id="newPassword"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-80 px-4 py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  placeholder=" "
+                />
+                <span className="absolute left-0 top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  New Password
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </label>
+            </div>
+
+            <div className="flex justify-center items-center">
+              <label htmlFor="confirmNewPassword" className="relative">
+                <input
+                  required
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmNewPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-80 px-4 py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  placeholder=" "
+                />
+                <span className="absolute left-0 top-3 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  Confirm New Password
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                </button>
+              </label>
+            </div>
+
+            <div className="flex justify-center items-center">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Resetting Password...' : 'Reset Password'}
+              </button>
+            </div>
+
+            {/* Back Button */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(1);
+                  setPassword('');
+                  setConfirmPassword('');
+                }}
+                className="text-blue-500 hover:text-blue-700 text-sm"
+              >
+                ← Back to PIN verification
+              </button>
+            </div>
+          </form>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const getStepTitle = () => {
+    const emailFromLogin = searchParams.get('email');
+    
+    if (!emailFromLogin) {
+      return 'Access Restricted';
+    }
+    
+    switch (step) {
+      case 1:
+        return 'Enter PIN';
+      case 2:
+        return 'Reset Password';
+      default:
+        return 'Forgot Password';
+    }
+  };
+
+  const getStepDescription = () => {
+    const emailFromLogin = searchParams.get('email');
+    
+    if (!emailFromLogin) {
+      return 'Please access this page from the login form.';
+    }
+    
+    switch (step) {
+      case 1:
+        return 'Check your email for the 6-digit PIN';
+      case 2:
+        return 'Enter your new password';
+      default:
+        return 'Check your email for the 6-digit PIN';
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
-      {/* Left Side - Login Form */}
+      {/* Left Side - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
         <div className="max-w-md mx-auto">
           {/* Logo */}
@@ -72,74 +391,33 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
 
-          {/* Sign In Header */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset password</h1>
-          <p className="text-gray-600 mb-8">
-            Enter your new passord
-          </p>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 items-center">
-            {/* Email Field */}
-            <div className="flex justify-center items-center">
-              <label htmlFor="email" className="relative">
-                <input
-                  required
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
-                />
-                <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
-                  New password
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                </button>
-              </label>
+          {/* Progress Indicator
+          <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center space-x-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                1
+              </div>
+              <div className={`w-8 h-1 ${step >= 2 ? 'bg-blue-500' : 'bg-gray-200'}`}></div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                2
+              </div>
             </div>
+          </div> 
+          */}
 
-            {/* Confirm password */}
-            <div className="flex justify-center items-center">
-              <label className="relative">
-                <input
-                  required
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmpassword"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
-                />
-                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
-                  Confirm Password
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                </button>
-              </label>
-            </div>
+          {/* Header */}
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{getStepTitle()}</h1>
+          <p className="text-gray-600 mb-8">{getStepDescription()}</p>
 
-            
-            {/* Sign In Button */}
-            <div className="flex justify-center items-center"> 
-              <button
-                type="submit"
-                className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
-              >
-                Reset Password
-              </button>
-            </div>
-            
-          </form>
+          {/* Form Content */}
+          {renderStepContent()}
+
+          {/* Back to Login */}
+          <div className="text-center mt-6">
+            <Link to="/loginpage" className="text-blue-500 hover:text-blue-700 text-sm">
+              ← Back to Login
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -153,9 +431,12 @@ export default function ForgotPasswordPage() {
 
           {/* Bottom Section */}
           <div className="mt-12 text-white relative z-10">
-            <h3 className="text-2xl alatsi-regular mb-4">Welcome to our community</h3>
+            <h3 className="text-2xl alatsi-regular mb-4">Secure Password Reset</h3>
             <p className="text-white leading-relaxed">
-               Whether you're looking for work or hiring talent, we match you with the right opportunities and professionals in seconds.
+              {step === 1 ? 
+                "Enter your email and we'll send you a secure PIN. Once received, enter it on the same page to continue." :
+                "You're almost done! Enter your new password and you'll be back to finding great opportunities."
+              }
             </p>
 
             {/* Navigation Dots */}

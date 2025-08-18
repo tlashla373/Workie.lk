@@ -5,7 +5,7 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const { auth } = require('../middleware/auth');
 const { validateRegister, validateLogin } = require('../middleware/validation');
-const { sendEmailVerificationCode } = require('../utils/emailService');
+const { sendEmailVerificationCode, sendPasswordResetPin } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -240,36 +240,105 @@ router.post('/logout', auth, (req, res) => {
 });
 
 // @route   POST /api/auth/forgot-password
-// @desc    Forgot password
+// @desc    Send password reset PIN to email
 // @access  Public
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
+    if (!email) {
+      return res.status(400).json({
         success: false,
-        message: 'User not found with this email'
+        message: 'Email is required'
       });
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const user = await User.findOne({ email });
+    if (!user) {
+      // For security, don't reveal if email exists or not
+      return res.status(200).json({
+        success: true,
+        message: 'If the email exists, a reset PIN has been sent'
+      });
+    }
+
+    // Generate 6-digit PIN
+    const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store PIN and expiry in user
+    user.passwordResetPin = resetPin;
+    user.passwordResetPinExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Send PIN via email
+    try {
+      await sendPasswordResetPin(user.email, user.firstName, resetPin);
+    } catch (emailError) {
+      console.error('Failed to send reset PIN email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send reset PIN. Please try again.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Reset PIN sent to your email address'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/auth/verify-reset-pin
+// @desc    Verify password reset PIN
+// @access  Public
+router.post('/verify-reset-pin', async (req, res) => {
+  try {
+    const { email, pin } = req.body;
+
+    if (!email || !pin) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and PIN are required'
+      });
+    }
+
+    const user = await User.findOne({
+      email,
+      passwordResetPin: pin,
+      passwordResetPinExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired PIN'
+      });
+    }
+
+    // Generate a temporary token for password reset
+    const resetToken = crypto.randomBytes(32).toString('hex');
     user.passwordResetToken = crypto
       .createHash('sha256')
       .update(resetToken)
       .digest('hex');
-    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
+    user.passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+    
+    // Clear the PIN since it's now verified
+    user.passwordResetPin = undefined;
+    user.passwordResetPinExpires = undefined;
+    
     await user.save();
 
-    // In a real application, you would send an email here
-    // For now, we'll just return the token (remove this in production)
     res.status(200).json({
       success: true,
-      message: 'Password reset email sent',
-      resetToken // Remove this in production
+      message: 'PIN verified successfully',
+      resetToken // This will be used for the final password reset
     });
   } catch (error) {
     res.status(500).json({

@@ -64,6 +64,8 @@ const userSchema = new mongoose.Schema({
   },
   passwordResetToken: String,
   passwordResetExpires: Date,
+  passwordResetPin: String,
+  passwordResetPinExpires: Date,
   emailVerificationToken: String,
   emailVerificationExpires: Date
 }, {
@@ -101,6 +103,8 @@ userSchema.methods.toJSON = function() {
   delete userObject.password;
   delete userObject.passwordResetToken;
   delete userObject.passwordResetExpires;
+  delete userObject.passwordResetPin;
+  delete userObject.passwordResetPinExpires;
   delete userObject.emailVerificationToken;
   delete userObject.emailVerificationExpires;
   return userObject;
