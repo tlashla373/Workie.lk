@@ -77,8 +77,8 @@ export const workHistoryData = [
     location: 'Matara, Sri Lanka',
     duration: 'Sep 2024 - Present',
     salary: 'LKR 7,200/day',
-    status: 'pending-payment',
-    stage: 5, // Payment Pending
+    status: 'Application Pending',
+    stage: 1, // Payment Pending
     rating: null,
     description: 'Completed wooden flooring installation, waiting for client payment confirmation.',
     skills: ['Floor Installation', 'Wood Treatment', 'Precision Work'],
