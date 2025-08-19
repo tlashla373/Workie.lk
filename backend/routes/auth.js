@@ -113,8 +113,8 @@ router.post('/register', validateRegister, async (req, res) => {
     // Create empty profile for the user
     await Profile.create({ user: user._id });
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate 5-digit OTP
+    const otp = Math.floor(10000 + Math.random() * 90000).toString();
 
     // Store OTP and expiry in user
     user.emailVerificationCode = otp;
@@ -516,8 +516,8 @@ router.post('/resend-otp', async (req, res) => {
       });
     }
 
-    // Generate new OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate new 5-digit OTP
+    const otp = Math.floor(10000 + Math.random() * 90000).toString();
 
     // Update user with new OTP
     user.emailVerificationCode = otp;

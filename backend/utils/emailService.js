@@ -290,10 +290,11 @@ const sendOtpEmail = async (email, otp, firstName) => {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 30px;">
           <h1 style="color: #3B82F6; margin: 0;">Workie.lk</h1>
+          <h2 style="color: #6c67f0; margin: 0;">Welcome Our Community</h2>
         </div>
         
         <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
-          <h2 style="color: #333; margin-bottom: 20px;">Email Verification</h2>
+          <h3 style="color: #333; margin-bottom: 20px;">Email Verification</h3>
           <p style="color: #666; margin-bottom: 30px;">Hi ${firstName},</p>
           <p style="color: #666; margin-bottom: 30px;">Please use the following verification code to verify your email address:</p>
           

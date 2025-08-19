@@ -10,7 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 const EmailVerification = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
@@ -39,7 +39,7 @@ const EmailVerification = () => {
       setOtp(newOtp);
 
       // Auto-focus next input
-      if (value && index < 5) {
+      if (value && index < 4) {
         const nextInput = document.getElementById(`otp-${index + 1}`);
         if (nextInput) nextInput.focus();
       }
@@ -58,7 +58,7 @@ const EmailVerification = () => {
   const handlePaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text');
-    if (/^\d{6}$/.test(pastedData)) {
+    if (/^\d{5}$/.test(pastedData)) {
       const newOtp = pastedData.split('');
       setOtp(newOtp);
     }
@@ -68,8 +68,8 @@ const EmailVerification = () => {
   const handleVerifyOtp = async () => {
     const otpString = otp.join('');
     
-    if (otpString.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
+    if (otpString.length !== 5) {
+      toast.error('Please enter a valid 5-digit OTP');
       return;
     }
 
@@ -143,7 +143,7 @@ const EmailVerification = () => {
 
       toast.success('OTP resent successfully!');
       setTimeLeft(300); // Reset timer
-      setOtp(['', '', '', '', '', '']); // Clear current OTP
+      setOtp(['', '', '', '', '']); // Clear current OTP
     } catch (error) {
       console.error('Resend OTP Error:', error);
       toast.error(error.message || 'Failed to resend OTP');
@@ -170,7 +170,7 @@ const EmailVerification = () => {
 
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Verify Your Email</h1>
           <p className="text-gray-600 text-sm">
-            We've sent a 6-digit verification code to
+            We've sent a 5-digit verification code to
           </p>
           <p className="text-blue-600 font-medium">{email}</p>
         </div>
@@ -207,9 +207,9 @@ const EmailVerification = () => {
         {/* Verify Button */}
         <button
           onClick={handleVerifyOtp}
-          disabled={loading || otp.join('').length !== 6}
+          disabled={loading || otp.join('').length !== 5}
           className={`w-full py-3 px-4 rounded-lg font-medium transition duration-200 ${
-            loading || otp.join('').length !== 6
+            loading || otp.join('').length !== 5
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-blue-500 text-white hover:bg-blue-600'
           }`}
