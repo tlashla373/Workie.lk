@@ -13,6 +13,8 @@ export const API_ENDPOINTS = {
     VERIFY_RESET_PIN: `${API_BASE_URL}/auth/verify-reset-pin`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
+    VERIFY_OTP: `${API_BASE_URL}/auth/verify-otp`,
+    RESEND_OTP: `${API_BASE_URL}/auth/resend-otp`,
   },
   
   // Users

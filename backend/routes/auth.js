@@ -5,7 +5,7 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const { auth } = require('../middleware/auth');
 const { validateRegister, validateLogin } = require('../middleware/validation');
-const { sendEmailVerificationCode, sendPasswordResetPin } = require('../utils/emailService');
+const { sendEmailVerificationCode, sendPasswordResetPin, sendOtpEmail } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -113,24 +113,24 @@ router.post('/register', validateRegister, async (req, res) => {
     // Create empty profile for the user
     await Profile.create({ user: user._id });
 
-    // Generate 5-digit verification code
-    const verificationCode = Math.floor(10000 + Math.random() * 90000).toString();
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Store code and expiry in user
-    user.emailVerificationToken = verificationCode;
+    // Store OTP and expiry in user
+    user.emailVerificationCode = otp;
     user.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
-    // Send verification code email (do not block response on error)
-    sendEmailVerificationCode(user.email, user.firstName, verificationCode)
-      .catch(err => console.error('Failed to send verification code email:', err));
+    // Send OTP email (do not block response on error)
+    sendOtpEmail(user.email, otp, user.firstName)
+      .catch(err => console.error('Failed to send OTP email:', err));
 
     // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully. Verification code sent to email.',
+      message: 'User registered successfully. OTP sent to email for verification.',
       data: {
         user,
         token
@@ -434,6 +434,117 @@ router.put('/change-password', auth, async (req, res) => {
       error: error.message
     });
   }
+});
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify OTP for email verification
+// @access  Public
+router.post('/verify-otp', async (req, res) => {
+  console.log('Verify OTP endpoint hit:', req.body); // Debug log
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    // Find user with matching email and OTP
+    const user = await User.findOne({ 
+      email, 
+      emailVerificationCode: otp,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+    }
+
+    // Mark email as verified
+    user.isEmailVerified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully'
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/auth/resend-otp
+// @desc    Resend OTP for email verification
+// @access  Public
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Update user with new OTP
+    user.emailVerificationCode = otp;
+    user.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Send OTP email
+    await sendOtpEmail(user.email, otp, user.firstName);
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP sent successfully'
+    });
+
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP',
+      error: error.message
+    });
+  }
+});
+
+// Test endpoint to verify routes are working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Auth routes are working!' });
 });
 
 module.exports = router;

@@ -77,7 +77,9 @@ const SignUpPage = () => {
         phone: mobile.trim() || undefined, // Send undefined if empty to make it truly optional
         userType: 'worker' // Valid userType accepted by backend
       });
-      navigate('/roleselection');
+      
+      // Navigate to email verification page with email
+      navigate('/email-verification', { state: { email: email.trim() } });
     } catch (error) {
       toast.error(error.message || 'Registration failed');
     }

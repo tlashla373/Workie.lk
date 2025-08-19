@@ -7,8 +7,8 @@ const createTransporter = () => {
     port: 587,
     secure: false, // Use TLS
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS
     },
     tls: {
       rejectUnauthorized: false
@@ -281,6 +281,48 @@ const sendPasswordResetPin = async (email, firstName, pin) => {
   });
 };
 
+// Send OTP Email
+const sendOtpEmail = async (email, otp, firstName) => {
+  const template = {
+    subject: 'Verify Your Email - Workie.lk',
+    text: `Hi ${firstName},\n\nYour email verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nWorkie.lk Team`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #3B82F6; margin: 0;">Workie.lk</h1>
+        </div>
+        
+        <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+          <h2 style="color: #333; margin-bottom: 20px;">Email Verification</h2>
+          <p style="color: #666; margin-bottom: 30px;">Hi ${firstName},</p>
+          <p style="color: #666; margin-bottom: 30px;">Please use the following verification code to verify your email address:</p>
+          
+          <div style="background-color: #3B82F6; color: white; padding: 15px 30px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 30px 0;">
+            ${otp}
+          </div>
+          
+          <p style="color: #666; margin-bottom: 20px;">This code will expire in <strong>10 minutes</strong>.</p>
+          <p style="color: #666; font-size: 14px;">If you didn't request this verification, please ignore this email.</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="color: #999; font-size: 12px;">
+            This email was sent by Workie.lk<br>
+            © 2025 Workie.lk. All rights reserved.
+          </p>
+        </div>
+      </div>
+    `
+  };
+
+  await sendEmail({
+    to: email,
+    subject: template.subject,
+    text: template.text,
+    html: template.html
+  });
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
@@ -290,5 +332,6 @@ module.exports = {
   sendJobCompletedEmail,
   sendReviewReceivedEmail,
   sendEmailVerificationCode,
-  sendPasswordResetPin
+  sendPasswordResetPin,
+  sendOtpEmail
 };
