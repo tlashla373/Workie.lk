@@ -115,7 +115,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => {
                   if (!email.trim()) {
-                    alert('Please enter your email address first before requesting password reset.');
+                    toast.error('Please enter your email address first before requesting password reset.');
                     return;
                   }
                   navigate(`/forgotpasswordpage?email=${encodeURIComponent(email)}`);

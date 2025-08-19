@@ -253,17 +253,17 @@ router.post('/forgot-password', async (req, res) => {
       });
     }
 
+    // Check if user exists in database
     const user = await User.findOne({ email });
     if (!user) {
-      // For security, don't reveal if email exists or not
-      return res.status(200).json({
-        success: true,
-        message: 'If the email exists, a reset PIN has been sent'
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with this email address'
       });
     }
 
-    // Generate 6-digit PIN
-    const resetPin = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate 5-digit PIN
+    const resetPin = Math.floor(10000 + Math.random() * 90000).toString();
     
     // Store PIN and expiry in user
     user.passwordResetPin = resetPin;
