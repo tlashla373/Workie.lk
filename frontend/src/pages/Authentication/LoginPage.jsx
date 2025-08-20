@@ -34,21 +34,21 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
       {/* Left Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
-        <div className="max-w-md mx-auto">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 lg:px-16 lg:py-0">
+        <div className="max-w-md w-full mx-auto">
           {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-2">
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-center sm:justify-start space-x-2">
               <Link to='/' className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
                 <img className="w-8 h-8" src={Logo} alt="Workie.LK Logo" />
               </Link>
-              <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
+              <span className="text-lg sm:text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
             </div>
           </div>
 
           {/* Sign In Header */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign in</h1>
-          <p className="text-gray-600 mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center sm:text-left">Sign in</h1>
+          <p className="text-gray-600 mb-6 sm:mb-8 text-center sm:text-left text-sm sm:text-base">
             Don't have an account?
             <Link to="/signuppage" className="text-blue-600 hover:underline ml-1">Create now</Link>
           </p>
@@ -58,16 +58,16 @@ export default function LoginPage() {
             
             {/* Email Field */}
             <div className="flex justify-center items-center">
-              <label htmlFor="email" className="relative">
+              <label htmlFor="email" className="relative w-full max-w-sm">
                 <input 
                   required 
                   type="email"
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)} 
-                  className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-full px-2 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                 />
-                <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   email address
                 </span>
               </label>
@@ -75,16 +75,16 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div className="flex justify-center items-center">
-              <label className="relative">
+              <label className="relative w-full max-w-sm">
                 <input
                   required
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-80 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-full px-2 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                 />
-                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 sm:top-3 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   password
                 </span>
                 <button
@@ -98,7 +98,7 @@ export default function LoginPage() {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => {
                   if (!email.trim()) {
-                    alert('Please enter your email address first before requesting password reset.');
+                    toast.error('Please enter your email address first before requesting password reset.');
                     return;
                   }
                   navigate(`/forgotpasswordpage?email=${encodeURIComponent(email)}`);
@@ -131,14 +131,14 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={authLoading}
-                className={`w-80 bg-blue-500 text-white py-3 px-4 rounded-md transition duration-200 font-medium ${authLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                className={`w-full max-w-sm bg-blue-500 text-white py-2 sm:py-3 px-4 rounded-md transition duration-200 font-medium ${authLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
               >
                 {authLoading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-4 sm:my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
               </div>
@@ -151,20 +151,20 @@ export default function LoginPage() {
             <div className="space-y-3">
               <button
                 type="button"
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
               >
                 <div className="w-5 h-5 mr-3">
-                  <img className="h-6 w-6" src={Google} alt="Google"/>
+                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Google} alt="Google"/>
                 </div>
                 Continue with Google
               </button>
 
               <button
                 type="button"
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
               >
                 <div className="w-5 h-5 mr-3">
-                  <img className="h-6 w-6" src={Facebook} alt="Facebook"/>
+                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Facebook} alt="Facebook"/>
                 </div>
                 Continue with Facebook
               </button>

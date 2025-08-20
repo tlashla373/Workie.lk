@@ -7,6 +7,8 @@ import Plumber from '../../assets/plumber.svg'
 import Carpenter from '../../assets/carpenter.svg'
 import Painter from '../../assets/painter.svg'
 import Mason from '../../assets/mason.svg'
+import Cleaner from '../../assets/cleaner.svg'
+import Mechanic from '../../assets/Mechanic.svg'
 
 
 
@@ -37,6 +39,8 @@ export default function MainFeed() {
     { name: "Mason", icon: Mason, color: "bg-[#F0F3FF]" },
     { name: "Plumber", icon: Plumber , color: "bg-[#F0F3FF]" },
     { name: "Welder", icon: Welder, color: "bg-[#F0F3FF]" },
+    { name: "Cleaner", icon: Cleaner, color: "bg-[#F0F3FF]" },
+    { name: "Mechanic", icon: Mechanic, color: "bg-[#F0F3FF]" },
     { name: "Painter", icon: Painter, color: "bg-[#F0F3FF]" }
   ];
 
@@ -106,12 +110,12 @@ export default function MainFeed() {
   const CategoryCard = ({ category, index }) => (
     <div
       key={index}
-      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} items-center p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}
+      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} items-center p-2 md:p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group w-16 md:w-24 lg:w-28`}
     >
-      <div className={`w-16 h-16 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-2 w-20 h-20 group-hover:scale-110 transition-transform duration-300`}>
-        <img src={category.icon} alt={category.name} className="w-15 h-15" />
+      <div className={`w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-1 md:mb-2 group-hover:scale-110 transition-transform duration-300`}>
+        <img src={category.icon} alt={category.name} className="w-8 h-8 md:w-12 md:h-12 lg:w-15 lg:h-15" />
       </div>
-      <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300 text-sm`}>{category.name}</span>
+      <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300 text-xs md:text-sm text-center leading-tight`}>{category.name}</span>
     </div>
   );
 
@@ -124,7 +128,7 @@ export default function MainFeed() {
           <img
             src={images[0]}
             alt={imageAlt}
-            className="w-full h-80 object-cover hover:opacity-95 transition-opacity duration-200"
+            className="w-full h-48 md:h-64 lg:h-80 object-cover hover:opacity-95 transition-opacity duration-200"
           />
         </div>
       );
@@ -138,7 +142,7 @@ export default function MainFeed() {
               key={index}
               src={image}
               alt={`${imageAlt} ${index + 1}`}
-              className="w-full h-60 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
+              className="w-full h-40 md:h-48 lg:h-60 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
               onClick={() => onClick(index)}
             />
           ))}
@@ -152,20 +156,20 @@ export default function MainFeed() {
           <img
             src={images[0]}
             alt={`${imageAlt} 1`}
-            className="w-full h-72 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
+            className="w-full h-48 md:h-56 lg:h-72 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
             onClick={() => onClick(0)}
           />
           <div className="grid grid-rows-2 gap-1">
             <img
               src={images[1]}
               alt={`${imageAlt} 2`}
-              className="w-full h-35 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
+              className="w-full h-23 md:h-27 lg:h-35 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
               onClick={() => onClick(1)}
             />
             <img
               src={images[2]}
               alt={`${imageAlt} 3`}
-              className="w-full h-35 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
+              className="w-full h-23 md:h-27 lg:h-35 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
               onClick={() => onClick(2)}
             />
           </div>
@@ -181,7 +185,7 @@ export default function MainFeed() {
               key={index}
               src={image}
               alt={`${imageAlt} ${index + 1}`}
-              className="w-full h-40 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
+              className="w-full h-28 md:h-32 lg:h-40 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
               onClick={() => onClick(index)}
             />
           ))}
@@ -189,7 +193,7 @@ export default function MainFeed() {
             <img
               src={images[3]}
               alt={`${imageAlt} 4`}
-              className="w-full h-40 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
+              className="w-full h-28 md:h-32 lg:h-40 object-cover cursor-pointer hover:opacity-95 transition-opacity duration-200"
               onClick={() => onClick(3)}
             />
             {imageCount > 4 && (
@@ -197,7 +201,7 @@ export default function MainFeed() {
                 className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center cursor-pointer hover:bg-opacity-50 transition-all duration-200"
                 onClick={() => onClick(3)}
               >
-                <span className="text-white text-2xl font-bold">+{imageCount - 4}</span>
+                <span className="text-white text-lg md:text-xl lg:text-2xl font-bold">+{imageCount - 4}</span>
               </div>
             )}
           </div>
@@ -251,26 +255,26 @@ export default function MainFeed() {
   const PostCard = ({ post }) => (
     <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-300`}>
       {/* Post Header */}
-      <div className="p-4">
+      <div className="p-3 md:p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <img
               src={post.avatar}
               alt={post.author}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
             />
             <div>
-              <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-sm`}>{post.author}</h3>
+              <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-xs md:text-sm`}>{post.author}</h3>
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>{post.profession} • {post.location} • {post.timeAgo}</p>
             </div>
           </div>
-          <button className={`p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
+          <button className={`p-1 md:p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
             <MoreHorizontal className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
         </div>
         
         {/* Post Description */}
-        <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm mb-3`}>{post.description}</p>
+        <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-xs md:text-sm mb-3`}>{post.description}</p>
       </div>
 
       {/* Post Images */}
@@ -283,26 +287,26 @@ export default function MainFeed() {
       </div>
 
       {/* Post Actions */}
-      <div className="p-4">
+      <div className="p-3 md:p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>{post.likes} likes</span>
-          <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>{(comments[post.id] || []).length} comments</span>
+          <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>{post.likes} likes</span>
+          <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>{(comments[post.id] || []).length} comments</span>
         </div>
         
         <div className={`flex items-center justify-between pt-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-          <button className={`flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
+          <button className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
             <Heart className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
+            <span className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
           </button>
           <button 
-            className={`flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+            className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
             onClick={() => handlePostClick(post)}
           >
             <MessageSquare className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Comment</span>
+            <span className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Comment</span>
           </button>
           <button 
-          className={`flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+          className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
           onClick={() => {
                       if (navigator.share) {
                         navigator
@@ -320,7 +324,7 @@ export default function MainFeed() {
                       }
                     }}>
             <Share2 className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
+            <span className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
           </button>
         </div>
       </div>
@@ -333,15 +337,17 @@ export default function MainFeed() {
   {/* Category Section */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-2 mb-2 shadow-sm border`}>
         {/*<h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Categories</h2>*/}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="flex overflow-x-auto space-x-3 md:space-x-4 pb-2 no-scrollbar">
           {categories.map((category, index) => (
-            <CategoryCard key={index} category={category} index={index} />
+            <div key={index} className="flex-shrink-0">
+              <CategoryCard category={category} index={index} />
+            </div>
           ))}
         </div>
       </div>
 
       {/* Posts Feed */}
-      <div className="flex-1 overflow-y-auto space-y-4 pb-6 no-scrollbar">
+      <div className="flex-1 overflow-y-auto space-y-3 md:space-y-4 pb-20 lg:pb-6 px-2 md:px-0 no-scrollbar">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
@@ -356,31 +362,31 @@ export default function MainFeed() {
               <img
                 src={selectedPost.avatar}
                 alt={selectedPost.author}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
               />
               <div>
-                <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{selectedPost.author}</h3>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>{selectedPost.profession} • {selectedPost.location} • {selectedPost.timeAgo}</p>
+                <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-sm md:text-base`}>{selectedPost.author}</h3>
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>{selectedPost.profession} • {selectedPost.location} • {selectedPost.timeAgo}</p>
               </div>
             </div>
             <button
               onClick={closeModal}
               className={`p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
             >
-              <X className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              <X className={`w-5 h-5 md:w-6 md:h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
             </button>
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1 flex overflow-hidden">
-            {/* Left Side - Images */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            {/* Images Section - Full width on mobile, left side on desktop */}
             <div className="flex-1 bg-black flex items-center justify-center relative">
               {selectedPost.images.length > 1 && currentImageIndex > 0 && (
                 <button
                   onClick={prevImage}
-                  className="absolute left-4 z-10 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                  className="absolute left-2 md:left-4 z-10 bg-black bg-opacity-50 text-white p-2 md:p-3 rounded-full hover:bg-opacity-70 transition-all duration-200"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               )}
               
@@ -393,27 +399,27 @@ export default function MainFeed() {
               {selectedPost.images.length > 1 && currentImageIndex < selectedPost.images.length - 1 && (
                 <button
                   onClick={nextImage}
-                  className="absolute right-4 z-10 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                  className="absolute right-2 md:right-4 z-10 bg-black bg-opacity-50 text-white p-2 md:p-3 rounded-full hover:bg-opacity-70 transition-all duration-200"
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               )}
 
               {/* Image Counter */}
               {selectedPost.images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full text-sm font-medium">
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white px-3 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-medium">
                   {currentImageIndex + 1} / {selectedPost.images.length}
                 </div>
               )}
 
-              {/* Image Thumbnails */}
+              {/* Image Thumbnails - Hidden on mobile, visible on tablet+ */}
               {selectedPost.images.length > 1 && (
-                <div className="absolute bottom-4 right-4 flex space-x-2">
+                <div className="hidden md:flex absolute bottom-4 right-4 space-x-2">
                   {selectedPost.images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      className={`w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                         index === currentImageIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-80'
                       }`}
                     >
@@ -428,26 +434,26 @@ export default function MainFeed() {
               )}
             </div>
 
-            {/* Right Side - Post Details & Comments */}
-            <div className={`w-96 flex flex-col border-l ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+            {/* Post Details & Comments Section - Bottom on mobile, right side on desktop */}
+            <div className={`w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} max-h-[40vh] lg:max-h-none`}>
               {/* Post Description */}
-              <div className={`p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{selectedPost.description}</p>
+              <div className={`p-3 md:p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm md:text-base`}>{selectedPost.description}</p>
                 
                 {/* Post Stats */}
-                <div className={`flex items-center justify-between mt-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <div className={`flex items-center justify-between mt-3 md:mt-4 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   <span>{selectedPost.likes} likes</span>
                   <span>{(comments[selectedPost.id] || []).length} comments</span>
                 </div>
 
                 {/* Action Buttons */}
                 <div className={`flex items-center justify-between mt-3 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <button className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                    <Heart className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
+                  <button className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                    <Heart className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                    <span className={`font-medium text-xs md:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
                   </button>
                   <button 
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                  className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                   onClick={() => {
                       if (navigator.share) {
                         navigator
@@ -464,33 +470,33 @@ export default function MainFeed() {
                         alert("Link copied to clipboard!");
                       }
                     }}>
-                    <Share2 className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
+                    <Share2 className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                    <span className={`font-medium text-xs md:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
                   </button>
                 </div>
               </div>
 
               {/* Comments Section */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-                <h4 className={`font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Comments</h4>
+              <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 no-scrollbar">
+                <h4 className={`font-semibold mb-2 md:mb-3 text-sm md:text-base ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Comments</h4>
                 {(comments[selectedPost.id] || []).length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageSquare className={`w-12 h-12 mx-auto mb-3 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
-                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No comments yet</p>
-                    <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-sm`}>Be the first to comment!</p>
+                  <div className="text-center py-6 md:py-8">
+                    <MessageSquare className={`w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm md:text-base`}>No comments yet</p>
+                    <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-xs md:text-sm`}>Be the first to comment!</p>
                   </div>
                 ) : (
                   (comments[selectedPost.id] || []).map((comment) => (
-                    <div key={comment.id} className="flex space-x-3">
+                    <div key={comment.id} className="flex space-x-2 md:space-x-3">
                       <img
                         src={comment.avatar}
                         alt={comment.author}
-                        className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                        className="w-7 h-7 md:w-9 md:h-9 rounded-full object-cover flex-shrink-0"
                       />
                       <div className="flex-1">
-                        <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-2xl px-4 py-3`}>
-                          <p className={`font-semibold text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{comment.author}</p>
-                          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{comment.text}</p>
+                        <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-2xl px-3 md:px-4 py-2 md:py-3`}>
+                          <p className={`font-semibold text-xs md:text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{comment.author}</p>
+                          <p className={`text-xs md:text-sm mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{comment.text}</p>
                         </div>
                         <div className={`flex items-center space-x-4 mt-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           <span>{comment.timeAgo}</span>
@@ -504,12 +510,12 @@ export default function MainFeed() {
               </div>
 
               {/* Add Comment */}
-              <div className={`p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex space-x-3">
+              <div className={`p-3 md:p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex space-x-2 md:space-x-3">
                   <img
                     src={mockAvatars[0]}
                     alt="You"
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    className="w-7 h-7 md:w-9 md:h-9 rounded-full object-cover flex-shrink-0"
                   />
                   <div className="flex-1 flex space-x-2">
                     <input
@@ -517,15 +523,15 @@ export default function MainFeed() {
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Write a comment..."
-                      className={`flex-1 px-4 py-3 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'}`}
+                      className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-full text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'}`}
                       onKeyPress={(e) => e.key === 'Enter' && handleAddComment(selectedPost.id)}
                     />
                     <button
                       onClick={() => handleAddComment(selectedPost.id)}
                       disabled={!newComment.trim()}
-                      className={`p-3 text-blue-600 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'hover:bg-blue-900' : 'hover:bg-blue-50'}`}
+                      className={`p-2 md:p-3 text-blue-600 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'hover:bg-blue-900' : 'hover:bg-blue-50'}`}
                     >
-                      <Send className="w-5 h-5" />
+                      <Send className="w-4 h-4 md:w-5 md:h-5" />
                     </button>
                   </div>
                 </div>

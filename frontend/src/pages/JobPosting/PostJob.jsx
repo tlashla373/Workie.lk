@@ -289,44 +289,44 @@ const PostJob = () => {
     { value: 'Manufacturing Company', label: 'Manufacturing Company' }
   ];
 
-  const inputClasses = `w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${
+  const inputClasses = `w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 text-sm sm:text-base ${
     isDarkMode
       ? 'bg-gray-700/50 border border-gray-600/50 text-white placeholder-gray-400'
       : 'bg-gray-200/50 border border-gray-300/50 text-black placeholder-gray-400'
   }`;
   
-  const labelClasses = `block text-sm font-medium mb-2 ${
+  const labelClasses = `block text-xs sm:text-sm font-medium mb-2 ${
     isDarkMode ? 'text-gray-300' : 'text-gray-700'
   }`;
 
   const optionClasses = isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900';
 
-  const sectionClasses = `p-6 rounded-xl ${
+  const sectionClasses = `p-4 sm:p-6 rounded-xl ${
     isDarkMode ? 'bg-gray-700/30 border border-gray-600/30' : 'bg-white border border-gray-200'
   }`;
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6">
       <div className="text-center">
-        <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Post a New Job</h1>
-        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Find the perfect candidate for your work</p>
+        <h1 className={`text-2xl sm:text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Post a New Job</h1>
+        <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Find the perfect candidate for your work</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
         {/* Basic Job Information */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Basic Job Information
           </h2>
           
           {/* Form Status Messages */}
           {submitStatus === 'success' && (
-            <div className={`p-4 rounded-xl mb-6 ${isDarkMode ? 'bg-green-500/20 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
+            <div className={`p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 ${isDarkMode ? 'bg-green-500/20 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
               <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-xs">✓</span>
                 </div>
-                <p className={`font-medium ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>
+                <p className={`font-medium text-xs sm:text-sm ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>
                   Job posted successfully! Candidates can now view and apply to your job.
                 </p>
               </div>
@@ -334,21 +334,21 @@ const PostJob = () => {
           )}
 
           {submitStatus === 'error' && (
-            <div className={`p-4 rounded-xl mb-6 ${isDarkMode ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
+            <div className={`p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 ${isDarkMode ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
               <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-xs">!</span>
                 </div>
-                <p className={`font-medium ${isDarkMode ? 'text-red-300' : 'text-red-800'}`}>
+                <p className={`font-medium text-xs sm:text-sm ${isDarkMode ? 'text-red-300' : 'text-red-800'}`}>
                   {errors.submit || 'Please check the form for errors and try again.'}
                 </p>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Job Title */}
-            <div className="md:col-span-2">
+            <div className="lg:col-span-2">
               <label className={labelClasses}>
                 Job Title *
               </label>
@@ -361,13 +361,13 @@ const PostJob = () => {
                 className={`${inputClasses} ${errors.title ? 'border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+              {errors.title && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.title}</p>}
             </div>
 
             {/* Company */}
             <div>
               <label className={labelClasses}>
-                <Building className="w-4 h-4 inline mr-1" />
+                <Building className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Company *
               </label>
               <input
@@ -379,13 +379,13 @@ const PostJob = () => {
                 className={`${inputClasses} ${errors.company ? 'border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
-              {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company}</p>}
+              {errors.company && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.company}</p>}
             </div>
 
             {/* Location */}
             <div>
               <label className={labelClasses}>
-                <MapPin className="w-4 h-4 inline mr-1" />
+                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Location *
               </label>
               <input
@@ -397,13 +397,13 @@ const PostJob = () => {
                 className={`${inputClasses} ${errors.location ? 'border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
-              {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+              {errors.location && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.location}</p>}
             </div>
 
             {/* Job Type */}
             <div>
               <label className={labelClasses}>
-                <Clock className="w-4 h-4 inline mr-1" />
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Job Type *
               </label>
               <select
@@ -423,7 +423,7 @@ const PostJob = () => {
             {/* Salary */}
             <div>
               <label className={labelClasses}>
-                <DollarSign className="w-4 h-4 inline mr-1" />
+                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Salary Range
               </label>
               <input
@@ -434,7 +434,7 @@ const PostJob = () => {
                 placeholder="e.g. Rs 60,000 - Rs 80,000"
                 className={`${inputClasses} ${errors.salary ? 'border-red-500 focus:ring-red-500' : ''}`}
               />
-              {errors.salary && <p className="text-red-500 text-sm mt-1">{errors.salary}</p>}
+              {errors.salary && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.salary}</p>}
             </div>
 
             {/* Category */}
@@ -455,7 +455,7 @@ const PostJob = () => {
                   </option>
                 ))}
               </select>
-              {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
+              {errors.category && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.category}</p>}
             </div>
 
             {/* Application Deadline */}
@@ -470,19 +470,19 @@ const PostJob = () => {
                 onChange={handleInputChange}
                 className={`${inputClasses} appearance-none ${errors.deadline ? 'border-red-500 focus:ring-red-500' : ''}`}
               />
-              {errors.deadline && <p className="text-red-500 text-sm mt-1">{errors.deadline}</p>}
+              {errors.deadline && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.deadline}</p>}
             </div>
           </div>
         </div>
 
         {/* Job Description */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Job Description
           </h2>
           
           {/* Short Description */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <label className={labelClasses}>
               Short Description *
             </label>
@@ -495,7 +495,7 @@ const PostJob = () => {
               className={`${inputClasses} resize-none ${errors.description ? 'border-red-500 focus:ring-red-500' : ''}`}
               required
             />
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+            {errors.description && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.description}</p>}
           </div>
 
           {/* Full Description */}
@@ -507,18 +507,18 @@ const PostJob = () => {
               name="fullDescription"
               value={formData.fullDescription}
               onChange={handleInputChange}
-              rows={8}
+              rows={6}
               placeholder="Detailed description including responsibilities, project details, work environment, etc..."
               className={`${inputClasses} resize-none ${errors.fullDescription ? 'border-red-500 focus:ring-red-500' : ''}`}
               required
             />
-            {errors.fullDescription && <p className="text-red-500 text-sm mt-1">{errors.fullDescription}</p>}
+            {errors.fullDescription && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.fullDescription}</p>}
           </div>
         </div>
 
         {/* Skills/Tags */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Skills & Tags
           </h2>
           
@@ -540,13 +540,13 @@ const PostJob = () => {
                   <button
                     type="button"
                     onClick={() => removeArrayItem(index, 'tags')}
-                    className={`p-2 rounded-lg transition-colors duration-200 ${
+                    className={`p-2 rounded-lg transition-colors duration-200 flex-shrink-0 ${
                       isDarkMode
                         ? 'text-red-400 hover:bg-red-500/20'
                         : 'text-red-500 hover:bg-red-100'
                     }`}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 )}
               </div>
@@ -554,22 +554,22 @@ const PostJob = () => {
             <button
               type="button"
               onClick={() => addArrayItem('tags')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
                 isDarkMode
                   ? 'text-blue-400 hover:bg-blue-500/20'
                   : 'text-blue-600 hover:bg-blue-100'
               }`}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Add Skill/Tag</span>
             </button>
-            {errors.tags && <p className="text-red-500 text-sm mt-1">{errors.tags}</p>}
+            {errors.tags && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.tags}</p>}
           </div>
         </div>
 
         {/* Requirements */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Job Requirements
           </h2>
           
@@ -591,13 +591,13 @@ const PostJob = () => {
                   <button
                     type="button"
                     onClick={() => removeArrayItem(index, 'requirements')}
-                    className={`p-2 rounded-lg transition-colors duration-200 ${
+                    className={`p-2 rounded-lg transition-colors duration-200 flex-shrink-0 ${
                       isDarkMode
                         ? 'text-red-400 hover:bg-red-500/20'
                         : 'text-red-500 hover:bg-red-100'
                     }`}
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 )}
               </div>
@@ -605,22 +605,22 @@ const PostJob = () => {
             <button
               type="button"
               onClick={() => addArrayItem('requirements')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
+              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
                 isDarkMode
                   ? 'text-blue-400 hover:bg-blue-500/20'
                   : 'text-blue-600 hover:bg-blue-100'
               }`}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Add Requirement</span>
             </button>
-            {errors.requirements && <p className="text-red-500 text-sm mt-1">{errors.requirements}</p>}
+            {errors.requirements && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.requirements}</p>}
           </div>
         </div>
 
         {/* Benefits */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Benefits & Perks
           </h2>
           
@@ -641,15 +641,15 @@ const PostJob = () => {
 
         {/* Client Information */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Client Information
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Client Name */}
             <div>
               <label className={labelClasses}>
-                <User className="w-4 h-4 inline mr-1" />
+                <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Your Name *
               </label>
               <input
@@ -661,7 +661,7 @@ const PostJob = () => {
                 className={`${inputClasses} ${errors.clientName ? 'border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
-              {errors.clientName && <p className="text-red-500 text-sm mt-1">{errors.clientName}</p>}
+              {errors.clientName && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.clientName}</p>}
             </div>
 
             {/* Client Type */}
@@ -687,15 +687,15 @@ const PostJob = () => {
 
         {/* Contact Information */}
         <div className={sectionClasses}>
-          <h2 className={`text-xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Contact Information
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Phone */}
             <div>
               <label className={labelClasses}>
-                <Phone className="w-4 h-4 inline mr-1" />
+                <Phone className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Phone Number *
               </label>
               <input
@@ -707,13 +707,13 @@ const PostJob = () => {
                 className={`${inputClasses} ${errors.contactPhone ? 'border-red-500 focus:ring-red-500' : ''}`}
                 required
               />
-              {errors.contactPhone && <p className="text-red-500 text-sm mt-1">{errors.contactPhone}</p>}
+              {errors.contactPhone && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.contactPhone}</p>}
             </div>
 
             {/* Email */}
             <div>
               <label className={labelClasses}>
-                <Mail className="w-4 h-4 inline mr-1" />
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
                 Email Address
               </label>
               <input
@@ -724,28 +724,28 @@ const PostJob = () => {
                 placeholder="your.email@example.com"
                 className={`${inputClasses} ${errors.contactEmail ? 'border-red-500 focus:ring-red-500' : ''}`}
               />
-              {errors.contactEmail && <p className="text-red-500 text-sm mt-1">{errors.contactEmail}</p>}
+              {errors.contactEmail && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.contactEmail}</p>}
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
           <button
             type="button"
-            className={`flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-200 text-sm sm:text-base ${
               isDarkMode
                 ? 'bg-gray-600/50 text-gray-300 hover:bg-gray-600'
                 : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            <Save className="w-5 h-5" />
+            <Save className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Save as Draft</span>
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-200 text-sm sm:text-base ${
               isSubmitting 
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700'
@@ -753,12 +753,12 @@ const PostJob = () => {
           >
             {isSubmitting ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 <span>Posting Job...</span>
               </>
             ) : (
               <>
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Post Job</span>
               </>
             )}

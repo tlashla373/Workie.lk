@@ -77,7 +77,9 @@ const SignUpPage = () => {
         phone: mobile.trim() || undefined, // Send undefined if empty to make it truly optional
         userType: 'worker' // Valid userType accepted by backend
       });
-      navigate('/roleselection');
+      
+      // Navigate to email verification page with email
+      navigate('/email-verification', { state: { email: email.trim() } });
     } catch (error) {
       toast.error(error.message || 'Registration failed');
     }
@@ -111,21 +113,21 @@ const SignUpPage = () => {
       </div>
 
       {/* Right Side - Create account form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
-        <div className="max-w-md mx-auto">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 lg:px-16 lg:py-0">
+        <div className="max-w-md w-full mx-auto">
           {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-2">
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-center sm:justify-start space-x-2">
               <Link to='/' className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
                 <img className="w-8 h-8" src={Logo} alt="Workie.LK Logo" />
               </Link>
-              <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
+              <span className="text-lg sm:text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
             </div>
           </div>
 
           {/* Sign Up Header */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create new account</h1>
-          <p className="text-gray-600 mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center sm:text-left">Create new account</h1>
+          <p className="text-gray-600 mb-6 sm:mb-8 text-center sm:text-left text-sm sm:text-base">
             have an account?
             <Link to="/loginpage" className="text-blue-600 hover:underline ml-1">Sign in</Link>
           </p>
@@ -133,34 +135,34 @@ const SignUpPage = () => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Personal Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex justify-center items-center">
-                <label htmlFor="firstname" className="relative">
+                <label htmlFor="firstname" className="relative w-full">
                   <input
                     required 
                     type="text"
                     id="firstname"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                    className="w-full px-3 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   />
-                  <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                     First Name
                   </span>
                 </label>
               </div>
 
               <div className="flex justify-center items-center">
-                <label htmlFor="lastname" className="relative">
+                <label htmlFor="lastname" className="relative w-full">
                   <input
                     required
                     type="text"
                     id="lastname"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                    className="w-full px-3 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   />
-                  <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                     Last Name
                   </span>
                 </label>
@@ -168,18 +170,18 @@ const SignUpPage = () => {
             </div>
 
             {/* Email and Mobile */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
               <div className="flex justify-center items-center">
-                <label htmlFor="email" className="relative">
+                <label htmlFor="email" className="relative w-full">
                   <input
                     required
                     type="email"
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                    className="w-full px-3 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   />
-                  <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                     E-mail
                   </span>
                 </label>
@@ -187,16 +189,16 @@ const SignUpPage = () => {
 
               {/* Mobile Number Field */}
               <div className="flex justify-center items-center">
-                <label htmlFor="mobile" className="relative"> 
+                <label htmlFor="mobile" className="relative w-full"> 
                   <input
                     required
                     type="tel"
                     id="mobile"
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
-                    className="w-50 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                    className="w-full px-3 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   />
-                  <span className="absolute left-0 top-2 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                     Mobile
                   </span>
                 </label>
@@ -205,16 +207,16 @@ const SignUpPage = () => {
 
             {/* Password Field */}
             <div className="flex justify-center items-center">
-              <label className="relative">
+              <label className="relative w-full max-w-md">
                 <input
                   required
                   type={showPassword ? "text" : "password"}
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-105 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-full px-3 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                 />
-                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 sm:top-3 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   Password
                 </span>
                 <button
@@ -229,16 +231,16 @@ const SignUpPage = () => {
 
             {/* Confirm password */}
             <div className="flex justify-center items-center">
-              <label className="relative">
+              <label className="relative w-full max-w-md">
                 <input
                   required
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmpassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-105 px-2 py-2 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-full px-3 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                 />
-                <span className="absolute left-0 top-2 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 sm:top-3 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   Confirm Password
                 </span>
                 <button
@@ -252,7 +254,7 @@ const SignUpPage = () => {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between space-y-3">
+            <div className="flex items-center justify-start space-y-3">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -268,16 +270,18 @@ const SignUpPage = () => {
             </div>
 
             {/* Sign Up Button */}
-            <button
-              type="submit"
-              disabled={authLoading}
-              className={`w-105 bg-blue-500 text-white py-3 px-4 rounded-md font-medium transition duration-200 ${authLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-            >
-              {authLoading ? 'Creating account...' : 'Sign up'}
-            </button>
+            <div className="flex justify-center items-center">
+              <button
+                type="submit"
+                disabled={authLoading}
+                className={`w-full max-w-md bg-blue-500 text-white py-2 sm:py-3 px-4 rounded-md font-medium transition duration-200 ${authLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+              >
+                {authLoading ? 'Creating account...' : 'Sign up'}
+              </button>
+            </div>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-4 sm:my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
               </div>
@@ -290,20 +294,20 @@ const SignUpPage = () => {
             <div className="space-y-3">
               <button
                 type="button"
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
               >
                 <div className="w-5 h-5 mr-3">
-                  <img className="h-6 w-6" src={Google} alt="Google"/>
+                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Google} alt="Google"/>
                 </div>
                 Continue with Google
               </button>
 
               <button
                 type="button"
-                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200"
+                className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
               >
                 <div className="w-5 h-5 mr-3">
-                  <img className="h-6 w-6" src={Facebook} alt="Facebook"/>
+                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Facebook} alt="Facebook"/>
                 </div>
                 Continue with Facebook
               </button>

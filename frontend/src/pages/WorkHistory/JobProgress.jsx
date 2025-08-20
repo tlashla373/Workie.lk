@@ -136,7 +136,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
           return (
             <button
               onClick={handleStartWork}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base w-full md:w-auto"
             >
               Start Work
             </button>
@@ -145,7 +145,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
           return (
             <button
               onClick={handleMarkCompleted}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base w-full md:w-auto"
             >
               Mark as Completed
             </button>
@@ -154,16 +154,16 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
           return (
             <button
               onClick={handleAcceptPayment}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base w-full md:w-auto"
             >
               Accept Payment Received
             </button>
           );
         case 7:
           return (
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-800 mb-2">Client Review:</h4>
+            <div className="space-y-4 w-full max-w-md mx-auto">
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 md:p-4 rounded-lg`}>
+                <h4 className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-2 text-sm md:text-base`}>Client Review:</h4>
                 <div className="flex items-center mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
@@ -171,13 +171,13 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
                       className={`w-4 h-4 ${star <= 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
                     />
                   ))}
-                  <span className="ml-2 text-sm text-gray-600">4/5 stars</span>
+                  <span className={`ml-2 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>4/5 stars</span>
                 </div>
-                <p className="text-gray-700 text-sm">Great work! Very professional and delivered on time.</p>
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs md:text-sm`}>Great work! Very professional and delivered on time.</p>
               </div>
               <button
                 onClick={handleCloseJob}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base w-full"
               >
                 Close Job
               </button>
@@ -192,7 +192,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
           return (
             <button
               onClick={handleAcceptApplication}
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-green-500 hover:bg-green-600 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base w-full md:w-auto"
             >
               Accept Application
             </button>
@@ -201,7 +201,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
           return (
             <button
               onClick={handleReleasePayment}
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-green-500 hover:bg-green-600 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base w-full md:w-auto"
             >
               Confirm & Release Payment
             </button>
@@ -209,15 +209,15 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
         case 5:
           return (
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
-              <span className="text-blue-600 font-medium">Processing Payment...</span>
+              <div className="animate-spin rounded-full h-5 w-5 md:h-6 md:w-6 border-b-2 border-blue-500 mr-2 md:mr-3"></div>
+              <span className="text-blue-600 font-medium text-sm md:text-base">Processing Payment...</span>
             </div>
           );
         case 6:
           return (
-            <div className="max-w-md mx-auto space-y-4">
+            <div className="max-w-md mx-auto space-y-4 w-full px-4 md:px-0">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                   Rate this worker
                 </label>
                 <div className="flex justify-center space-x-1 mb-4">
@@ -228,7 +228,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
                       className="focus:outline-none"
                     >
                       <Star
-                        className={`w-8 h-8 transition-colors ${
+                        className={`w-6 h-6 md:w-8 md:h-8 transition-colors ${
                           star <= rating 
                             ? 'text-yellow-400 fill-current' 
                             : 'text-gray-300 hover:text-yellow-200'
@@ -239,7 +239,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
                 </div>
               </div>
               <div>
-                <label htmlFor="review" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="review" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                   Leave Review & Feedback
                 </label>
                 <textarea
@@ -247,7 +247,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
                   value={review}
                   onChange={(e) => setReview(e.target.value)}
                   placeholder="Share your experience with this worker..."
-                  className={`w-full p-3 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full p-3 text-sm md:text-base rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     isDarkMode 
                       ? 'bg-gray-700 border-gray-600 text-gray-200' 
                       : 'bg-white border-gray-300 text-gray-900'
@@ -258,7 +258,7 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
               <button
                 onClick={handleSubmitReview}
                 disabled={!review.trim() || rating === 0}
-                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors text-sm md:text-base"
               >
                 Submit Review
               </button>
@@ -272,21 +272,61 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
   };
 
   return (
-    <div className={`w-full max-w-6xl mx-auto p-4 ${
+    <div className={`w-full max-w-6xl mx-auto p-3 md:p-4 lg:p-6 ${
       isDarkMode ? 'bg-gray-800' : 'bg-white'
     } rounded-lg shadow-lg transition-colors duration-300`}>
-      <div className="mb-8">
-        <h2 className={`text-2xl font-bold ${
+      <div className="mb-6 md:mb-8">
+        <h2 className={`text-xl md:text-2xl font-bold ${
           isDarkMode ? 'text-white' : 'text-gray-800'
         } text-center mb-2`}>Job Progress Tracker</h2>
-        <p className={`text-center ${
+        <p className={`text-center text-sm md:text-base ${
           isDarkMode ? 'text-gray-400' : 'text-gray-600'
         } capitalize`}>{role} Dashboard</p>
       </div>
 
       {/* Progress Bar */}
-      <div className="relative mb-8">
-        <div className="flex justify-between items-start">
+      <div className="relative mb-6 md:mb-8">
+        {/* Mobile: Vertical layout */}
+        <div className="md:hidden space-y-4">
+          {stages.map((stage, index) => {
+            const status = getStageStatus(stage.id);
+            const Icon = stage.icon;
+            
+            return (
+              <div key={stage.id} className="flex items-center relative">
+                {/* Connector Line for mobile */}
+                {index < stages.length - 1 && (
+                  <div 
+                    className={`absolute left-6 top-12 w-0.5 h-8 ${getConnectorClasses(stage.id)} z-0`}
+                  />
+                )}
+                
+                {/* Stage Circle */}
+                <div className={`
+                  w-12 h-12 rounded-full border-2 flex items-center justify-center mr-4 z-10 flex-shrink-0
+                  ${isDarkMode ? 'bg-gray-800' : 'bg-white'}
+                  ${getStageClasses(status)}
+                `}>
+                  <Icon size={20} className="text-current" />
+                </div>
+                
+                {/* Stage Label */}
+                <div className="flex-1">
+                  <span className={`text-sm font-medium ${
+                    status === 'current' ? 'text-blue-500' : 
+                    status === 'completed' ? 'text-green-500' : 
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {stage.name}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop: Horizontal layout */}
+        <div className="hidden md:flex justify-between items-start">
           {stages.map((stage, index) => {
             const status = getStageStatus(stage.id);
             const Icon = stage.icon;
@@ -328,16 +368,16 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
       </div>
 
       {/* Current Stage Information */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6 md:mb-8">
         <div className={`inline-block ${
           isDarkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'
-        } border rounded-lg px-6 py-3`}>
-          <h3 className={`text-lg font-semibold ${
+        } border rounded-lg px-4 md:px-6 py-3`}>
+          <h3 className={`text-base md:text-lg font-semibold ${
             isDarkMode ? 'text-blue-400' : 'text-blue-800'
           } mb-1`}>
             Stage {currentStage}: {stages[currentStage - 1]?.name}
           </h3>
-          <p className={`${isDarkMode ? 'text-blue-300' : 'text-blue-700'} text-sm`}>
+          <p className={`${isDarkMode ? 'text-blue-300' : 'text-blue-700'} text-xs md:text-sm`}>
             {renderStageMessage()}
           </p>
         </div>
@@ -347,10 +387,10 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
       {currentStage === 7 && role === 'worker' && (
         <div className={`${
           isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-        } p-4 rounded-lg mb-4`}>
+        } p-3 md:p-4 rounded-lg mb-4`}>
           <h4 className={`font-medium ${
             isDarkMode ? 'text-gray-200' : 'text-gray-800'
-          } mb-2`}>Client Review:</h4>
+          } mb-2 text-sm md:text-base`}>Client Review:</h4>
           <div className="flex items-center mb-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
@@ -358,27 +398,27 @@ const JobProgress = ({ role = 'worker', initialStage = 1 }) => {
                 className={`w-4 h-4 ${star <= 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
               />
             ))}
-            <span className="ml-2 text-sm text-gray-600">4/5 stars</span>
+            <span className={`ml-2 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>4/5 stars</span>
           </div>
-          <p className="text-gray-700 text-sm">Great work! Very professional and delivered on time.</p>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-xs md:text-sm`}>Great work! Very professional and delivered on time.</p>
         </div>
       )}
 
       {/* Role-specific Actions */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-4 md:mb-6 px-4 md:px-0">
         {renderRoleActions()}
       </div>
 
       {/* Completion Message */}
       {currentStage === 8 && (
-        <div className="text-center">
+        <div className="text-center px-4 md:px-0">
           <div className={`inline-flex items-center ${
             isDarkMode 
               ? 'bg-green-900/20 text-green-400' 
               : 'bg-green-100 text-green-800'
-          } px-6 py-3 rounded-lg`}>
-            <CheckCircle className="w-6 h-6 mr-2" />
-            <span className="text-lg font-semibold">Job Completed Successfully!</span>
+          } px-4 md:px-6 py-3 rounded-lg`}>
+            <CheckCircle className="w-5 h-5 md:w-6 md:h-6 mr-2" />
+            <span className="text-base md:text-lg font-semibold">Job Completed Successfully!</span>
           </div>
         </div>
       )}

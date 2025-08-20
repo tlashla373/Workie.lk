@@ -11,7 +11,9 @@ import {
   PanelRightOpen,
   PanelRightClose,
   Bell,
-  ImagePlus
+  ImagePlus,
+  Menu,
+  X
 } from 'lucide-react';
 import profileImage from '../assets/profile.jpeg';
 import Logo from '../assets/Logo.png'
@@ -25,11 +27,15 @@ const SideNavbar = ({
   setIsCollapsed = () => {}
 }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { userRole: userType, clearUserRole } = useUserRole();
   const { isDarkMode } = useDarkMode();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   // Navigation links for workers
   const workerNavigationLinks = [
@@ -55,12 +61,40 @@ const SideNavbar = ({
     { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
   ];
 
+  // Navigation links for workers (mobile bottom nav)
+  const workerMobileNavLinks = [
+    { icon: Home, label: 'Home', href: '/' },
+    { icon: BriefcaseBusiness, label: 'Jobs', href: '/findjobs' },
+    { icon: ImagePlus, label: 'Post', href: '/add-post'},
+    { icon: Users, label: 'Friends', href: '/friends' },
+    { icon: Menu, label: 'More', href: '#', isMore: true },
+  ];
+
+  // Navigation links for clients (mobile bottom nav)
+  const clientMobileNavLinks = [
+    { icon: Home, label: 'Home', href: '/' },
+    { icon: Edit3, label: 'Post Job', href: '/post-job' },
+    { icon: ImagePlus, label: 'Post', href: '/add-post'},
+    { icon: Users, label: 'Friends', href: '/friends' },
+    { icon: Menu, label: 'More', href: '#', isMore: true },
+  ];
+
+  // Additional menu items for mobile "More" section
+  const moreMenuItems = [
+    { icon: History, label: 'Work Status', href: '/workhistory' },
+    { icon: Video, label: 'Video', href: '/video' },
+    { icon: Settings, label: 'Settings', href: '/settings' },
+    { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
+  ];
+
   // Select navigation links based on user type
   const navigationLinks = userType === 'client' ? clientNavigationLinks : workerNavigationLinks;
+  const mobileNavLinks = userType === 'client' ? clientMobileNavLinks : workerMobileNavLinks;
 
   // Handle logout - clear localStorage and user data
   const handleLogout = () => {
     clearUserRole();
+    setIsMobileMenuOpen(false);
     // Clear other user-related data here
     // localStorage.removeItem('authToken');
     // localStorage.removeItem('userData');
@@ -68,8 +102,8 @@ const SideNavbar = ({
 
   return (
     <>
-      {/* Sidebar */}
-      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5] border-gray-700/50'}`}>
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <div className={`hidden lg:flex h-full flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5] border-gray-700/50'}`}>
         {/* Sidebar Header */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
           <div className="flex items-center justify-between">
@@ -171,7 +205,110 @@ const SideNavbar = ({
         </nav>
       </div>
 
-      {/* Overlay for mobile */}
+      {/* Mobile Bottom Navigation - Visible only on mobile */}
+      <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5]  border-blue-400'} border-t`}>
+        <div className="flex items-center justify-around py-1 px-4">
+          {mobileNavLinks.map((link) => {
+            const Icon = link.icon;
+            
+            if (link.isMore) {
+              return (
+                <button
+                  key={link.label}
+                  onClick={toggleMobileMenu}
+                  className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
+                    isMobileMenuOpen
+                      ? 'text-blue-100 bg-blue-600'
+                      : isDarkMode 
+                      ? 'text-gray-400 hover:text-white' 
+                      : 'text-white hover:text-gray-900'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 mb-0.5" />
+                  <span className="text-xs font-medium">{link.label}</span>
+                </button>
+              );
+            }
+
+            return (
+              <NavLink
+                key={link.label}
+                to={link.href}
+                end={link.href === '/'}
+                className={({ isActive }) =>
+                  `flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
+                    isActive
+                      ? 'text-blue-100 bg-blue-700'
+                      : isDarkMode 
+                      ? 'text-gray-400 hover:text-white' 
+                      : 'text-white hover:text-gray-900'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5 mb-0.5" />
+                <span className="text-xs font-medium">{link.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mobile More Menu Overlay */}
+      {isMobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* More Menu */}
+          <div className={`fixed bottom-20 right-4 left-4 z-50 lg:hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-2xl shadow-xl`}>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  More Options
+                </h3>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {moreMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isLogout = item.danger;
+                  
+                  return (
+                    <NavLink
+                      key={item.label}
+                      to={item.href}
+                      onClick={isLogout ? handleLogout : () => setIsMobileMenuOpen(false)}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl transition-colors ${
+                        isLogout
+                          ? isDarkMode
+                            ? 'text-red-400 hover:bg-red-500/10'
+                            : 'text-red-500 hover:bg-red-50'
+                          : isDarkMode
+                          ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="w-6 h-6 mb-2" />
+                      <span className="text-sm font-medium text-center">{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Overlay for desktop profile dropdown */}
       {isProfileDropdownOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"

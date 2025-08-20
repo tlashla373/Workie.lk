@@ -13,6 +13,7 @@ import Video from './pages/Video/Video';
 import ClientProfile from './pages/Profile/ClientProfile';
 import LoginPage from './pages/Authentication/LoginPage';
 import SignUpPage from './pages/Authentication/SignUpPage';
+import EmailVerification from './pages/Authentication/EmailVerification';
 import RoleSelection from './pages/Authentication/RoleSelection';
 import Friends from './pages/Friend/Friends';
 import WorkerVerification from './pages/Authentication/WorkerVerificatio';
@@ -86,6 +87,10 @@ const App = () => {
     {
       path: '/signuppage',
       element: <SignUpPage/>,
+    },
+    {
+      path: '/email-verification',
+      element: <EmailVerification/>,
     },
     {
       path: '/roleselection',
