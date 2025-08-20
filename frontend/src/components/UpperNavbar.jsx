@@ -16,10 +16,12 @@ import profileImage from '../assets/profile.jpeg';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { Link } from 'react-router-dom';
+import ChatInterface from './Chat/ChatInterface';
 
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const location = useLocation();
   const { isDarkMode } = useDarkMode();
 
@@ -166,7 +168,10 @@ const UpperNavbar = ({ isCollapsed = false }) => {
               </button>
             </Link>
             
-            <button className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 text-gray-100 hover:bg-gray-700 hover:text-white' : 'bg-gray-700/30 text-gray-100 hover:bg-gray-700/50 hover:text-white'}`}>
+            <button 
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 text-gray-100 hover:bg-gray-700 hover:text-white' : 'bg-gray-700/30 text-gray-100 hover:bg-gray-700/50 hover:text-white'}`}
+            >
               <MessageCircle className="w-5 h-5" />
             </button>
             
@@ -266,13 +271,20 @@ const UpperNavbar = ({ isCollapsed = false }) => {
         </div>
       </header>
 
+      {/* Chat Interface */}
+      <ChatInterface 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+      />
+
       {/* Overlay for mobile */}
-      {(isProfileDropdownOpen || isNotificationDropdownOpen) && (
+      {(isProfileDropdownOpen || isNotificationDropdownOpen || isChatOpen) && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
           onClick={() => {
             setIsProfileDropdownOpen(false);
             setIsNotificationDropdownOpen(false);
+            setIsChatOpen(false);
           }}
         />
       )}
