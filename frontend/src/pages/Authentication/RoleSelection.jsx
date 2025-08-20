@@ -105,14 +105,7 @@ const RoleSelection = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm looking for work</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Find opportunities that match your skills. Get hired by clients who need your expertise.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Find Jobs</span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Build Profile</span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Earn Money</span>
-                  </div>
+                  
                 </div>
               </div>
             </div>
@@ -135,14 +128,6 @@ const RoleSelection = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm looking to hire</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Post jobs and find qualified workers. Connect with professionals who can help grow your business.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Post Jobs</span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Find Talent</span>
-                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Manage Projects</span>
-                  </div>
                 </div>
               </div>
             </div>

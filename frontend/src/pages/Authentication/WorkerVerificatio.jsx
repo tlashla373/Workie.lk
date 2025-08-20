@@ -211,15 +211,15 @@ const WorkerVerification = () => {
     const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
     
     return (
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-4 relative px-2">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-start justify-between mb-4 relative px-1 sm:px-2 overflow-x-auto">
           {steps.map((step, index) => {
             const status = getStepStatus(step.id);
             const IconComponent = step.icon;
             
             return (
-              <div key={step.id} className="flex flex-col items-center relative" style={{ width: `${100 / steps.length}%` }}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 relative z-10 ${
+              <div key={step.id} className="flex flex-col items-center relative min-w-0 flex-1">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mb-1 sm:mb-2 transition-all duration-300 relative z-10 ${
                   status === 'completed' 
                     ? 'bg-green-500 text-white' 
                     : status === 'current'
@@ -229,12 +229,12 @@ const WorkerVerification = () => {
                     : 'bg-gray-200 text-gray-500'
                 }`}>
                   {status === 'completed' ? (
-                    <Check className="w-5 h-5" />
+                    <Check className="w-3 h-3 sm:w-5 sm:h-5" />
                   ) : (
-                    <IconComponent className="w-5 h-5" />
+                    <IconComponent className="w-3 h-3 sm:w-5 sm:h-5" />
                   )}
                 </div>
-                <span className={`text-xs text-center leading-tight max-w-20 ${
+                <span className={`text-xs sm:text-xs text-center leading-tight max-w-12 sm:max-w-20 truncate hidden sm:block ${
                   status === 'current' 
                     ? 'text-blue-500 font-medium' 
                     : status === 'completed'
@@ -274,21 +274,21 @@ const WorkerVerification = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Choose Your Categories & Skills</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Choose Your Categories & Skills</h2>
             
             {/* Worker Categories */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-3">
+                <label className="block text-sm font-medium mb-2 sm:mb-3">
                   Select Your Work Categories * (Choose exactly 2)
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                   {workerCategories.map((category) => (
                     <button
                       key={category}
                       onClick={() => handleCategoryToggle(category)}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-all ${
+                      className={`p-2 sm:p-3 rounded-lg border text-sm font-medium transition-all ${
                         workerData.categories.includes(category)
                           ? 'bg-blue-500 text-white border-blue-500'
                           : workerData.categories.length >= 2
@@ -318,7 +318,7 @@ const WorkerVerification = () => {
                   value={workerData.skills}
                   onChange={(e) => setWorkerData({ ...workerData, skills: e.target.value })}
                   rows={3}
-                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
@@ -334,7 +334,7 @@ const WorkerVerification = () => {
                   value={workerData.experience}
                   onChange={(e) => setWorkerData({ ...workerData, experience: e.target.value })}
                   rows={3}
-                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
@@ -345,9 +345,9 @@ const WorkerVerification = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Write Your Bio</h2>
-            <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Write Your Bio</h2>
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
                   About Yourself *
@@ -356,8 +356,8 @@ const WorkerVerification = () => {
                   placeholder="Write a brief bio about yourself. Tell potential clients about your work style, reliability, and what makes you a great worker."
                   value={workerData.bio}
                   onChange={(e) => setWorkerData({ ...workerData, bio: e.target.value })}
-                  rows={6}
-                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                  rows={5}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
@@ -371,9 +371,9 @@ const WorkerVerification = () => {
 
       case 3:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Personal Details</h2>
-            <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Personal Details</h2>
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Age *</label>
                 <input
@@ -383,7 +383,7 @@ const WorkerVerification = () => {
                   onChange={(e) => setWorkerData({ ...workerData, age: e.target.value })}
                   min="18"
                   max="70"
-                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
@@ -396,7 +396,7 @@ const WorkerVerification = () => {
                   placeholder="Enter your country"
                   value={workerData.country}
                   onChange={(e) => setWorkerData({ ...workerData, country: e.target.value })}
-                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
@@ -409,13 +409,13 @@ const WorkerVerification = () => {
                   placeholder="Enter your street address"
                   value={workerData.streetAddress}
                   onChange={(e) => setWorkerData({ ...workerData, streetAddress: e.target.value })}
-                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">City *</label>
                   <input
@@ -423,7 +423,7 @@ const WorkerVerification = () => {
                     placeholder="Enter your city"
                     value={workerData.city}
                     onChange={(e) => setWorkerData({ ...workerData, city: e.target.value })}
-                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
                     }`}
                   />
@@ -436,7 +436,7 @@ const WorkerVerification = () => {
                     placeholder="Enter postal code"
                     value={workerData.postalCode}
                     onChange={(e) => setWorkerData({ ...workerData, postalCode: e.target.value })}
-                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
                     }`}
                   />
@@ -503,17 +503,16 @@ const WorkerVerification = () => {
         );
 
       case 5:
-      case 5:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Profile Photo</h2>
-            <div className="flex flex-col items-center space-y-4">
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Profile Photo</h2>
+            <div className="flex flex-col items-center space-y-3 sm:space-y-4">
               {profileImagePreview ? (
                 <div className="text-center">
                   <img
                     src={profileImagePreview}
                     alt="Profile preview"
-                    className="w-32 h-32 object-cover rounded-full border-4 border-blue-500 mb-4"
+                    className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full border-4 border-blue-500 mb-3 sm:mb-4"
                   />
                   <p className="text-sm text-green-600 flex items-center justify-center gap-2">
                     <CheckCircle className="w-4 h-4" />
@@ -521,10 +520,10 @@ const WorkerVerification = () => {
                   </p>
                 </div>
               ) : (
-                <div className={`w-32 h-32 rounded-full border-2 border-dashed flex items-center justify-center ${
+                <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-dashed flex items-center justify-center ${
                   isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
                 }`}>
-                  <Camera className="w-8 h-8 text-gray-400" />
+                  <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                 </div>
               )}
               
@@ -550,24 +549,23 @@ const WorkerVerification = () => {
         );
 
       case 6:
-      case 6:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">ID Verification</h2>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">ID Verification</h2>
+            <p className="text-sm text-gray-600 mb-4 sm:mb-6">
               Please upload clear photos of both sides of your government-issued ID for verification.
             </p>
             
             {/* ID Front Photo */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">ID Front Photo</h3>
-              <div className="flex flex-col items-center space-y-4">
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-base sm:text-lg font-medium">ID Front Photo</h3>
+              <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                 {idFrontImagePreview ? (
                   <div className="text-center">
                     <img
                       src={idFrontImagePreview}
                       alt="ID Front preview"
-                      className="w-64 h-40 object-cover rounded-lg border-2 border-blue-500 mb-4"
+                      className="w-48 h-32 sm:w-64 sm:h-40 object-cover rounded-lg border-2 border-blue-500 mb-3 sm:mb-4"
                     />
                     <p className="text-sm text-green-600 flex items-center justify-center gap-2">
                       <CheckCircle className="w-4 h-4" />
@@ -575,11 +573,11 @@ const WorkerVerification = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className={`w-64 h-40 rounded-lg border-2 border-dashed flex items-center justify-center ${
+                  <div className={`w-48 h-32 sm:w-64 sm:h-40 rounded-lg border-2 border-dashed flex items-center justify-center ${
                     isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
                   }`}>
                     <div className="text-center">
-                      <CreditCard className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-400">ID Front</p>
                     </div>
                   </div>
@@ -602,15 +600,15 @@ const WorkerVerification = () => {
             </div>
 
             {/* ID Back Photo */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">ID Back Photo</h3>
-              <div className="flex flex-col items-center space-y-4">
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-base sm:text-lg font-medium">ID Back Photo</h3>
+              <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                 {idBackImagePreview ? (
                   <div className="text-center">
                     <img
                       src={idBackImagePreview}
                       alt="ID Back preview"
-                      className="w-64 h-40 object-cover rounded-lg border-2 border-blue-500 mb-4"
+                      className="w-48 h-32 sm:w-64 sm:h-40 object-cover rounded-lg border-2 border-blue-500 mb-3 sm:mb-4"
                     />
                     <p className="text-sm text-green-600 flex items-center justify-center gap-2">
                       <CheckCircle className="w-4 h-4" />
@@ -618,11 +616,11 @@ const WorkerVerification = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className={`w-64 h-40 rounded-lg border-2 border-dashed flex items-center justify-center ${
+                  <div className={`w-48 h-32 sm:w-64 sm:h-40 rounded-lg border-2 border-dashed flex items-center justify-center ${
                     isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
                   }`}>
                     <div className="text-center">
-                      <CreditCard className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-400">ID Back</p>
                     </div>
                   </div>
@@ -647,29 +645,28 @@ const WorkerVerification = () => {
         );
 
       case 7:
-      case 7:
         return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Contact Verification</h2>
-            <div className="space-y-6">
-              <div className={`p-4 rounded-lg border ${
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Contact Verification</h2>
+            <div className="space-y-4 sm:space-y-6">
+              <div className={`p-3 sm:p-4 rounded-lg border ${
                 workerData.phoneVerified 
                   ? 'border-green-300 bg-green-50' 
                   : isDarkMode 
                   ? 'border-gray-600 bg-gray-800' 
                   : 'border-gray-200 bg-gray-50'
               }`}>
-                <div className="flex items-center gap-3 mb-3">
-                  <Phone className="w-5 h-5 text-blue-500" />
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                   <label className={`block ${isDarkMode ? 'text-gray-800' : 'text-gray-600'} text-sm font-medium`}>Phone Verification *</label>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="tel"
                     placeholder="Enter your phone number"
                     value={workerData.phone}
                     onChange={(e) => setWorkerData({ ...workerData, phone: e.target.value })}
-                    className={`flex-1 border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`flex-1 border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       isDarkMode ? 'border-gray-600 text-gray-800' : 'border-gray-300  text-gray-400'
                     }`}
                     disabled={workerData.phoneVerified}
@@ -677,7 +674,7 @@ const WorkerVerification = () => {
                   <button
                     onClick={handleVerifyPhone}
                     disabled={isVerifyingPhone || workerData.phoneVerified || !workerData.phone.trim()}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                       workerData.phoneVerified
                         ? 'bg-green-500 text-white'
                         : workerData.phone.trim() && !isVerifyingPhone
@@ -686,7 +683,7 @@ const WorkerVerification = () => {
                     }`}
                   >
                     {workerData.phoneVerified ? (
-                      <CheckCircle className="w-5 h-5" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                     ) : isVerifyingPhone ? (
                       'Verifying...'
                     ) : (
@@ -762,49 +759,49 @@ const WorkerVerification = () => {
   };
 
   return (
-    <div className={`min-h-screen px-4 py-8 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`min-h-screen px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'}`}>
       <div className="max-w-3xl mx-auto">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-              <Shield className="w-8 h-8 text-blue-500" />
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between">
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center sm:justify-start gap-2">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
               Worker Verification
             </h1>
-            <p className="text-gray-600">Complete your verification to start working on our platform</p>
+            <p className="text-sm sm:text-base text-gray-600">Complete your verification to start working on our platform</p>
           </div>
         </div>
 
         {renderProgressBar()}
 
-        <div className={`rounded-xl p-6 mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <div className={`rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
           {renderStepContent()}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between">
+        <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0">
           <button
             onClick={currentStep === 1 ? () => navigate(-1) : handlePrevious}
-            className={`flex items-center gap-2 px-6 py-2 border rounded-lg transition-colors ${
+            className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 border rounded-lg transition-colors text-sm sm:text-base ${
               isDarkMode 
                 ? 'border-gray-600 hover:bg-gray-800' 
                 : 'border-gray-300 hover:bg-gray-100'
             }`}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             {currentStep === 1 ? 'Back' : 'Previous'}
           </button>
 
           <button
             onClick={currentStep === 8 ? handleComplete : handleNext}
             disabled={!canProceedToNext()}
-            className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
               canProceedToNext()
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-400 text-white cursor-not-allowed'
             }`}
           >
             {currentStep === 8 ? 'Complete Setup' : 'Next'}
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>

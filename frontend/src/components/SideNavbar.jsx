@@ -224,7 +224,7 @@ const SideNavbar = ({
                       : 'text-white hover:text-gray-900'
                   }`}
                 >
-                  <Icon className="w-6 h-6 mb-1" />
+                  <Icon className="w-5 h-5 mb-0.5" />
                   <span className="text-xs font-medium">{link.label}</span>
                 </button>
               );
@@ -245,7 +245,7 @@ const SideNavbar = ({
                   }`
                 }
               >
-                <Icon className="w-6 h-6 mb-1" />
+                <Icon className="w-5 h-5 mb-0.5" />
                 <span className="text-xs font-medium">{link.label}</span>
               </NavLink>
             );
@@ -297,7 +297,7 @@ const SideNavbar = ({
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                       }`}
                     >
-                      <Icon className="w-8 h-8 mb-2" />
+                      <Icon className="w-6 h-6 mb-2" />
                       <span className="text-sm font-medium text-center">{item.label}</span>
                     </NavLink>
                   );
