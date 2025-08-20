@@ -10,28 +10,25 @@ import {
   Briefcase,
   UserPlus,
   Settings,
-  MoreHorizontal,
-  Menu,
-  X,
-  ArrowLeft
+  MoreHorizontal
 } from 'lucide-react';
 import profileImage from '../assets/profile.jpeg';
-import Logo from '../assets/Logo.png';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { Link } from 'react-router-dom';
+import Logo from '../assets/Logo.png';
 
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
 
-  const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
+  // const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const navigate = useNavigate();
+  const toggleMobileSearch = () => setIsMobileSearchOpen((prev) => !prev);
   const toggleNotificationDropdown = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
-  const toggleMobileSearch = () => setIsMobileSearchOpen(!isMobileSearchOpen);
 
   // Sample notification data
   const notifications = [
@@ -97,17 +94,13 @@ const UpperNavbar = ({ isCollapsed = false }) => {
   const pageTitles = {
     '/': 'Home',
     '/postjob': 'Post Job',
-    '/post-job': 'Post Job',
     '/friends': 'Friends',
     '/notifications': 'Notifications',
     '/findjobs': 'Find Jobs',
     '/workhistory': 'Work Status',
-    '/add-post': 'Create Post',
-    '/video': 'Video',
+    '/games': 'Video',
     '/settings': 'Settings',
     '/logout': 'Log Out',
-    '/workerprofile': 'Profile',
-    '/clientprofile': 'Profile',
   };
   
   const currentPageTitle = pageTitles[location.pathname] || 'Dashboard';
@@ -133,15 +126,15 @@ const UpperNavbar = ({ isCollapsed = false }) => {
 
   return (
     <>
-      {/* Desktop Header */}
-      <header className={`hidden lg:flex h-full px-6 py-2 items-center border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFFFF] border-gray-700/50'}`}>
+      {/* Top Bar */}
+      <header className={`h-full px-6 py-2 flex items-center border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFFFF] border-gray-700/50'}`}>
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-4">
             <h1 className={`text-xl alatsi-regular font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>{currentPageTitle}</h1>
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
+          <div className="flex-1 max-w-md mx-8 ">
             <div className="relative">
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
               <input
@@ -154,8 +147,10 @@ const UpperNavbar = ({ isCollapsed = false }) => {
 
           {/* Right Actions */}
           <div className="flex items-center space-x-3 pl-4">
+            <div className=''></div>
             <Link className="relative" to="/clientprofile">
               <button
+                
                 className={`w-full flex items-center space-x-3 p-2 rounded-xl transition-all border duration-200 group ${isDarkMode ? 'bg-gray-700 border-gray-800 hover:bg-gray-600' : 'bg-[#F0F3FF] border-gray-300 hover:bg-gray-400/50'}`}
               >
                 <div className="relative">
@@ -193,7 +188,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                 )}
               </button>
 
-              {/* Desktop Notifications Dropdown */}
+              {/* Notifications Dropdown */}
               {isNotificationDropdownOpen && (
                 <div className={`absolute right-0 top-full mt-2 w-96 rounded-xl shadow-2xl border z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                   {/* Header */}
@@ -319,7 +314,10 @@ const UpperNavbar = ({ isCollapsed = false }) => {
               </button>
 
               {/* Messages Button */}
-              <button className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
+              <button
+                className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                onClick={() => navigate('/messages')}
+              >
                 <MessageCircle className="w-5 h-5" />
               </button>
 
