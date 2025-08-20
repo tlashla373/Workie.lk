@@ -82,7 +82,7 @@ const WorkHistoryStatus = ({ viewRole, workHistory }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-6">
       {getStatusCards().map((card, index) => (
         <StatusCard
           key={index}

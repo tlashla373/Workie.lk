@@ -30,7 +30,18 @@ const WorkerVerification = () => {
   const { isDarkMode } = useDarkMode();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [clientData, setClientData] = useState({
+  const [workerData, setWorkerData] = useState({
+    // New fields for added steps
+    categories: [],
+    skills: '',
+    experience: '',
+    bio: '',
+    age: '',
+    country: '',
+    streetAddress: '',
+    city: '',
+    postalCode: '',
+    // Existing fields
     location: '',
     address: '',
     companyName: '',
@@ -39,41 +50,49 @@ const WorkerVerification = () => {
     idPhotoBack: null,
     emailVerified: false,
     phoneVerified: false,
-    email: '',
     phone: '',
   });
 
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
 
+  // Available worker categories
+  const workerCategories = [
+    'Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter', 'Welder',
+    'HVAC Technician', 'Roofer', 'Landscaper', 'Cleaner', 'Mechanic', 'Driver'
+  ];
+
   const steps = [
-    { id: 1, title: 'Basic Information', icon: FileText },
-    { id: 2, title: 'Profile Photo', icon: Camera },
-    { id: 3, title: 'ID Verification', icon: CreditCard },
-    { id: 4, title: 'Contact Verification', icon: Shield },
-    { id: 5, title: 'Complete Setup', icon: CheckCircle }
+    { id: 1, title: 'Category & Skills', icon: User },
+    { id: 2, title: 'Bio', icon: FileText },
+    { id: 3, title: 'Personal Details', icon: MapPin },
+    { id: 4, title: 'Work Information', icon: Building },
+    { id: 5, title: 'Profile Photo', icon: Camera },
+    { id: 6, title: 'ID Verification', icon: CreditCard },
+    { id: 7, title: 'Contact Verification', icon: Shield },
+    { id: 8, title: 'Complete Setup', icon: CheckCircle }
   ];
 
   const profileImagePreview = useMemo(() => {
-    if (clientData.profilePhoto) {
-      return URL.createObjectURL(clientData.profilePhoto);
+    if (workerData.profilePhoto) {
+      return URL.createObjectURL(workerData.profilePhoto);
     }
     return null;
-  }, [clientData.profilePhoto]);
+  }, [workerData.profilePhoto]);
 
   const idFrontImagePreview = useMemo(() => {
-    if (clientData.idPhotoFront) {
-      return URL.createObjectURL(clientData.idPhotoFront);
+    if (workerData.idPhotoFront) {
+      return URL.createObjectURL(workerData.idPhotoFront);
     }
     return null;
-  }, [clientData.idPhotoFront]);
+  }, [workerData.idPhotoFront]);
 
   const idBackImagePreview = useMemo(() => {
-    if (clientData.idPhotoBack) {
-      return URL.createObjectURL(clientData.idPhotoBack);
+    if (workerData.idPhotoBack) {
+      return URL.createObjectURL(workerData.idPhotoBack);
     }
     return null;
-  }, [clientData.idPhotoBack]);
+  }, [workerData.idPhotoBack]);
 
   // Cleanup image previews
   useEffect(() => {
@@ -93,15 +112,33 @@ const WorkerVerification = () => {
   const handleVerifyEmail = async () => {
     setIsVerifyingEmail(true);
     await new Promise(res => setTimeout(res, 1500));
-    setClientData(prev => ({ ...prev, emailVerified: true }));
+    setWorkerData(prev => ({ ...prev, emailVerified: true }));
     setIsVerifyingEmail(false);
   };
 
   const handleVerifyPhone = async () => {
     setIsVerifyingPhone(true);
     await new Promise(res => setTimeout(res, 1500));
-    setClientData(prev => ({ ...prev, phoneVerified: true }));
+    setWorkerData(prev => ({ ...prev, phoneVerified: true }));
     setIsVerifyingPhone(false);
+  };
+
+  const handleCategoryToggle = (category) => {
+    setWorkerData(prev => {
+      const currentCategories = prev.categories;
+      if (currentCategories.includes(category)) {
+        return {
+          ...prev,
+          categories: currentCategories.filter(c => c !== category)
+        };
+      } else if (currentCategories.length < 2) {
+        return {
+          ...prev,
+          categories: [...currentCategories, category]
+        };
+      }
+      return prev;
+    });
   };
 
   const handleComplete = () => {
@@ -113,25 +150,35 @@ const WorkerVerification = () => {
   const isStepValid = (step) => {
     switch (step) {
       case 1:
-        return clientData.location.trim() !== '' && clientData.address.trim() !== '';
+        return workerData.categories.length === 2; // Must choose exactly 2 categories
       case 2:
-        return clientData.profilePhoto !== null;
+        return workerData.bio.trim() !== '';
       case 3:
-        return clientData.idPhotoFront !== null && clientData.idPhotoBack !== null;
+        return workerData.age.trim() !== '' && 
+               workerData.country.trim() !== '' && 
+               workerData.streetAddress.trim() !== '' && 
+               workerData.city.trim() !== '' && 
+               workerData.postalCode.trim() !== '';
       case 4:
-        return clientData.email.trim() !== '' && 
-               clientData.phone.trim() !== '' && 
-               clientData.emailVerified && 
-               clientData.phoneVerified;
+        return workerData.location.trim() !== '' && workerData.address.trim() !== '';
       case 5:
-        return isStepValid(1) && isStepValid(2) && isStepValid(3) && isStepValid(4);
+        return workerData.profilePhoto !== null;
+      case 6:
+        return workerData.idPhotoFront !== null && workerData.idPhotoBack !== null;
+      case 7:
+        return workerData.phone.trim() !== '' && 
+               workerData.phoneVerified;
+      case 8:
+        return isStepValid(1) && isStepValid(2) && isStepValid(3) && isStepValid(4) && 
+               isStepValid(5) && isStepValid(6) && isStepValid(7);
       default:
         return false;
     }
   };
 
   const isAllStepsComplete = () => {
-    return isStepValid(1) && isStepValid(2) && isStepValid(3) && isStepValid(4);
+    return isStepValid(1) && isStepValid(2) && isStepValid(3) && isStepValid(4) && 
+           isStepValid(5) && isStepValid(6) && isStepValid(7);
   };
 
   const getStepStatus = (stepId) => {
@@ -141,11 +188,15 @@ const WorkerVerification = () => {
   };
 
   const canProceedToNext = () => {
+    // Step 1 can be skipped if categories are selected but skills/experience are empty
+    if (currentStep === 1) {
+      return workerData.categories.length === 2;
+    }
     return isStepValid(currentStep);
   };
 
   const handleNext = () => {
-    if (canProceedToNext() && currentStep < 5) {
+    if (canProceedToNext() && currentStep < 8) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -161,13 +212,13 @@ const WorkerVerification = () => {
     
     return (
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4 relative">
+        <div className="flex items-start justify-between mb-4 relative px-2">
           {steps.map((step, index) => {
             const status = getStepStatus(step.id);
             const IconComponent = step.icon;
             
             return (
-              <div key={step.id} className="flex flex-col items-center flex-1 relative">
+              <div key={step.id} className="flex flex-col items-center relative" style={{ width: `${100 / steps.length}%` }}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 relative z-10 ${
                   status === 'completed' 
                     ? 'bg-green-500 text-white' 
@@ -183,7 +234,7 @@ const WorkerVerification = () => {
                     <IconComponent className="w-5 h-5" />
                   )}
                 </div>
-                <span className={`text-xs text-center px-1 ${
+                <span className={`text-xs text-center leading-tight max-w-20 ${
                   status === 'current' 
                     ? 'text-blue-500 font-medium' 
                     : status === 'completed'
@@ -200,8 +251,8 @@ const WorkerVerification = () => {
                   <div className={`absolute top-5 left-1/2 h-0.5 transition-colors duration-300 ${
                     step.id < currentStep ? 'bg-green-500' : isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
                   }`} style={{ 
-                    width: `calc(100vw / ${steps.length} - 2.5rem)`,
-                    transform: 'translateX(1.25rem)'
+                    width: `calc(100% - 1.25rem)`,
+                    transform: 'translateX(0.625rem)'
                   }} />
                 )}
               </div>
@@ -224,49 +275,167 @@ const WorkerVerification = () => {
       case 1:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-4">Basic Information</h2>
+            <h2 className="text-2xl font-semibold mb-4">Choose Your Categories & Skills</h2>
+            
+            {/* Worker Categories */}
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-blue-500" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Current Location *</label>
+              <div>
+                <label className="block text-sm font-medium mb-3">
+                  Select Your Work Categories * (Choose exactly 2)
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {workerCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategoryToggle(category)}
+                      className={`p-3 rounded-lg border text-sm font-medium transition-all ${
+                        workerData.categories.includes(category)
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : workerData.categories.length >= 2
+                          ? 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed'
+                          : isDarkMode
+                          ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-800'
+                          : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                      }`}
+                      disabled={!workerData.categories.includes(category) && workerData.categories.length >= 2}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Selected: {workerData.categories.length}/2 categories
+                </p>
+              </div>
+
+              {/* Skills (Optional) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Skills (Optional - you can skip this)
+                </label>
+                <textarea
+                  placeholder="List your relevant skills (e.g., 5 years plumbing experience, certified electrician, etc.)"
+                  value={workerData.skills}
+                  onChange={(e) => setWorkerData({ ...workerData, skills: e.target.value })}
+                  rows={3}
+                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+
+              {/* Experience (Optional) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Experience (Optional - you can skip this)
+                </label>
+                <textarea
+                  placeholder="Describe your work experience and achievements"
+                  value={workerData.experience}
+                  onChange={(e) => setWorkerData({ ...workerData, experience: e.target.value })}
+                  rows={3}
+                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold mb-4">Write Your Bio</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  About Yourself *
+                </label>
+                <textarea
+                  placeholder="Write a brief bio about yourself. Tell potential clients about your work style, reliability, and what makes you a great worker."
+                  value={workerData.bio}
+                  onChange={(e) => setWorkerData({ ...workerData, bio: e.target.value })}
+                  rows={6}
+                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {workerData.bio.length}/500 characters
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold mb-4">Personal Details</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Age *</label>
+                <input
+                  type="number"
+                  placeholder="Enter your age"
+                  value={workerData.age}
+                  onChange={(e) => setWorkerData({ ...workerData, age: e.target.value })}
+                  min="18"
+                  max="70"
+                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Country *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your country"
+                  value={workerData.country}
+                  onChange={(e) => setWorkerData({ ...workerData, country: e.target.value })}
+                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Street Address *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your street address"
+                  value={workerData.streetAddress}
+                  onChange={(e) => setWorkerData({ ...workerData, streetAddress: e.target.value })}
+                  className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">City *</label>
                   <input
                     type="text"
-                    placeholder="Enter your current location"
-                    value={clientData.location}
-                    onChange={(e) => setClientData({ ...clientData, location: e.target.value })}
+                    placeholder="Enter your city"
+                    value={workerData.city}
+                    onChange={(e) => setWorkerData({ ...workerData, city: e.target.value })}
                     className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
                     }`}
                   />
                 </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <Building className="w-5 h-5 text-blue-500" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Work Address *</label>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Postal Code *</label>
                   <input
                     type="text"
-                    placeholder="Enter your work address"
-                    value={clientData.address}
-                    onChange={(e) => setClientData({ ...clientData, address: e.target.value })}
-                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-blue-500" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Company Name</label>
-                  <input
-                    type="text"
-                    placeholder="Enter company name (optional)"
-                    value={clientData.companyName}
-                    onChange={(e) => setClientData({ ...clientData, companyName: e.target.value })}
+                    placeholder="Enter postal code"
+                    value={workerData.postalCode}
+                    onChange={(e) => setWorkerData({ ...workerData, postalCode: e.target.value })}
                     className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
                     }`}
@@ -277,7 +446,64 @@ const WorkerVerification = () => {
           </div>
         );
 
-      case 2:
+      case 4:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold mb-4">Work Information</h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-blue-500" />
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">Current Work Location *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your current work location"
+                    value={workerData.location}
+                    onChange={(e) => setWorkerData({ ...workerData, location: e.target.value })}
+                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Building className="w-5 h-5 text-blue-500" />
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">Preferred Work Areas *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter areas where you prefer to work"
+                    value={workerData.address}
+                    onChange={(e) => setWorkerData({ ...workerData, address: e.target.value })}
+                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5 text-blue-500" />
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1">Current Company</label>
+                  <input
+                    type="text"
+                    placeholder="Enter current company name (optional)"
+                    value={workerData.companyName}
+                    onChange={(e) => setWorkerData({ ...workerData, companyName: e.target.value })}
+                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                    }`}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 5:
+      case 5:
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Profile Photo</h2>
@@ -310,7 +536,7 @@ const WorkerVerification = () => {
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
-                      setClientData({ ...clientData, profilePhoto: file });
+                      setWorkerData({ ...workerData, profilePhoto: file });
                     }
                   }}
                   className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -323,7 +549,8 @@ const WorkerVerification = () => {
           </div>
         );
 
-      case 3:
+      case 6:
+      case 6:
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4">ID Verification</h2>
@@ -365,7 +592,7 @@ const WorkerVerification = () => {
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
-                        setClientData({ ...clientData, idPhotoFront: file });
+                        setWorkerData({ ...workerData, idPhotoFront: file });
                       }
                     }}
                     className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -408,7 +635,7 @@ const WorkerVerification = () => {
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
-                        setClientData({ ...clientData, idPhotoBack: file });
+                        setWorkerData({ ...workerData, idPhotoBack: file });
                       }
                     }}
                     className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -419,63 +646,14 @@ const WorkerVerification = () => {
           </div>
         );
 
-      case 4:
+      case 7:
+      case 7:
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Contact Verification</h2>
             <div className="space-y-6">
               <div className={`p-4 rounded-lg border ${
-                clientData.emailVerified 
-                  ? 'border-green-300 bg-green-50' 
-                  : isDarkMode 
-                  ? 'border-gray-600 bg-gray-800' 
-                  : 'border-gray-200 bg-gray-50'
-              }`}>
-                <div className="flex items-center gap-3 mb-3">
-                  <Mail className="w-5 h-5 text-blue-500" />
-                  <label className="block text-sm font-medium">Email Verification *</label>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={clientData.email}
-                    onChange={(e) => setClientData({ ...clientData, email: e.target.value })}
-                    className={`flex-1 border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
-                    }`}
-                    disabled={clientData.emailVerified}
-                  />
-                  <button
-                    onClick={handleVerifyEmail}
-                    disabled={isVerifyingEmail || clientData.emailVerified || !clientData.email.trim()}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      clientData.emailVerified
-                        ? 'bg-green-500 text-white'
-                        : clientData.email.trim() && !isVerifyingEmail
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {clientData.emailVerified ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : isVerifyingEmail ? (
-                      'Verifying...'
-                    ) : (
-                      'Verify'
-                    )}
-                  </button>
-                </div>
-                {clientData.emailVerified && (
-                  <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4" />
-                    Email verified successfully
-                  </p>
-                )}
-              </div>
-
-              <div className={`p-4 rounded-lg border ${
-                clientData.phoneVerified 
+                workerData.phoneVerified 
                   ? 'border-green-300 bg-green-50' 
                   : isDarkMode 
                   ? 'border-gray-600 bg-gray-800' 
@@ -483,31 +661,31 @@ const WorkerVerification = () => {
               }`}>
                 <div className="flex items-center gap-3 mb-3">
                   <Phone className="w-5 h-5 text-blue-500" />
-                  <label className="block text-sm font-medium">Phone Verification *</label>
+                  <label className={`block ${isDarkMode ? 'text-gray-800' : 'text-gray-600'} text-sm font-medium`}>Phone Verification *</label>
                 </div>
                 <div className="flex gap-2">
                   <input
                     type="tel"
                     placeholder="Enter your phone number"
-                    value={clientData.phone}
-                    onChange={(e) => setClientData({ ...clientData, phone: e.target.value })}
+                    value={workerData.phone}
+                    onChange={(e) => setWorkerData({ ...workerData, phone: e.target.value })}
                     className={`flex-1 border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                      isDarkMode ? 'border-gray-600 text-gray-800' : 'border-gray-300  text-gray-400'
                     }`}
-                    disabled={clientData.phoneVerified}
+                    disabled={workerData.phoneVerified}
                   />
                   <button
                     onClick={handleVerifyPhone}
-                    disabled={isVerifyingPhone || clientData.phoneVerified || !clientData.phone.trim()}
+                    disabled={isVerifyingPhone || workerData.phoneVerified || !workerData.phone.trim()}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      clientData.phoneVerified
+                      workerData.phoneVerified
                         ? 'bg-green-500 text-white'
-                        : clientData.phone.trim() && !isVerifyingPhone
+                        : workerData.phone.trim() && !isVerifyingPhone
                         ? 'bg-blue-500 text-white hover:bg-blue-600'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
-                    {clientData.phoneVerified ? (
+                    {workerData.phoneVerified ? (
                       <CheckCircle className="w-5 h-5" />
                     ) : isVerifyingPhone ? (
                       'Verifying...'
@@ -516,7 +694,7 @@ const WorkerVerification = () => {
                     )}
                   </button>
                 </div>
-                {clientData.phoneVerified && (
+                {workerData.phoneVerified && (
                   <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
                     <CheckCircle className="w-4 h-4" />
                     Phone verified successfully
@@ -527,7 +705,8 @@ const WorkerVerification = () => {
           </div>
         );
 
-      case 5:
+      case 8:
+      case 8:
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Complete Setup</h2>
@@ -544,7 +723,19 @@ const WorkerVerification = () => {
                 <h4 className="font-medium mb-3">Verification Summary:</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span>Basic Information</span>
+                    <span>Categories & Skills</span>
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Bio Information</span>
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Personal Details</span>
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Work Information</span>
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
                   <div className="flex items-center justify-between">
@@ -553,10 +744,6 @@ const WorkerVerification = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span>ID Verification</span>
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Email Verification</span>
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
                   <div className="flex items-center justify-between">
@@ -608,7 +795,7 @@ const WorkerVerification = () => {
           </button>
 
           <button
-            onClick={currentStep === 5 ? handleComplete : handleNext}
+            onClick={currentStep === 8 ? handleComplete : handleNext}
             disabled={!canProceedToNext()}
             className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
               canProceedToNext()
@@ -616,7 +803,7 @@ const WorkerVerification = () => {
                 : 'bg-gray-400 text-white cursor-not-allowed'
             }`}
           >
-            {currentStep === 5 ? 'Complete Setup' : 'Next'}
+            {currentStep === 8 ? 'Complete Setup' : 'Next'}
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>

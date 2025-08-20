@@ -76,32 +76,32 @@ const WorkHistoryItem = ({ job, viewRole, onClick }) => {
     <div
       className={`${
         isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:bg-gray-50'
-      } rounded-2xl p-6 shadow-sm border ${
+      } rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-6 shadow-sm border ${
         isDarkMode ? 'border-gray-700' : 'border-gray-200'
       } transition-all duration-300 cursor-pointer hover:shadow-md hover:scale-[1.01]`}
       onClick={onClick}
     >
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
-        <div className="flex-1 lg:pr-4">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className={`text-xl font-semibold ${
+      <div className="flex flex-col space-y-3 md:space-y-4">
+        <div className="flex-1">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between space-y-2 md:space-y-0 mb-3">
+            <div className="flex-1">
+              <h3 className={`text-base md:text-lg lg:text-xl font-semibold ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
               } mb-1`}>
                 {displayJob.title}
               </h3>
-              <p className={`text-lg ${
+              <p className={`text-sm md:text-base lg:text-lg ${
                 isDarkMode ? 'text-blue-400' : 'text-blue-600'
               } font-medium`}>
                 {displayJob.company}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${getStatusColor(job.status)}`}>
                 {getStatusIcon(job.status)}
                 <span>{getStatusText(job.status)}</span>
               </span>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${
                 isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
               }`}>
                 {job.type}
@@ -109,15 +109,15 @@ const WorkHistoryItem = ({ job, viewRole, onClick }) => {
             </div>
           </div>
 
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-4 text-sm leading-relaxed`}>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-3 md:mb-4 text-xs md:text-sm leading-relaxed`}>
             {displayJob.description}
           </p>
 
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
             {job.skills.map((skill, index) => (
               <span
                 key={index}
-                className={`px-3 py-1 rounded-lg text-xs font-medium ${
+                className={`px-2 md:px-3 py-1 rounded-lg text-xs font-medium ${
                   isDarkMode 
                     ? 'bg-blue-900/30 text-blue-300' 
                     : 'bg-blue-100 text-blue-800'
@@ -128,9 +128,9 @@ const WorkHistoryItem = ({ job, viewRole, onClick }) => {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm">
             <div className="flex items-center space-x-2">
-              <Calendar className={`w-4 h-4 ${
+              <Calendar className={`w-3 h-3 md:w-4 md:h-4 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
               }`} />
               <span className={`${
@@ -140,7 +140,7 @@ const WorkHistoryItem = ({ job, viewRole, onClick }) => {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <MapPin className={`w-4 h-4 ${
+              <MapPin className={`w-3 h-3 md:w-4 md:h-4 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
               }`} />
               <span className={`${
@@ -150,7 +150,7 @@ const WorkHistoryItem = ({ job, viewRole, onClick }) => {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <DollarSign className={`w-4 h-4 ${
+              <DollarSign className={`w-3 h-3 md:w-4 md:h-4 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
               }`} />
               <span className={`${
@@ -163,9 +163,9 @@ const WorkHistoryItem = ({ job, viewRole, onClick }) => {
         </div>
 
         {job.rating && (
-          <div className="flex items-center space-x-2 bg-yellow-50 dark:bg-yellow-900/20 px-4 py-2 rounded-lg flex-shrink-0">
-            <Star className="w-5 h-5 text-yellow-500 fill-current" />
-            <span className={`font-semibold ${
+          <div className="flex items-center space-x-2 bg-yellow-50 dark:bg-yellow-900/20 px-3 md:px-4 py-2 rounded-lg self-start">
+            <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-500 fill-current" />
+            <span className={`font-semibold text-sm md:text-base ${
               isDarkMode ? 'text-yellow-300' : 'text-yellow-700'
             }`}>
               {job.rating}

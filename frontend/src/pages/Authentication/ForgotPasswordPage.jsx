@@ -159,7 +159,7 @@ export default function ForgotPasswordPage() {
           </div>
           <Link 
             to="/loginpage" 
-            className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium inline-block"
+            className="w-full max-w-sm bg-blue-500 text-white py-2 sm:py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium inline-block"
           >
             Go to Login Page
           </Link>
@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
             {/* PIN Input - Show if PIN is sent or being sent */}
             {(pinSent || sendingPin) && (
               <div className="flex justify-center items-center">
-                <label htmlFor="pin" className="relative">
+                <label htmlFor="pin" className="relative w-full max-w-sm">
                   <input
                     required
                     type="text"
@@ -208,12 +208,12 @@ export default function ForgotPasswordPage() {
                     value={pin}
                     onChange={handlePinChange}
                     disabled={sendingPin}
-                    className="w-80 px-4 py-3 border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer text-center text-2xl tracking-widest disabled:bg-gray-100"
+                    className="w-full px-4 py-2 sm:py-3 border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer text-center text-xl sm:text-2xl tracking-widest disabled:bg-gray-100"
                     placeholder="00000"
                     maxLength={5}
                     autoFocus
                   />
-                  <span className="absolute left-0 top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                  <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                     Enter 5-digit PIN
                   </span>
                   <Shield className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -227,7 +227,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading || pin.length !== 5}
-                  className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="w-full max-w-sm bg-blue-500 text-white py-2 sm:py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Verifying PIN...' : 'Verify PIN & Continue'}
                 </button>
@@ -264,17 +264,17 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="flex justify-center items-center">
-              <label htmlFor="newPassword" className="relative">
+              <label htmlFor="newPassword" className="relative w-full max-w-sm">
                 <input
                   required
                   type={showPassword ? "text" : "password"}
                   id="newPassword"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-80 px-4 py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-full px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   placeholder=" "
                 />
-                <span className="absolute left-0 top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   New Password
                 </span>
                 <button
@@ -288,17 +288,17 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="flex justify-center items-center">
-              <label htmlFor="confirmNewPassword" className="relative">
+              <label htmlFor="confirmNewPassword" className="relative w-full max-w-sm">
                 <input
                   required
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirmNewPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-80 px-4 py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
+                  className="w-full px-4 py-2 sm:py-3 text-sm border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer"
                   placeholder=" "
                 />
-                <span className="absolute left-0 top-3 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
+                <span className="absolute left-0 top-2 sm:top-3 px-1 text-gray-600 text-sm tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
                   Confirm New Password
                 </span>
                 <button
@@ -315,7 +315,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-80 bg-blue-500 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full max-w-sm bg-blue-500 text-white py-2 sm:py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Resetting Password...' : 'Reset Password'}
               </button>
@@ -380,15 +380,15 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
       {/* Left Side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
-        <div className="max-w-md mx-auto">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 lg:px-16 lg:py-0">
+        <div className="max-w-md w-full mx-auto">
           {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-2">
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-center sm:justify-start space-x-2">
               <Link to='/' className="w-10 h-10 bg-blue-50 rounded flex drop-shadow-sm items-center justify-center cursor-pointer">
                 <img className="w-8 h-8" src={Logo} alt="Workie.LK Logo" />
               </Link>
-              <span className="text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
+              <span className="text-lg sm:text-xl audiowide-regular font-bold text-gray-800">Workie.LK</span>
             </div>
           </div>
 
@@ -407,14 +407,14 @@ export default function ForgotPasswordPage() {
           */}
 
           {/* Header */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{getStepTitle()}</h1>
-          <p className="text-gray-600 mb-8">{getStepDescription()}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center sm:text-left">{getStepTitle()}</h1>
+          <p className="text-gray-600 mb-6 sm:mb-8 text-center sm:text-left text-sm sm:text-base">{getStepDescription()}</p>
 
           {/* Form Content */}
           {renderStepContent()}
 
           {/* Back to Login */}
-          <div className="text-center mt-6">
+          <div className="text-center mt-4 sm:mt-6">
             <Link to="/loginpage" className="text-blue-500 hover:text-blue-700 text-sm">
               ← Back to Login
             </Link>
