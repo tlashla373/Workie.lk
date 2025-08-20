@@ -96,7 +96,7 @@ const ClientProfile = () => {
           isDarkMode={isDarkMode}
         />
         
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {renderTabContent()}
         </div>
       </div>
