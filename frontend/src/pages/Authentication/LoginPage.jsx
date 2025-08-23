@@ -1,5 +1,6 @@
 import { useState } from "react";
 import useAuth from '../../hooks/useAuth.js';
+import authService from '../../services/authService.js';
 import { Eye, EyeOff } from "lucide-react";
 import Logo from '../../assets/Logo.png'
 import Facebook from '../../assets/facebook.svg'
@@ -31,11 +32,48 @@ export default function LoginPage() {
     }
   };
 
+  // Google Sign-In handler
+  const handleGoogleSignIn = async () => {
+    try {
+      // Use Google Identity Services (GIS) for client-side sign-in
+      /* global google */
+      if (!window.google) {
+        toast.error('Google Sign-In SDK not loaded.');
+        return;
+      }
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'email profile',
+        callback: async (response) => {
+          if (response && response.access_token) {
+            try {
+              // Send token to backend for verification
+              const result = await authService.googleSignIn(response.access_token);
+              if (result.token) {
+                toast.success('Signed in with Google!');
+                navigate('/roleselection');
+              } else {
+                toast.error(result.message || 'Google Sign-In failed');
+              }
+            } catch (err) {
+              toast.error('Google Sign-In error: ' + (err.message || 'Unknown error'));
+            }
+          } else {
+            toast.error('Google Sign-In failed to get token.');
+          }
+        }
+      });
+      client.requestAccessToken();
+    } catch (error) {
+      toast.error('Google Sign-In error: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
       {/* Left Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 lg:px-16 lg:py-0">
-        <div className="max-w-md w-full mx-auto">
+        <div className="max-w-md  mx-auto">
           {/* Logo */}
           <div className="mb-6 sm:mb-8">
             <div className="flex items-center justify-center sm:justify-start space-x-2">
@@ -152,6 +190,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
+                onClick={handleGoogleSignIn}
               >
                 <div className="w-5 h-5 mr-3">
                   <img className="h-5 w-5 sm:h-6 sm:w-6" src={Google} alt="Google"/>

@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import SideNavbar from '../../components/SideNavbar';
 import UpperNavbar from '../../components/UpperNavbar';
 import JobSuggestion from '../JobSuggestions/JobSuggestions';
+import AdminAccess from '../../components/AdminAccess';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 
 const AppLayout = () => {
@@ -45,6 +46,9 @@ const AppLayout = () => {
       <div className="lg:hidden">
         <SideNavbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       </div>
+
+      {/* Admin Access Button */}
+      <AdminAccess />
     </>
   );
 };

@@ -265,7 +265,7 @@ const Friends = () => {
           </div>
         ) : (
           <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-6' 
             : 'space-y-3 sm:space-y-4'
           }>
             {filteredFriends.map((friend) => (

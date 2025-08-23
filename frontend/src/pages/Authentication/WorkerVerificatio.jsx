@@ -127,18 +127,28 @@ const WorkerVerification = () => {
     setWorkerData(prev => {
       const currentCategories = prev.categories;
       if (currentCategories.includes(category)) {
+        // Remove category if already selected
         return {
           ...prev,
           categories: currentCategories.filter(c => c !== category)
         };
       } else if (currentCategories.length < 2) {
+        // Add category if less than 2 are selected
         return {
           ...prev,
           categories: [...currentCategories, category]
         };
       }
+      // Do nothing if 2 categories are already selected
       return prev;
     });
+  };
+
+  const handleClearCategories = () => {
+    setWorkerData(prev => ({
+      ...prev,
+      categories: []
+    }));
   };
 
   const handleComplete = () => {
@@ -150,7 +160,7 @@ const WorkerVerification = () => {
   const isStepValid = (step) => {
     switch (step) {
       case 1:
-        return workerData.categories.length === 2; // Must choose exactly 2 categories
+        return workerData.categories.length >= 1 && workerData.categories.length <= 2; // Must choose at least 1, max 2 categories
       case 2:
         return workerData.bio.trim() !== '';
       case 3:
@@ -188,9 +198,9 @@ const WorkerVerification = () => {
   };
 
   const canProceedToNext = () => {
-    // Step 1 can be skipped if categories are selected but skills/experience are empty
+    // Step 1 requires at least 1 category to be selected
     if (currentStep === 1) {
-      return workerData.categories.length === 2;
+      return workerData.categories.length >= 1 && workerData.categories.length <= 2;
     }
     return isStepValid(currentStep);
   };
@@ -280,9 +290,19 @@ const WorkerVerification = () => {
             {/* Worker Categories */}
             <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 sm:mb-3">
-                  Select Your Work Categories * (Choose exactly 2)
-                </label>
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <label className="block text-sm font-medium">
+                    Select Your Work Categories * (Choose 1-2 categories)
+                  </label>
+                  {workerData.categories.length > 0 && (
+                    <button
+                      onClick={handleClearCategories}
+                      className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                   {workerCategories.map((category) => (
                     <button
@@ -303,9 +323,21 @@ const WorkerVerification = () => {
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Selected: {workerData.categories.length}/2 categories
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-gray-500">
+                    Selected: {workerData.categories.length}/2 categories
+                  </p>
+                  {workerData.categories.length === 0 && (
+                    <p className="text-xs text-red-500">
+                      Please select at least one category
+                    </p>
+                  )}
+                  {workerData.categories.length >= 1 && (
+                    <p className="text-xs text-green-600">
+                      ✓ {workerData.categories.length === 1 ? 'You can select one more' : 'Maximum reached'}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Skills (Optional) */}

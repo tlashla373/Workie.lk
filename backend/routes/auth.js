@@ -6,6 +6,9 @@ const Profile = require('../models/Profile');
 const { auth } = require('../middleware/auth');
 const { validateRegister, validateLogin } = require('../middleware/validation');
 const { sendEmailVerificationCode, sendPasswordResetPin, sendOtpEmail } = require('../utils/emailService');
+const { OAuth2Client } = require('google-auth-library');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID; // Set this in your .env file
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
@@ -262,22 +265,29 @@ router.post('/forgot-password', async (req, res) => {
       });
     }
 
-    // Generate 5-digit PIN
-    const resetPin = Math.floor(10000 + Math.random() * 90000).toString();
-    
-    // Store PIN and expiry in user
-    user.passwordResetPin = resetPin;
-    user.passwordResetPinExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-    await user.save();
-
-    // Send PIN via email
-    try {
-      await sendPasswordResetPin(user.email, user.firstName, resetPin);
-    } catch (emailError) {
-      console.error('Failed to send reset PIN email:', emailError);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to send reset PIN. Please try again.'
+    // Only send a new PIN if there is no valid PIN
+    const now = Date.now();
+    if (!user.passwordResetPin || !user.passwordResetPinExpires || user.passwordResetPinExpires < now) {
+      // Generate 5-digit PIN
+      const resetPin = Math.floor(10000 + Math.random() * 90000).toString();
+      user.passwordResetPin = resetPin;
+      user.passwordResetPinExpires = now + 10 * 60 * 1000; // 10 minutes
+      await user.save();
+      // Send PIN via email
+      try {
+        await sendPasswordResetPin(user.email, user.firstName, resetPin);
+      } catch (emailError) {
+        console.error('Failed to send reset PIN email:', emailError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send reset PIN. Please try again.'
+        });
+      }
+    } else {
+      // If valid PIN exists, do not send another email
+      return res.status(200).json({
+        success: true,
+        message: 'A valid PIN has already been sent to your email address. Please check your inbox.'
       });
     }
 
@@ -538,6 +548,143 @@ router.post('/resend-otp', async (req, res) => {
       success: false,
       message: 'Failed to send OTP',
       error: error.message
+    });
+  }
+});
+
+// @route   POST /api/auth/google-signin
+// @desc    Google Sign-In authentication
+// @access  Public
+router.post('/google-signin', async (req, res) => {
+  console.log('Google Sign-In request body:', req.body); // Debug log
+  try {
+    const { accessToken, userInfo } = req.body;
+        
+    if (!accessToken && !userInfo) {
+      return res.status(400).json({
+        success: false,
+        message: 'No access token or user info provided'
+      });
+    }
+
+    let payload;
+
+    // Try to verify accessToken first
+    if (accessToken) {
+      try {
+        // Verify accessToken by making a request to Google's userinfo endpoint
+        const response = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
+        if (response.ok) {
+          const userProfile = await response.json();
+          payload = {
+            sub: userProfile.id,
+            email: userProfile.email,
+            given_name: userProfile.given_name,
+            family_name: userProfile.family_name,
+            picture: userProfile.picture,
+            email_verified: userProfile.verified_email
+          };
+        }
+      } catch (error) {
+        console.error('Access Token verification failed:', error);
+      }
+    }
+
+    // If accessToken verification failed, use userInfo as fallback
+    if (!payload && userInfo && userInfo.email) {
+      payload = {
+        sub: userInfo.id,
+        email: userInfo.email,
+        given_name: userInfo.displayName ? userInfo.displayName.split(' ')[0] : '',
+        family_name: userInfo.displayName ? userInfo.displayName.split(' ').slice(1).join(' ') : '',
+        picture: userInfo.photoUrl,
+        email_verified: true // Assume verified from Google
+      };
+    }
+
+    if (!payload || !payload.email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unable to verify Google authentication. Please try again.'
+      });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email: payload.email });
+    
+    if (!user) {
+      // Create new user
+      user = await User.create({
+        firstName: payload.given_name || '',
+        lastName: payload.family_name || '',
+        email: payload.email,
+        password: crypto.randomBytes(16).toString('hex'), // Generate a random password
+        googleId: payload.sub, // Store Google ID
+        isGoogleUser: true, // Flag for Google users
+        phone: '', // Phone not available from Google
+        emailVerificationCode: undefined, // No need for verification code
+        emailVerificationExpires: undefined,
+        isEmailVerified: payload.email_verified || true,
+        userType: 'worker', // Default user type
+        isVerified: true,
+        isActive: true,
+        profilePicture: payload.picture || '',
+      });
+      
+      // Create empty profile for the user
+      await Profile.create({ user: user._id });
+    } else {
+      // Update existing user with Google info if needed
+      let updateFields = {};
+      if (!user.googleId && payload.sub) {
+        updateFields.googleId = payload.sub;
+        updateFields.isGoogleUser = true;
+      }
+      if (!user.profilePicture && payload.picture) {
+        updateFields.profilePicture = payload.picture;
+      }
+      if (!user.isEmailVerified && payload.email_verified) {
+        updateFields.isEmailVerified = true;
+      }
+      
+      if (Object.keys(updateFields).length > 0) {
+        await User.findByIdAndUpdate(user._id, updateFields);
+        user = await User.findById(user._id); // Refresh user data
+      }
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.'
+      });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+
+    // Remove password from response
+    user.password = undefined;
+
+    res.status(200).json({
+      success: true,
+      message: 'Google sign-in successful',
+      data: {
+        user,
+        token,
+      },
+    });
+  } catch (error) {
+    console.error('Google Sign-In Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Google sign-in failed',
+      error: error.message,
     });
   }
 });

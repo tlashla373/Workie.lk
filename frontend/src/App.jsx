@@ -24,6 +24,15 @@ import ForgotPasswordPage from './pages/Authentication/ForgotPasswordPage';
 import { ToastContainer } from 'react-toastify';
 import JobApplicationPage from './pages/JobApplicationPage/JobApplicationPage';
 import JobProgressPage from './pages/WorkHistory/JobProgressPage';
+import AdminLayout from './pages/Admin/AdminLayout';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import AdminUsers from './pages/Admin/AdminUsers';
+import AdminJobs from './pages/Admin/AdminJobs';
+import AdminApplications from './pages/Admin/AdminApplications';
+import AdminReviews from './pages/Admin/AdminReviews';
+import AdminReports from './pages/Admin/AdminReports';
+import AdminNotifications from './pages/Admin/AdminNotifications';
+import AdminSettings from './pages/Admin/AdminSettings';
 
 
 const App = () => {
@@ -77,6 +86,44 @@ const App = () => {
         {
           path: 'job-application-page',
           element: <JobApplicationPage />,
+        },
+      ],
+    },
+    {
+      path: '/admin',
+      element: <AdminLayout />,
+      children: [
+        {
+          index: true,
+          element: <AdminDashboard />,
+        },
+        {
+          path: 'users',
+          element: <AdminUsers />,
+        },
+        {
+          path: 'jobs',
+          element: <AdminJobs />,
+        },
+        {
+          path: 'applications',
+          element: <AdminApplications />,
+        },
+        {
+          path: 'reviews',
+          element: <AdminReviews />,
+        },
+        {
+          path: 'reports',
+          element: <AdminReports />,
+        },
+        {
+          path: 'notifications',
+          element: <AdminNotifications />,
+        },
+        {
+          path: 'settings',
+          element: <AdminSettings />,
         },
       ],
     },
