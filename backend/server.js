@@ -14,6 +14,7 @@ const applicationRoutes = require('./routes/applications');
 const profileRoutes = require('./routes/profiles');
 const reviewRoutes = require('./routes/reviews');
 const notificationRoutes = require('./routes/notifications');
+const mediaRoutes = require('./routes/media');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -52,7 +53,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/workie_db
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
+// Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
@@ -60,6 +61,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/media', mediaRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

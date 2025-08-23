@@ -1,7 +1,32 @@
 import OccupationInformation from "./OccupationInformation";
 import PersonalInformation from "./PersonalInformation";
 
-const BasicInformation = () => {
+const BasicInformation = ({ profileData }) => {
+  // Extract data from profileData
+  const user = profileData?.user;
+  const profile = profileData?.profile;
+  
+  // Calculate years worked since account creation
+  const getYearsWorked = () => {
+    if (!user?.createdAt) return "N/A";
+    const createdDate = new Date(user.createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now - createdDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const years = Math.floor(diffDays / 365);
+    const months = Math.floor((diffDays % 365) / 30);
+    return `${years} years, ${months} months`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       {/* Header */}
@@ -13,35 +38,39 @@ const BasicInformation = () => {
       {/* Top Info Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-sm text-blue-600 font-medium">Hire Date</label>
+          <label className="text-sm text-blue-600 font-medium">Join Date</label>
           <div className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm">
-            August, 28, 2019
+            {formatDate(user?.createdAt)}
           </div>
         </div>
         <div>
-          <label className="text-sm text-blue-600 font-medium">Worked for</label>
+          <label className="text-sm text-blue-600 font-medium">Member for</label>
           <div className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm">
-            9 years, 1 month
+            {getYearsWorked()}
           </div>
         </div>
         <div>
-          <label className="text-sm text-blue-600 font-medium">Employee ID</label>
+          <label className="text-sm text-blue-600 font-medium">User ID</label>
           <div className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm">
-            356
+            {user?._id?.toString().slice(-6).toUpperCase() || "N/A"}
           </div>
         </div>
         <div>
-          <label className="text-sm text-blue-600 font-medium">SSN</label>
-          <div className="mt-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm">
-            XXX-XX-3540
+          <label className="text-sm text-blue-600 font-medium">Verification Status</label>
+          <div className={`mt-1 px-3 py-2 rounded-lg text-sm ${
+            user?.isVerified 
+              ? 'bg-green-600 text-white' 
+              : 'bg-orange-600 text-white'
+          }`}>
+            {user?.isVerified ? 'Verified' : 'Pending'}
           </div>
         </div>
       </div>
 
       {/* Personal & Occupation Info */}
       <div className="mt-6 space-y-6">
-        <PersonalInformation />
-        <OccupationInformation />
+        <PersonalInformation profileData={profileData} />
+        <OccupationInformation profileData={profileData} />
       </div>
     </div>
   );
