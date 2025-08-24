@@ -5,10 +5,60 @@ export class ProfileService {
     this.cache = new Map();
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
     this.pendingRequests = new Map();
+    this.currentUserId = null; // Track current user to detect user changes
+    
+    // Initialize and check for user changes on startup
+    this.checkUserChange();
+  }
+
+  // Clear all cache when user changes
+  clearAllCache() {
+    this.cache.clear();
+    this.pendingRequests.clear();
+    console.log('ProfileService: All cache cleared');
+  }
+
+  // Check if user has changed and clear cache if needed
+  checkUserChange() {
+    const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('auth_user');
+    
+    if (!token || !user) {
+      // No authentication, clear cache
+      if (this.cache.size > 0) {
+        this.clearAllCache();
+        this.currentUserId = null;
+      }
+      return false;
+    }
+
+    try {
+      const userData = JSON.parse(user);
+      const userId = userData.id || userData._id;
+      
+      if (this.currentUserId && this.currentUserId !== userId) {
+        // User has changed, clear cache
+        console.log('ProfileService: User changed, clearing cache');
+        this.clearAllCache();
+      }
+      
+      this.currentUserId = userId;
+      return true;
+    } catch (error) {
+      console.error('ProfileService: Error parsing user data:', error);
+      this.clearAllCache();
+      this.currentUserId = null;
+      return false;
+    }
   }
 
   // Get current user's profile data with caching
   async getCurrentUserProfile() {
+    // Check if user has changed or if there's no authentication
+    if (!this.checkUserChange()) {
+      throw new Error('Authentication required. Please log in.');
+    }
+
     const cacheKey = 'currentUserProfile';
     
     // Check if there's already a pending request
@@ -16,9 +66,10 @@ export class ProfileService {
       return this.pendingRequests.get(cacheKey);
     }
 
-    // Check cache first
+    // Check cache first (only if user hasn't changed)
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      console.log('ProfileService: Returning cached profile data');
       return cached.data;
     }
 
@@ -35,9 +86,19 @@ export class ProfileService {
         timestamp: Date.now()
       });
       
+      console.log('ProfileService: Profile data fetched and cached successfully');
       return response;
     } catch (error) {
-      console.error('Error fetching current user profile:', error);
+      console.error('ProfileService: Error fetching current user profile:', error);
+      
+      // If it's an authentication error, clear cache and user data
+      if (error.message?.includes('401') || error.message?.includes('authentication') || error.message?.includes('token')) {
+        console.log('ProfileService: Authentication error detected, clearing cache');
+        this.clearAllCache();
+        this.currentUserId = null;
+        throw new Error('Authentication failed. Please log in again.');
+      }
+      
       throw error;
     } finally {
       // Remove from pending requests
@@ -61,6 +122,66 @@ export class ProfileService {
   // Clear cache for current user profile
   clearCurrentUserProfileCache() {
     this.cache.delete('currentUserProfile');
+  }
+
+  // Handle user logout - clear all cache and user tracking
+  handleLogout() {
+    console.log('ProfileService: Handling user logout');
+    this.clearAllCache();
+    this.currentUserId = null;
+  }
+
+  // Handle user login - clear cache to ensure fresh data
+  handleLogin(userId) {
+    console.log('ProfileService: Handling user login for user:', userId);
+    if (this.currentUserId && this.currentUserId !== userId) {
+      this.clearAllCache();
+    }
+    this.currentUserId = userId;
+  }
+
+  // Check if user is authenticated
+  isAuthenticated() {
+    const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('auth_user');
+    return !!(token && user);
+  }
+
+  // Get current user ID from localStorage
+  getCurrentUserId() {
+    try {
+      const user = localStorage.getItem('auth_user');
+      if (user) {
+        const userData = JSON.parse(user);
+        return userData.id || userData._id;
+      }
+    } catch (error) {
+      console.error('ProfileService: Error getting user ID:', error);
+    }
+    return null;
+  }
+
+  // Debug method to check authentication status
+  debugAuthStatus() {
+    const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('auth_user');
+    const currentUserId = this.getCurrentUserId();
+    
+    console.log('ProfileService Debug:', {
+      hasToken: !!token,
+      hasUser: !!user,
+      currentUserId,
+      trackedUserId: this.currentUserId,
+      cacheSize: this.cache.size,
+      pendingRequests: this.pendingRequests.size
+    });
+    
+    return {
+      authenticated: !!(token && user),
+      currentUserId,
+      trackedUserId: this.currentUserId,
+      cacheSize: this.cache.size
+    };
   }
 
   // Get user profile by ID

@@ -64,13 +64,26 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
         }
       } catch (error) {
         console.error('SideNavbar: Error fetching user data:', error);
-        // Set default values on error
-        setUserData({
-          firstName: 'User',
-          lastName: '',
-          profilePicture: null,
-          isActive: false
-        });
+        
+        // Handle authentication errors specifically
+        if (error.message?.includes('Authentication')) {
+          console.log('SideNavbar: Authentication error detected, redirecting to login');
+          // Don't set default values for auth errors, let the auth system handle it
+          setUserData({
+            firstName: '',
+            lastName: '',
+            profilePicture: null,
+            isActive: false
+          });
+        } else {
+          // Set default values on other errors
+          setUserData({
+            firstName: 'User',
+            lastName: '',
+            profilePicture: null,
+            isActive: false
+          });
+        }
       } finally {
         setLoading(false);
       }

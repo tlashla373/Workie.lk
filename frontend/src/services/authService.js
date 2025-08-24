@@ -1,5 +1,6 @@
 import apiService from './apiService.js';
 import { API_ENDPOINTS } from '../config/api.js';
+import profileService from './profileService.js';
 
 export class AuthService {
   // Register new user
@@ -9,6 +10,14 @@ export class AuthService {
       
       if (response.success && response.data.token) {
         apiService.setAuthToken(response.data.token);
+        
+        // Store user data and notify ProfileService of registration
+        if (response.data.user) {
+          apiService.setUser(response.data.user);
+          const userId = response.data.user.id || response.data.user._id;
+          profileService.handleLogin(userId);
+        }
+        
         return response;
       }
       
@@ -30,6 +39,14 @@ export class AuthService {
       
       if (response.success && response.data.token) {
         apiService.setAuthToken(response.data.token);
+        
+        // Store user data and notify ProfileService of login
+        if (response.data.user) {
+          apiService.setUser(response.data.user);
+          const userId = response.data.user.id || response.data.user._id;
+          profileService.handleLogin(userId);
+        }
+        
         return response;
       }
       
@@ -44,7 +61,12 @@ export class AuthService {
   async logout() {
     try {
       await apiService.post('/auth/logout');
+      
+      // Clear all authentication data and notify ProfileService
       apiService.removeAuthToken();
+      apiService.removeUser();
+      profileService.handleLogout();
+      
       return { success: true };
     } catch (error) {
       // Even if API call fails, remove token locally

@@ -89,14 +89,27 @@ const UpperNavbar = ({ isCollapsed = false }) => {
           console.warn('API response indicated failure:', response);
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        // Set default values on error
-        setUserData({
-          firstName: 'User',
-          lastName: '',
-          profileImage: null,
-          isActive: false
-        });
+        console.error('UpperNavbar: Error fetching user data:', error);
+        
+        // Handle authentication errors specifically
+        if (error.message?.includes('Authentication')) {
+          console.log('UpperNavbar: Authentication error detected');
+          // Don't set default values for auth errors
+          setUserData({
+            firstName: '',
+            lastName: '',
+            profileImage: null,
+            isActive: false
+          });
+        } else {
+          // Set default values on other errors
+          setUserData({
+            firstName: 'User',
+            lastName: '',
+            profileImage: null,
+            isActive: false
+          });
+        }
       } finally {
         setLoading(false);
       }
