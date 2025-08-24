@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, MoreHorizontal } from 'lucide-react';
+import connectionService from '../services/connectionService';
 
 const NavigationTabs = ({ 
   activeTab, 
@@ -8,10 +9,33 @@ const NavigationTabs = ({
   setIsFollowing,
   isDarkMode = false 
 }) => {
+  const [friendCount, setFriendCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch friend count from API
+  useEffect(() => {
+    const fetchConnectionStats = async () => {
+      try {
+        const response = await connectionService.getConnectionStats();
+        if (response.success) {
+          setFriendCount(response.data.totalConnections);
+        }
+      } catch (error) {
+        console.error('Error fetching connection stats:', error);
+        // Fallback to default value
+        setFriendCount(8);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConnectionStats();
+  }, []);
+
   const tabs = [
     { id: 'timeline', label: 'Timeline' },
     { id: 'about', label: 'About' },
-    { id: 'friends', label: 'Friends', count: 8 },
+    { id: 'friends', label: 'Friends', count: friendCount },
     { id: 'photos', label: 'Photos' },
   ];
 

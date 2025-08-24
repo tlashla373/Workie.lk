@@ -32,6 +32,19 @@ const profilePictureStorage = new CloudinaryStorage({
   },
 });
 
+// Cover Photos Storage
+const coverPhotoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'workie-lk/cover-photos',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [
+      { width: 1200, height: 400, crop: 'fill', gravity: 'center' },
+      { quality: 'auto', fetch_format: 'auto' }
+    ],
+  },
+});
+
 // Worker Verification Documents Storage
 const verificationDocStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -86,6 +99,13 @@ const uploadProfilePicture = multer({
   storage: profilePictureStorage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
+
+const uploadCoverPhoto = multer({
+  storage: coverPhotoStorage,
+  limits: {
+    fileSize: 8 * 1024 * 1024, // 8MB limit for cover photos
   },
 });
 
@@ -164,6 +184,7 @@ const generateVideoThumbnail = (publicId, options = {}) => {
 module.exports = {
   cloudinary,
   uploadProfilePicture,
+  uploadCoverPhoto,
   uploadVerificationDoc,
   uploadPortfolio,
   uploadJobImage,

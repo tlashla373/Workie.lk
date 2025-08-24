@@ -13,7 +13,11 @@ async function testMediaRoutes() {
     console.log('✅ Health endpoint:', healthResponse.data);
     
   } catch (error) {
-    console.error('❌ Error testing routes:', error.message);
+    console.error('❌ Error testing routes:');
+    console.error('Error message:', error.message);
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
     if (error.response) {
       console.error('Response data:', error.response.data);
       console.error('Response status:', error.response.status);

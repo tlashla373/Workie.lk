@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Edit } from 'lucide-react';
+import mediaService from '../services/mediaService';
 
 const ProfileHeader = ({
   profileData,
@@ -9,43 +10,75 @@ const ProfileHeader = ({
 }) => {
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const coverInputRef = useRef(null);
   const profileInputRef = useRef(null);
 
-  const handleCoverPhotoChange = (event) => {
+  // Get cover photo URL with fallback
+  const coverPhotoUrl = profileData?.coverImage || 
+                       profileData?.coverPhoto || 
+                       profileData?.user?.coverPhoto || 
+                       'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop';
+
+  const handleCoverPhotoChange = async (event) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          onCoverPhotoUpdate(e.target.result);
-          setIsEditingCover(false);
+      try {
+        setIsUploading(true);
+        
+        // Upload to Cloudinary and save to database
+        const result = await mediaService.uploadCoverPhoto(file);
+        
+        // Update the UI with the new cover photo URL
+        if (result.user?.coverPhoto) {
+          onCoverPhotoUpdate(result.user.coverPhoto);
         }
-      };
-      reader.readAsDataURL(file);
+        
+        setIsEditingCover(false);
+        console.log('Cover photo uploaded successfully:', result);
+      } catch (error) {
+        console.error('Error uploading cover photo:', error);
+        alert('Failed to upload cover photo. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
-  const handleProfilePhotoChange = (event) => {
+  const handleProfilePhotoChange = async (event) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          onProfilePhotoUpdate(e.target.result);
-          setIsEditingProfile(false);
+      try {
+        setIsUploading(true);
+        
+        // Upload to Cloudinary and save to database
+        const result = await mediaService.uploadProfilePicture(file);
+        
+        // Update the UI with the new profile picture URL
+        if (result.user?.profilePicture) {
+          onProfilePhotoUpdate(result.user.profilePicture);
         }
-      };
-      reader.readAsDataURL(file);
+        
+        setIsEditingProfile(false);
+        console.log('Profile picture uploaded successfully:', result);
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        alert('Failed to upload profile picture. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
   return (
     <div className="relative h-80 overflow-hidden">
       <img
-        src={profileData.coverImage}
+        src={coverPhotoUrl}
         alt="Cover"
         className="w-full h-full object-cover"
+        onError={(e) => {
+          e.target.src = 'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop';
+        }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
@@ -53,16 +86,22 @@ const ProfileHeader = ({
       <div className="absolute top-4 right-4 flex space-x-2">
         <button
           onClick={() => coverInputRef.current?.click()}
-          className="p-2 bg-black/20 backdrop-blur-sm rounded-lg text-white hover:bg-black/30 transition-colors"
+          disabled={isUploading}
+          className={`p-2 bg-black/20 backdrop-blur-sm rounded-lg text-white transition-colors ${
+            isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
+          }`}
         >
           <Camera className="w-5 h-5" />
         </button>
         <button
           onClick={() => setIsEditingCover(!isEditingCover)}
-          className="px-4 py-2 bg-black/20 backdrop-blur-sm rounded-lg text-white hover:bg-black/30 transition-colors flex items-center space-x-2"
+          disabled={isUploading}
+          className={`px-4 py-2 bg-black/20 backdrop-blur-sm rounded-lg text-white transition-colors flex items-center space-x-2 ${
+            isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
+          }`}
         >
           <Edit className="w-4 h-4" />
-          <span>Edit Cover</span>
+          <span>{isUploading ? 'Uploading...' : 'Edit Cover'}</span>
         </button>
       </div>
 
@@ -92,7 +131,10 @@ const ProfileHeader = ({
           />
           <button
             onClick={() => profileInputRef.current?.click()}
-            className="absolute bottom-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white hover:bg-blue-600 transition-colors"
+            disabled={isUploading}
+            className={`absolute bottom-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white transition-colors ${
+              isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+            }`}
           >
             <Camera className="w-4 h-4" />
           </button>

@@ -81,6 +81,12 @@ const FileUpload = ({
           }
           break;
 
+        case 'cover':
+          if (validFiles.length === 1) {
+            result = await mediaService.uploadCoverPhoto(validFiles[0]);
+          }
+          break;
+
         case 'verification':
           // Assuming first file is front ID, second is back ID
           const verificationFiles = {};

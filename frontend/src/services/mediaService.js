@@ -1,4 +1,5 @@
 import apiService from './apiService';
+import profileService from './profileService';
 
 class MediaService {
   // Upload profile picture
@@ -8,9 +9,39 @@ class MediaService {
       formData.append('profilePicture', file);
 
       const response = await apiService.postFormData('/media/profile-picture', formData);
+      
+      // Trigger profile update event for other components to refresh
+      if (response.success) {
+        profileService.clearCurrentUserProfileCache();
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+        localStorage.setItem('profileUpdated', Date.now().toString());
+      }
+      
       return response;
     } catch (error) {
       console.error('Error uploading profile picture:', error);
+      throw error;
+    }
+  }
+
+  // Upload cover photo
+  async uploadCoverPhoto(file) {
+    try {
+      const formData = new FormData();
+      formData.append('coverPhoto', file);
+
+      const response = await apiService.postFormData('/media/cover-photo', formData);
+      
+      // Trigger profile update event for other components to refresh
+      if (response.success) {
+        profileService.clearCurrentUserProfileCache();
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+        localStorage.setItem('profileUpdated', Date.now().toString());
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Error uploading cover photo:', error);
       throw error;
     }
   }

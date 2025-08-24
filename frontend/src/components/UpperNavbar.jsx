@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   MessageCircle,
@@ -16,76 +16,212 @@ import profileImage from '../assets/profile.jpeg';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import profileService from '../services/profileService';
+import notificationService from '../services/notificationService';
 
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [userData, setUserData] = useState({
+    firstName: '',
+    lastName: '',
+    profileImage: null,
+    isActive: false
+  });
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const location = useLocation();
   const { isDarkMode } = useDarkMode();
+  const { user } = useAuth() || {};
+
+  // Helper function to get notification type icon
+  const getNotificationTypeIcon = (type) => {
+    switch(type) {
+      case 'like':
+      case 'post_like':
+        return Heart;
+      case 'comment':
+      case 'post_comment':
+        return MessageSquare;
+      case 'job':
+      case 'job_match':
+      case 'job_application':
+        return Briefcase;
+      case 'friend':
+      case 'friend_request':
+      case 'connection':
+        return UserPlus;
+      case 'share':
+      case 'post_share':
+        return Share2;
+      default:
+        return Bell;
+    }
+  };
 
   const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
   const toggleNotificationDropdown = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
 
-  // Sample notification data
-  const notifications = [
-    {
-      id: 1,
-      type: 'like',
-      user: 'John Smith',
-      action: 'liked your post',
-      content: 'Great work on the project!',
-      time: '2 hours ago',
-      unread: true,
-      avatar: profileImage,
-      icon: Heart
-    },
-    {
-      id: 2,
-      type: 'comment',
-      user: 'Sarah Johnson',
-      action: 'commented on your post',
-      content: 'Looking forward to collaborating...',
-      time: '4 hours ago',
-      unread: true,
-      avatar: profileImage,
-      icon: MessageSquare
-    },
-    {
-      id: 3,
-      type: 'job',
-      user: 'TechCorp',
-      action: 'posted a new job that matches your skills',
-      content: 'Senior React Developer - Remote',
-      time: '6 hours ago',
-      unread: false,
-      avatar: profileImage,
-      icon: Briefcase
-    },
-    {
-      id: 4,
-      type: 'friend',
-      user: 'Mike Wilson',
-      action: 'sent you a friend request',
-      content: '',
-      time: '1 day ago',
-      unread: false,
-      avatar: profileImage,
-      icon: UserPlus
-    },
-    {
-      id: 5,
-      type: 'share',
-      user: 'Emily Davis',
-      action: 'shared your post',
-      content: 'Amazing insights on web development',
-      time: '2 days ago',
-      unread: false,
-      avatar: profileImage,
-      icon: Share2
-    }
-  ];
+  // Fetch user data and notifications from database
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await profileService.getCurrentUserProfile();
+        
+        if (response.success) {
+          const { user: userInfo, profile: profileInfo } = response.data;
+          
+          if (!userInfo) {
+            console.warn('No user data received from API');
+            return;
+          }
+          
+          setUserData({
+            firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
+            lastName: userInfo?.lastName || profileInfo?.lastName || '',
+            profileImage: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
+            isActive: userInfo?.isActive || false
+          });
+        } else {
+          console.warn('API response indicated failure:', response);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Set default values on error
+        setUserData({
+          firstName: 'User',
+          lastName: '',
+          profileImage: null,
+          isActive: false
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotifications();
+        if (response.success) {
+          // Map backend notification data to frontend format
+          const mappedNotifications = response.data.notifications.map(notification => ({
+            id: notification._id,
+            type: notification.type,
+            user: notification.sender ? `${notification.sender.firstName} ${notification.sender.lastName}` : 'System',
+            action: notification.title,
+            content: notification.message,
+            time: new Date(notification.createdAt).toLocaleString(),
+            unread: !notification.isRead,
+            avatar: notification.sender?.profilePicture || profileImage,
+            icon: getNotificationTypeIcon(notification.type)
+          }));
+          setNotifications(mappedNotifications);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        // Fallback to mock data if API fails
+        const mockNotifications = [
+          {
+            id: 1,
+            type: 'like',
+            user: 'John Smith',
+            action: 'liked your post',
+            content: 'Great work on the project!',
+            time: '2 hours ago',
+            unread: true,
+            avatar: profileImage,
+            icon: Heart
+          },
+          {
+            id: 2,
+            type: 'comment',
+            user: 'Sarah Johnson',
+            action: 'commented on your post',
+            content: 'Looking forward to collaborating...',
+            time: '4 hours ago',
+            unread: true,
+            avatar: profileImage,
+            icon: MessageSquare
+          }
+        ];
+        setNotifications(mockNotifications);
+      }
+    };
+
+    fetchUserData();
+    fetchNotifications();
+  }, [refreshTrigger]);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'profileUpdated') {
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events
+    const handleProfileUpdate = () => {
+      setRefreshTrigger(prev => prev + 1);
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, []);
+
+  // Computed values
+  const displayName = userData.firstName && userData.lastName 
+    ? `${userData.firstName} ${userData.lastName}` 
+    : userData.firstName || 'User';
+  
+  // Multiple fallback paths for profile image
+  const displayProfileImage = userData.profileImage || 
+                              (user?.profileImage) || 
+                              (user?.profilePicture) || 
+                              profileImage;
 
   const unreadCount = notifications.filter(n => n.unread).length;
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      const response = await notificationService.markAllAsRead();
+      if (response.success) {
+        // Update local state to reflect changes
+        const updatedNotifications = notifications.map(n => ({ ...n, unread: false }));
+        setNotifications(updatedNotifications);
+      }
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      // Fallback: still update UI for better UX
+      const updatedNotifications = notifications.map(n => ({ ...n, unread: false }));
+      setNotifications(updatedNotifications);
+    }
+  };
+
+  const handleNotificationClick = async (notificationId) => {
+    try {
+      const notification = notifications.find(n => n.id === notificationId);
+      if (notification && notification.unread) {
+        await notificationService.markAsRead(notificationId);
+        // Update local state
+        const updatedNotifications = notifications.map(n => 
+          n.id === notificationId ? { ...n, unread: false } : n
+        );
+        setNotifications(updatedNotifications);
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
 
   const pageTitles = {
     '/': 'Home',
@@ -146,21 +282,49 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             <div className=''></div>
             <Link className="relative" to="/clientprofile">
               <button
-                
                 className={`w-full flex items-center space-x-3 p-2 rounded-xl transition-all border duration-200 group ${isDarkMode ? 'bg-gray-700 border-gray-800 hover:bg-gray-600' : 'bg-[#F0F3FF] border-gray-300 hover:bg-gray-400/50'}`}
               >
                 <div className="relative">
-                  <img
-                    className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100"
-                    src={profileImage}
-                    alt="Profile"
-                  />
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-gray-300"></div>
+                  {loading ? (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+                  ) : (
+                    <img
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100"
+                      src={displayProfileImage}
+                      alt="Profile"
+                      onError={(e) => {
+                        // Try multiple fallback sources
+                        if (e.target.src !== profileImage) {
+                          if (userData.profileImage && e.target.src === userData.profileImage) {
+                            e.target.src = user?.profileImage || user?.profilePicture || profileImage;
+                          } else {
+                            e.target.src = profileImage; // Final fallback
+                          }
+                        }
+                      }}
+                    />
+                  )}
+                  <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-300 ${
+                    userData.isActive ? 'bg-green-500' : 'bg-gray-400'
+                  }`}></div>
                 </div>
                 {(!isCollapsed || isProfileDropdownOpen) && (
                   <div className="flex-1 text-left">
-                    <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>Supun Hashintha</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-500'}`}>My Account</p>
+                    {loading ? (
+                      <div className="space-y-1">
+                        <div className="h-4 bg-gray-300 rounded animate-pulse"></div>
+                        <div className="h-3 bg-gray-300 rounded animate-pulse w-3/4"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                          {displayName}
+                        </p>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-500'}`}>
+                          My Account
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </button>
@@ -193,7 +357,10 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                       <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         Notifications
                       </h3>
-                      <button className={`text-sm ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}>
+                      <button 
+                        onClick={handleMarkAllAsRead}
+                        className={`text-sm ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}
+                      >
                         Mark all as read
                       </button>
                     </div>
@@ -204,6 +371,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
+                        onClick={() => handleNotificationClick(notification.id)}
                         className={`px-4 py-3 hover:bg-opacity-50 transition-colors cursor-pointer border-l-4 ${
                           notification.unread 
                             ? (isDarkMode ? 'bg-gray-700/30 border-blue-500 hover:bg-gray-700/50' : 'bg-blue-50 border-blue-500 hover:bg-blue-100') 
