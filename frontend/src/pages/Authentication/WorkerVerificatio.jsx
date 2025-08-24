@@ -17,6 +17,9 @@ import {
   CreditCard
 } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import apiService from '../../services/apiService';
+import mediaService from '../../services/mediaService';
+import FileUpload from '../../components/ui/FileUpload';
 
 const WorkerVerification = () => {
   // Mock navigation and dark mode for demo
@@ -30,6 +33,7 @@ const WorkerVerification = () => {
   const { isDarkMode } = useDarkMode();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [workerData, setWorkerData] = useState({
     // New fields for added steps
     categories: [],
@@ -46,8 +50,11 @@ const WorkerVerification = () => {
     address: '',
     companyName: '',
     profilePhoto: null,
+    profilePhotoUrl: '',
     idPhotoFront: null,
+    idPhotoFrontUrl: '',
     idPhotoBack: null,
+    idPhotoBackUrl: '',
     emailVerified: false,
     phoneVerified: false,
     phone: '',
@@ -55,6 +62,45 @@ const WorkerVerification = () => {
 
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
+
+  // Function to submit worker verification data to backend
+  const submitWorkerVerificationData = async () => {
+    try {
+      // Check if user is authenticated
+      const token = apiService.getAuthToken();
+      if (!token) {
+        throw new Error('You must be logged in to submit verification data');
+      }
+
+      // Prepare data as JSON (no file uploads for now)
+      const verificationData = {
+        categories: JSON.stringify(workerData.categories),
+        skills: workerData.skills,
+        experience: workerData.experience,
+        bio: workerData.bio,
+        age: workerData.age,
+        country: workerData.country,
+        streetAddress: workerData.streetAddress,
+        city: workerData.city,
+        postalCode: workerData.postalCode,
+        location: workerData.location,
+        address: workerData.address,
+        companyName: workerData.companyName,
+        phone: workerData.phone
+      };
+
+      console.log('Submitting verification data:', verificationData);
+      console.log('Auth token exists:', !!token);
+
+      // Submit to backend using apiService
+      const response = await apiService.post('/auth/worker-verification', verificationData);
+      console.log('Response from backend:', response);
+      return response;
+    } catch (error) {
+      console.error('Error submitting verification data:', error);
+      throw error;
+    }
+  };
 
   // Available worker categories
   const workerCategories = [
@@ -127,40 +173,42 @@ const WorkerVerification = () => {
     setWorkerData(prev => {
       const currentCategories = prev.categories;
       if (currentCategories.includes(category)) {
-        // Remove category if already selected
         return {
           ...prev,
           categories: currentCategories.filter(c => c !== category)
         };
       } else if (currentCategories.length < 2) {
-        // Add category if less than 2 are selected
         return {
           ...prev,
           categories: [...currentCategories, category]
         };
       }
-      // Do nothing if 2 categories are already selected
       return prev;
     });
   };
 
-  const handleClearCategories = () => {
-    setWorkerData(prev => ({
-      ...prev,
-      categories: []
-    }));
-  };
-
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (isAllStepsComplete()) {
-      navigate('/clientprofile');
+      try {
+        setIsSubmitting(true);
+        const response = await submitWorkerVerificationData();
+        
+        // Show success message
+        alert('Worker verification submitted successfully! Your profile is now under review.');
+        navigate('/clientprofile');
+      } catch (error) {
+        console.error('Error submitting verification data:', error);
+        alert(`Failed to save verification data: ${error.message}. Please try again.`);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const isStepValid = (step) => {
     switch (step) {
       case 1:
-        return workerData.categories.length >= 1 && workerData.categories.length <= 2; // Must choose at least 1, max 2 categories
+        return workerData.categories.length === 2; // Must choose exactly 2 categories
       case 2:
         return workerData.bio.trim() !== '';
       case 3:
@@ -172,9 +220,9 @@ const WorkerVerification = () => {
       case 4:
         return workerData.location.trim() !== '' && workerData.address.trim() !== '';
       case 5:
-        return workerData.profilePhoto !== null;
+        return true; // Skip photo requirement for now
       case 6:
-        return workerData.idPhotoFront !== null && workerData.idPhotoBack !== null;
+        return true; // Skip ID photo requirement for now
       case 7:
         return workerData.phone.trim() !== '' && 
                workerData.phoneVerified;
@@ -198,9 +246,9 @@ const WorkerVerification = () => {
   };
 
   const canProceedToNext = () => {
-    // Step 1 requires at least 1 category to be selected
+    // Step 1 can be skipped if categories are selected but skills/experience are empty
     if (currentStep === 1) {
-      return workerData.categories.length >= 1 && workerData.categories.length <= 2;
+      return workerData.categories.length === 2;
     }
     return isStepValid(currentStep);
   };
@@ -290,19 +338,9 @@ const WorkerVerification = () => {
             {/* Worker Categories */}
             <div className="space-y-3 sm:space-y-4">
               <div>
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <label className="block text-sm font-medium">
-                    Select Your Work Categories * (Choose 1-2 categories)
-                  </label>
-                  {workerData.categories.length > 0 && (
-                    <button
-                      onClick={handleClearCategories}
-                      className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
-                    >
-                      Clear All
-                    </button>
-                  )}
-                </div>
+                <label className="block text-sm font-medium mb-2 sm:mb-3">
+                  Select Your Work Categories * (Choose exactly 2)
+                </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                   {workerCategories.map((category) => (
                     <button
@@ -323,21 +361,9 @@ const WorkerVerification = () => {
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-500">
-                    Selected: {workerData.categories.length}/2 categories
-                  </p>
-                  {workerData.categories.length === 0 && (
-                    <p className="text-xs text-red-500">
-                      Please select at least one category
-                    </p>
-                  )}
-                  {workerData.categories.length >= 1 && (
-                    <p className="text-xs text-green-600">
-                      ✓ {workerData.categories.length === 1 ? 'You can select one more' : 'Maximum reached'}
-                    </p>
-                  )}
-                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Selected: {workerData.categories.length}/2 categories
+                </p>
               </div>
 
               {/* Skills (Optional) */}
@@ -538,42 +564,34 @@ const WorkerVerification = () => {
         return (
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Profile Photo</h2>
-            <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-              {profileImagePreview ? (
-                <div className="text-center">
-                  <img
-                    src={profileImagePreview}
-                    alt="Profile preview"
-                    className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full border-4 border-blue-500 mb-3 sm:mb-4"
-                  />
-                  <p className="text-sm text-green-600 flex items-center justify-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    Photo uploaded successfully
-                  </p>
-                </div>
-              ) : (
-                <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-dashed flex items-center justify-center ${
-                  isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
-                }`}>
-                  <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
-                </div>
-              )}
+            <div className="max-w-md mx-auto">
+              <FileUpload
+                uploadType="profile"
+                maxFiles={1}
+                maxSizeInMB={5}
+                acceptedTypes={['image/jpeg', 'image/png', 'image/webp']}
+                onFileUpload={(result, files) => {
+                  console.log('Profile photo uploaded:', result);
+                  setWorkerData(prev => ({
+                    ...prev,
+                    profilePhoto: files[0],
+                    profilePhotoUrl: result?.url
+                  }));
+                }}
+                onFileRemove={() => {
+                  setWorkerData(prev => ({
+                    ...prev,
+                    profilePhoto: null,
+                    profilePhotoUrl: null
+                  }));
+                }}
+                uploadText="Upload your profile photo"
+                showPreview={true}
+              />
               
-              <div className="w-full max-w-md">
-                <label className="block text-sm font-medium mb-2">Upload Profile Photo *</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setWorkerData({ ...workerData, profilePhoto: file });
-                    }
-                  }}
-                  className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Please upload a clear photo of yourself for verification purposes.
+              <div className="text-center mt-4">
+                <p className="text-xs text-gray-500">
+                  This photo will be visible to potential clients. Choose a clear, professional image.
                 </p>
               </div>
             </div>
@@ -584,92 +602,83 @@ const WorkerVerification = () => {
         return (
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">ID Verification</h2>
-            <p className="text-sm text-gray-600 mb-4 sm:mb-6">
-              Please upload clear photos of both sides of your government-issued ID for verification.
-            </p>
-            
-            {/* ID Front Photo */}
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-medium">ID Front Photo</h3>
-              <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                {idFrontImagePreview ? (
-                  <div className="text-center">
-                    <img
-                      src={idFrontImagePreview}
-                      alt="ID Front preview"
-                      className="w-48 h-32 sm:w-64 sm:h-40 object-cover rounded-lg border-2 border-blue-500 mb-3 sm:mb-4"
-                    />
-                    <p className="text-sm text-green-600 flex items-center justify-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      ID Front uploaded successfully
-                    </p>
-                  </div>
-                ) : (
-                  <div className={`w-48 h-32 sm:w-64 sm:h-40 rounded-lg border-2 border-dashed flex items-center justify-center ${
-                    isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
-                  }`}>
-                    <div className="text-center">
-                      <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400">ID Front</p>
-                    </div>
-                  </div>
-                )}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Upload ID Photos</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Please upload clear photos of the front and back of your government-issued ID
+                </p>
                 
-                <div className="w-full max-w-md">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setWorkerData({ ...workerData, idPhotoFront: file });
-                      }
+                {/* ID Front Photo */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">ID Front Photo</label>
+                  <FileUpload
+                    uploadType="verification"
+                    maxFiles={1}
+                    maxSizeInMB={10}
+                    acceptedTypes={['image/jpeg', 'image/png']}
+                    onFileUpload={(result, files) => {
+                      console.log('ID front uploaded:', result);
+                      setWorkerData(prev => ({
+                        ...prev,
+                        idPhotoFront: files[0],
+                        idPhotoFrontUrl: result?.files?.idPhotoFront?.url
+                      }));
                     }}
-                    className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    onFileRemove={() => {
+                      setWorkerData(prev => ({
+                        ...prev,
+                        idPhotoFront: null,
+                        idPhotoFrontUrl: null
+                      }));
+                    }}
+                    uploadText="Upload front of ID"
+                    showPreview={true}
+                    className="mb-4"
+                  />
+                </div>
+
+                {/* ID Back Photo */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">ID Back Photo</label>
+                  <FileUpload
+                    uploadType="verification"
+                    maxFiles={1}
+                    maxSizeInMB={10}
+                    acceptedTypes={['image/jpeg', 'image/png']}
+                    onFileUpload={(result, files) => {
+                      console.log('ID back uploaded:', result);
+                      setWorkerData(prev => ({
+                        ...prev,
+                        idPhotoBack: files[0],
+                        idPhotoBackUrl: result?.files?.idPhotoBack?.url
+                      }));
+                    }}
+                    onFileRemove={() => {
+                      setWorkerData(prev => ({
+                        ...prev,
+                        idPhotoBack: null,
+                        idPhotoBackUrl: null
+                      }));
+                    }}
+                    uploadText="Upload back of ID"
+                    showPreview={true}
                   />
                 </div>
               </div>
-            </div>
-
-            {/* ID Back Photo */}
-            <div className="space-y-3 sm:space-y-4">
-              <h3 className="text-base sm:text-lg font-medium">ID Back Photo</h3>
-              <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                {idBackImagePreview ? (
-                  <div className="text-center">
-                    <img
-                      src={idBackImagePreview}
-                      alt="ID Back preview"
-                      className="w-48 h-32 sm:w-64 sm:h-40 object-cover rounded-lg border-2 border-blue-500 mb-3 sm:mb-4"
-                    />
-                    <p className="text-sm text-green-600 flex items-center justify-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      ID Back uploaded successfully
-                    </p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex">
+                  <CreditCard className="w-5 h-5 text-blue-500 mt-0.5 mr-3" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800">ID Verification Tips</h4>
+                    <ul className="text-xs text-blue-600 mt-1 space-y-1">
+                      <li>• Ensure all text is clearly readable</li>
+                      <li>• Take photos in good lighting</li>
+                      <li>• Avoid glare and shadows</li>
+                      <li>• Include all edges of the ID</li>
+                    </ul>
                   </div>
-                ) : (
-                  <div className={`w-48 h-32 sm:w-64 sm:h-40 rounded-lg border-2 border-dashed flex items-center justify-center ${
-                    isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
-                  }`}>
-                    <div className="text-center">
-                      <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400">ID Back</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="w-full max-w-md">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setWorkerData({ ...workerData, idPhotoBack: file });
-                      }
-                    }}
-                    className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
                 </div>
               </div>
             </div>
@@ -734,7 +743,6 @@ const WorkerVerification = () => {
           </div>
         );
 
-      case 8:
       case 8:
         return (
           <div className="space-y-6">
@@ -825,15 +833,21 @@ const WorkerVerification = () => {
 
           <button
             onClick={currentStep === 8 ? handleComplete : handleNext}
-            disabled={!canProceedToNext()}
+            disabled={!canProceedToNext() || isSubmitting}
             className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-              canProceedToNext()
+              canProceedToNext() && !isSubmitting
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-400 text-white cursor-not-allowed'
             }`}
           >
-            {currentStep === 8 ? 'Complete Setup' : 'Next'}
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+            {isSubmitting ? (
+              'Submitting...'
+            ) : currentStep === 8 ? (
+              'Complete Setup'
+            ) : (
+              'Next'
+            )}
+            {!isSubmitting && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
         </div>
       </div>

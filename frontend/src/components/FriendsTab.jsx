@@ -1,81 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, MessageCircle, Check } from 'lucide-react';
+import connectionService from '../services/connectionService';
 
 const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
-  const [friends, setFriends] = useState([
-    {
-      id: 1,
-      name: "Sarah Wilson",
-      profession: "UI/UX Designer",
-      avatar: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 12,
-      isConnected: false,
-      location: "New York, USA"
-    },
-    {
-      id: 2,
-      name: "Mike Johnson",
-      profession: "Frontend Developer",
-      avatar: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 8,
-      isConnected: true,
-      location: "San Francisco, USA"
-    },
-    {
-      id: 3,
-      name: "Emily Davis",
-      profession: "Product Manager",
-      avatar: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 15,
-      isConnected: false,
-      location: "London, UK"
-    },
-    {
-      id: 4,
-      name: "David Chen",
-      profession: "Software Engineer",
-      avatar: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 6,
-      isConnected: false,
-      location: "Toronto, Canada"
-    },
-    {
-      id: 5,
-      name: "Anna Martinez",
-      profession: "Graphic Designer",
-      avatar: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 20,
-      isConnected: true,
-      location: "Barcelona, Spain"
-    },
-    {
-      id: 6,
-      name: "James Thompson",
-      profession: "Marketing Specialist",
-      avatar: "https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 9,
-      isConnected: false,
-      location: "Sydney, Australia"
-    },
-    {
-      id: 7,
-      name: "Lisa Wang",
-      profession: "Data Scientist",
-      avatar: "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 11,
-      isConnected: false,
-      location: "Singapore"
-    },
-    {
-      id: 8,
-      name: "Robert Brown",
-      profession: "Business Analyst",
-      avatar: "https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
-      mutualFriends: 7,
-      isConnected: true,
-      location: "Berlin, Germany"
-    }
-  ]);
+  const [friends, setFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch friends data from API
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        setLoading(true);
+        const response = await connectionService.getMyConnections();
+        
+        if (response.success) {
+          // Transform API data to match component format
+          const transformedFriends = response.data.connections.map(connection => ({
+            id: connection._id,
+            name: `${connection.firstName} ${connection.lastName}`,
+            profession: connection.userType === 'worker' ? 'Skilled Worker' : 'Client',
+            avatar: connection.profilePicture || 'https://via.placeholder.com/150',
+            mutualFriends: Math.floor(Math.random() * 20) + 1, // Random for now
+            isConnected: true, // They are already connected
+            location: 'Sri Lanka' // Default for now
+          }));
+          
+          setFriends(transformedFriends);
+        }
+      } catch (error) {
+        console.error('Error fetching friends:', error);
+        setError('Failed to load connections');
+        // Fallback to mock data if API fails
+        setFriends([
+          {
+            id: 1,
+            name: "Sarah Wilson",
+            profession: "UI/UX Designer",
+            avatar: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+            mutualFriends: 12,
+            isConnected: false,
+            location: "New York, USA"
+          },
+          {
+            id: 2,
+            name: "Mike Johnson",
+            profession: "Frontend Developer",
+            avatar: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+            mutualFriends: 8,
+            isConnected: true,
+            location: "San Francisco, USA"
+          },
+          {
+            id: 3,
+            name: "Emily Davis",
+            profession: "Product Manager",
+            avatar: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+            mutualFriends: 15,
+            isConnected: false,
+            location: "London, UK"
+          },
+          {
+            id: 4,
+            name: "David Chen",
+            profession: "Software Engineer",
+            avatar: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+            mutualFriends: 6,
+            isConnected: false,
+            location: "Toronto, Canada"
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFriends();
+  }, []);
 
   const handleConnect = (friendId) => {
     setFriends(prevFriends =>

@@ -40,6 +40,35 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  profilePicturePublicId: {
+    type: String,
+    default: ''
+  },
+  // Cover photo (Cloudinary URL)
+  coverPhoto: {
+    type: String,
+    default: ''
+  },
+  coverPhotoPublicId: {
+    type: String,
+    default: ''
+  },
+  // Verification documents (Cloudinary URLs)
+  verificationDocuments: {
+    idPhotoFront: {
+      type: String,
+      default: ''
+    },
+    idPhotoBack: {
+      type: String,
+      default: ''
+    },
+    publicIds: {
+      profilePicture: String,
+      idPhotoFront: String,
+      idPhotoBack: String
+    }
+  },
   isVerified: {
     type: Boolean,
     default: false

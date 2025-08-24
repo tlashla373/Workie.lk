@@ -10,11 +10,9 @@ export const API_ENDPOINTS = {
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     ME: `${API_BASE_URL}/auth/me`,
     FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
-    VERIFY_RESET_PIN: `${API_BASE_URL}/auth/verify-reset-pin`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
-    VERIFY_OTP: `${API_BASE_URL}/auth/verify-otp`,
-    RESEND_OTP: `${API_BASE_URL}/auth/resend-otp`,
+    WORKER_VERIFICATION: `${API_BASE_URL}/auth/worker-verification`,
   },
   
   // Users
@@ -75,18 +73,6 @@ export const API_ENDPOINTS = {
     MARK_READ: (id) => `${API_BASE_URL}/notifications/${id}/read`,
     MARK_ALL_READ: `${API_BASE_URL}/notifications/mark-all-read`,
     CLEAR_ALL: `${API_BASE_URL}/notifications/clear-all`,
-  },
-
-  // Admin
-  ADMIN: {
-    DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
-    USERS: `${API_BASE_URL}/admin/users`,
-    JOBS: `${API_BASE_URL}/admin/jobs`,
-    APPLICATIONS: `${API_BASE_URL}/admin/applications`,
-    REVIEWS: `${API_BASE_URL}/admin/reviews`,
-    REPORTS: `${API_BASE_URL}/admin/reports`,
-    NOTIFICATIONS: `${API_BASE_URL}/admin/notifications`,
-    SETTINGS: `${API_BASE_URL}/admin/settings`,
   }
 };
 

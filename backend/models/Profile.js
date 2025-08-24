@@ -73,7 +73,19 @@ const profileSchema = new mongoose.Schema({
       required: true
     },
     description: String,
-    images: [String],
+    media: [{
+      url: String,
+      publicId: String,
+      type: {
+        type: String,
+        enum: ['image', 'video'],
+        required: true
+      },
+      thumbnail: String, // For video thumbnails
+      format: String,
+      size: Number
+    }],
+    images: [String], // Keep for backward compatibility
     url: String,
     completedDate: Date,
     category: String
