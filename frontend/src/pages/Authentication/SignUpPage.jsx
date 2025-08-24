@@ -88,29 +88,37 @@ const SignUpPage = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans">
       {/* Left Side - design */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-r from-blue-700 to-blue-300 items-center justify-center p-8 relative overflow-hidden">
-        <div className="max-w-md w-full relative z-0">
-          {/* Feature Card */}
-          <div className="rounded-2xl shadow-xl relative z-10">
-            <InfiniteSlider />
-          </div>
-
-          {/* Bottom Section */}
-          <div className="mt-12 text-white relative z-10">
-            <h3 className="text-2xl alatsi-regular mb-4">Welcome to our community</h3>
-            <p className="text-white leading-relaxed">
-              Whether you're looking for work or hiring talent, we match you with the right opportunities and professionals in seconds.
-            </p>
-
-            {/* Navigation Dots */}
-            <div className="flex space-x-2 mt-6">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
-              <div className="w-2 h-2 bg-white bg-opacity-50 rounded-full"></div>
-              <div className="w-2 h-2 bg-white bg-opacity-50 rounded-full"></div>
+            <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-blue-400 items-center justify-center p-6 lg:p-8 xl:p-12 relative overflow-hidden">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 left-0 w-64 h-64 lg:w-72 lg:h-72 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-80 h-80 lg:w-96 lg:h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"></div>
+              </div>
+              
+              <div className="max-w-md lg:max-w-lg xl:max-w-xl w-full relative z-10">
+                {/* Feature Card */}
+                <div className="rounded-2xl shadow-2xl relative z-10 mb-8 lg:mb-12">
+                  <InfiniteSlider/>           
+                </div>
+      
+                {/* Bottom Section */}
+                <div className="text-white relative z-10">
+                  <h3 className="text-xl lg:text-2xl xl:text-3xl alatsi-regular mb-4 lg:mb-6 leading-tight">
+                    Welcome to our community
+                  </h3>
+                  <p className="text-white/90 leading-relaxed text-sm lg:text-base xl:text-lg">
+                    Whether you're looking for work or hiring talent, we match you with the right opportunities and professionals in seconds.
+                  </p>
+      
+                  {/* Navigation Dots */}
+                  <div className="flex space-x-2 mt-6 lg:mt-8">
+                    <div className="w-2 h-2 lg:w-3 lg:h-3 bg-white rounded-full shadow-lg"></div>
+                    <div className="w-2 h-2 lg:w-3 lg:h-3 bg-white/50 rounded-full"></div>
+                    <div className="w-2 h-2 lg:w-3 lg:h-3 bg-white/50 rounded-full"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
       {/* Right Side - Create account form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 sm:px-6 md:px-8 py-8 sm:py-12 lg:px-16 lg:py-0">

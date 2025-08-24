@@ -40,7 +40,7 @@ const ClientSetup = () => {
   };
 
   const handleBack = () => {
-    navigate('/role-selection');
+    navigate('/roleselection');
   };
 
   return (
