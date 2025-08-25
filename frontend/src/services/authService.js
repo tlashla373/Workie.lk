@@ -32,6 +32,26 @@ export class AuthService {
     }
   }
 
+  // Google Sign-In
+  async googleSignIn(googleToken) {
+    try {
+      // Call backend API to authenticate with Google token
+      const response = await apiService.post('/auth/google-signin', {
+        accessToken: googleToken
+      }, { includeAuth: false });
+      
+      if (response.success && response.data.token) {
+        apiService.setAuthToken(response.data.token);
+        return response;
+      }
+      
+      throw new Error(response.message || 'Google Sign-In failed');
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      throw error;
+    }
+  }
+
   // Login user
   async login(credentials) {
     try {
@@ -98,6 +118,17 @@ export class AuthService {
       return response;
     } catch (error) {
       console.error('Forgot password error:', error);
+      throw error;
+    }
+  }
+
+  // Verify reset PIN
+  async verifyResetPin(email, pin) {
+    try {
+      const response = await apiService.post('/auth/verify-reset-pin', { email, pin }, { includeAuth: false });
+      return response;
+    } catch (error) {
+      console.error('Verify reset PIN error:', error);
       throw error;
     }
   }

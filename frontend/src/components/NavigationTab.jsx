@@ -41,14 +41,14 @@ const NavigationTabs = ({
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-10 transition-colors duration-300`}>
-      <div className="px-6">
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-8">
+      <div className="px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between">
+          <div className="flex overflow-x-auto no-scrollbar space-x-4 sm:space-x-8 pb-2 sm:pb-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-3 sm:py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
                     : isDarkMode
@@ -67,10 +67,10 @@ const NavigationTabs = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-center sm:justify-end space-x-2 sm:space-x-3 pt-3 sm:pt-0 pb-3 sm:pb-0">
             <button
               onClick={() => setIsFollowing(!isFollowing)}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 sm:px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
                 isFollowing
                   ? isDarkMode
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -81,10 +81,10 @@ const NavigationTabs = ({
               {isFollowing ? 'Following' : 'Follow'}
             </button>
             <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
-              <MessageCircle className="w-5 h-5" />
+              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
-              <MoreHorizontal className="w-5 h-5" />
+              <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
