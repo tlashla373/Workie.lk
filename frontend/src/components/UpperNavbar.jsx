@@ -27,6 +27,7 @@ import notificationService from '../services/notificationService';
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',

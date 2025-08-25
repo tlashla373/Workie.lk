@@ -171,6 +171,34 @@ const profileSchema = new mongoose.Schema({
     instagram: String,
     website: String
   },
+  // Worker Verification Fields
+  workerCategories: [{
+    type: String
+  }],
+  age: {
+    type: Number,
+    min: 18,
+    max: 100
+  },
+  country: String,
+  streetAddress: String,
+  city: String,
+  postalCode: String,
+  workLocation: String,
+  preferredWorkAreas: String,
+  currentCompany: String,
+  phone: String,
+  isWorkerVerificationSubmitted: {
+    type: Boolean,
+    default: false
+  },
+  workerVerificationStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  workerVerificationSubmittedAt: Date,
+  workerVerificationApprovedAt: Date,
   isVerified: {
     type: Boolean,
     default: false

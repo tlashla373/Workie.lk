@@ -722,6 +722,101 @@ router.post('/google-signin', async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/worker-verification
+// @desc    Submit worker verification data
+// @access  Private
+router.post('/worker-verification', auth, async (req, res) => {
+  try {
+    const {
+      categories,
+      skills,
+      experience,
+      bio,
+      age,
+      country,
+      streetAddress,
+      city,
+      postalCode,
+      location,
+      address,
+      companyName,
+      phone
+    } = req.body;
+
+    // Validate required fields
+    if (!categories || !bio || !age || !country || !streetAddress || !city || !postalCode || !location || !address || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'All required fields must be provided'
+      });
+    }
+
+    // Find and update user profile
+    let profile = await Profile.findOne({ user: req.user.id });
+    
+    if (!profile) {
+      // Create new profile if doesn't exist
+      profile = new Profile({ user: req.user.id });
+    }
+
+    // Parse categories if it's a string
+    let parsedCategories = categories;
+    if (typeof categories === 'string') {
+      try {
+        parsedCategories = JSON.parse(categories);
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid categories format'
+        });
+      }
+    }
+
+    // Update profile with worker verification data
+    profile.workerCategories = parsedCategories;
+    profile.skills = skills;
+    profile.experience = experience;
+    profile.bio = bio;
+    profile.age = parseInt(age);
+    profile.country = country;
+    profile.streetAddress = streetAddress;
+    profile.city = city;
+    profile.postalCode = postalCode;
+    profile.workLocation = location;
+    profile.preferredWorkAreas = address;
+    profile.currentCompany = companyName;
+    profile.phone = phone;
+    profile.isWorkerVerificationSubmitted = true;
+    profile.workerVerificationStatus = 'pending';
+    profile.workerVerificationSubmittedAt = new Date();
+
+    await profile.save();
+
+    // Update user to mark as worker if not already
+    const user = await User.findById(req.user.id);
+    if (user.userType !== 'worker') {
+      user.userType = 'worker';
+      await user.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Worker verification data submitted successfully',
+      data: {
+        profile
+      }
+    });
+
+  } catch (error) {
+    console.error('Worker verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during worker verification submission',
+      error: error.message
+    });
+  }
+});
+
 // Test endpoint to verify routes are working
 router.get('/test', (req, res) => {
   res.json({ message: 'Auth routes are working!' });

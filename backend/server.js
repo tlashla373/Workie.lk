@@ -44,7 +44,10 @@ app.use(cors({
     'http://localhost:5174', // Vite dev server alternative port
     'http://localhost:3000'  // Allow React dev server port too
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // Body parsing middleware
