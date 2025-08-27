@@ -152,7 +152,7 @@ const ProfileAbout = ({ profileData, isDarkMode = false }) => {
                   key={index}
                   className={`px-3 py-1 rounded-lg text-sm font-medium ${isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'}`}
                 >
-                  {skill}
+                  {typeof skill === 'object' ? skill.name : skill}
                 </span>
               ))}
             </div>

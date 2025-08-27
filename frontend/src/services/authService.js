@@ -42,6 +42,31 @@ export class AuthService {
       
       if (response.success && response.data.token) {
         apiService.setAuthToken(response.data.token);
+        
+        // Always fetch the latest user data from /auth/me after Google sign-in
+        try {
+          const userDataResponse = await apiService.get('/auth/me');
+          if (userDataResponse.success && userDataResponse.data.user) {
+            // Store the latest user data from database
+            apiService.setUser(userDataResponse.data.user);
+            
+            // Return the response with fresh user data
+            return {
+              ...response,
+              data: {
+                ...response.data,
+                user: userDataResponse.data.user
+              }
+            };
+          }
+        } catch (fetchError) {
+          console.warn('Failed to fetch latest user data after Google sign-in:', fetchError);
+          // Fallback to login response data
+          if (response.data.user) {
+            apiService.setUser(response.data.user);
+          }
+        }
+        
         return response;
       }
       
@@ -60,11 +85,32 @@ export class AuthService {
       if (response.success && response.data.token) {
         apiService.setAuthToken(response.data.token);
         
-        // Store user data and notify ProfileService of login
-        if (response.data.user) {
-          apiService.setUser(response.data.user);
-          const userId = response.data.user.id || response.data.user._id;
-          profileService.handleLogin(userId);
+        // Always fetch the latest user data from /auth/me after login
+        try {
+          const userDataResponse = await apiService.get('/auth/me');
+          if (userDataResponse.success && userDataResponse.data.user) {
+            // Store the latest user data from database
+            apiService.setUser(userDataResponse.data.user);
+            const userId = userDataResponse.data.user.id || userDataResponse.data.user._id;
+            profileService.handleLogin(userId);
+            
+            // Return the response with fresh user data
+            return {
+              ...response,
+              data: {
+                ...response.data,
+                user: userDataResponse.data.user
+              }
+            };
+          }
+        } catch (fetchError) {
+          console.warn('Failed to fetch latest user data after login:', fetchError);
+          // Fallback to login response data
+          if (response.data.user) {
+            apiService.setUser(response.data.user);
+            const userId = response.data.user.id || response.data.user._id;
+            profileService.handleLogin(userId);
+          }
         }
         
         return response;
@@ -163,24 +209,37 @@ export class AuthService {
     }
   }
 
+  // Update user role (for role selection)
+  async updateUserRole(userType) {
+    try {
+      const response = await apiService.put('/auth/update-role', { userType });
+      
+      if (response.success) {
+        // Update stored user data with the new userType
+        if (response.data.user) {
+          apiService.setUser(response.data.user);
+          console.log('Updated stored user data:', response.data.user);
+        }
+        
+        return response;
+      }
+      
+      throw new Error(response.message || 'Failed to update user role');
+    } catch (error) {
+      console.error('Update user role error:', error);
+      throw error;
+    }
+  }
+
   // Check if user is authenticated
   isAuthenticated() {
     return !!apiService.getAuthToken();
   }
 
-  // Get user role from token (basic implementation)
+  // Get user role from stored user data
   getUserRole() {
-    const token = apiService.getAuthToken();
-    if (!token) return null;
-
-    try {
-      // Basic JWT payload decode (not secure, just for UI logic)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.userType || null;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
-    }
+    const user = apiService.getUser();
+    return user?.userType || null;
   }
 }
 

@@ -191,7 +191,6 @@ const SideNavbar = ({
   const workerNavigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: Bell, label: 'Notifications', href: '/notifications', badge: notificationCount > 0 ? notificationCount : null },
     { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work Status', href: '/workhistory' },
@@ -205,7 +204,6 @@ const SideNavbar = ({
     { icon: Home, label: 'Home', href: '/' },
     { icon: Edit3, label: 'Post Jobs', href: '/post-job' },
     { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: Bell, label: 'Notifications', href: '/notifications', badge: notificationCount > 0 ? notificationCount : null },
     { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
     { icon: History, label: 'Work Status', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },

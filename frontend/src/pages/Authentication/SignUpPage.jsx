@@ -74,8 +74,7 @@ const SignUpPage = () => {
         lastName: lastName.trim(),
         email: email.trim(),
         password,
-        phone: mobile.trim() || undefined, // Send undefined if empty to make it truly optional
-        userType: 'worker' // Valid userType accepted by backend
+        phone: mobile.trim() || undefined // Send undefined if empty to make it truly optional
       });
       
       // Navigate to email verification page with email

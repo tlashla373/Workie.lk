@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
   userType: {
     type: String,
     enum: ['worker', 'client', 'admin'],
-    default: 'client'
+    required: false
   },
   profilePicture: {
     type: String,

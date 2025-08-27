@@ -36,7 +36,12 @@ const ClientSetup = () => {
   };
 
   const handleComplete = () => {
-    navigate('/clientprofile');
+    try {
+      console.log('Client setup completed, navigating to client profile...');
+      navigate('/clientprofile');
+    } catch (error) {
+      console.error('Error navigating to client profile:', error);
+    }
   };
 
   const handleBack = () => {

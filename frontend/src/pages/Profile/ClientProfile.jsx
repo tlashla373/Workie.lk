@@ -42,21 +42,29 @@ const ClientProfile = () => {
         setLoading(true);
         setError(null); // Clear any previous errors
         
+        console.log('ClientProfile: Starting profile fetch...');
+        console.log('ClientProfile: Auth token exists:', !!localStorage.getItem('auth_token'));
+        console.log('ClientProfile: User data exists:', !!localStorage.getItem('auth_user'));
+        
         const response = await profileService.getCurrentUserProfile();
+        console.log('ClientProfile: Profile service response:', response);
         
         if (response.success) {
           const { user, profile } = response.data;
+          
+          console.log('Client Profile - User data:', user);
+          console.log('Client Profile - Profile data:', profile);
           
           // Validate that user data exists
           if (!user) {
             throw new Error('User data not found');
           }
           
-          // Map backend data to frontend structure
+          // Map backend data to frontend structure (Client-specific)
           const mappedData = {
             name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
-            profession: profile?.preferences?.jobTypes?.join(', ') || "Professional",
-            location: user.address ? `${user.address.city}, ${user.address.country}` : "",
+            profession: user.userType === 'client' ? 'Client' : (profile?.preferences?.jobTypes?.join(', ') || "Professional"),
+            location: user.address ? `${user.address.city || ''}, ${user.address.country || ''}`.replace(', ,', ',').trim().replace(/^,|,$/g, '') : "",
             phone: user.phone || "",
             website: profile?.socialLinks?.website || "",
             coverImage: user.coverPhoto || "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop",
@@ -65,7 +73,7 @@ const ClientProfile = () => {
             following: 0, // Not implemented yet
             posts: 0, // Not implemented yet
             rating: profile?.ratings?.average || 0,
-            completedJobs: profile?.completedJobs || 0,
+            completedJobs: user.userType === 'client' ? (profile?.completedJobs || 0) : 0, // For clients, this could be "Posted Jobs"
             bio: profile?.bio || "",
             skills: profile?.skills?.map(skill => skill.name) || [],
             experience: profile?.experience?.map(exp => ({
@@ -76,26 +84,49 @@ const ClientProfile = () => {
                 `${new Date(exp.startDate).getFullYear()} - ${new Date(exp.endDate).getFullYear()}`,
               description: exp.description || ""
             })) || [],
-            portfolio: profile?.portfolio?.map(item => item.images?.[0] || "").filter(img => img) || []
+            portfolio: profile?.portfolio?.map(item => {
+              // Handle both new media format and legacy images format
+              if (item.media && item.media.length > 0) {
+                return item.media[0].url;
+              }
+              return item.images?.[0] || "";
+            }).filter(img => img) || []
           };
           
+          console.log('Client Profile - Mapped data:', mappedData);
           setProfileData(mappedData);
         } else {
+          console.log('ClientProfile: Response not successful:', response);
           throw new Error(response.message || 'Failed to fetch profile data');
         }
       } catch (error) {
-        console.error('Error fetching profile data:', error);
+        console.error('ClientProfile: Error fetching profile data:', error);
+        console.error('ClientProfile: Error name:', error.name);
+        console.error('ClientProfile: Error message:', error.message);
+        console.error('ClientProfile: Full error:', error);
         
         // Show specific error message
         const errorMessage = error.message === 'User data not found' 
           ? 'Profile data is incomplete. Please check your profile settings.'
-          : error.message?.includes('401') || error.message?.includes('authentication')
+          : error.message?.includes('401') || error.message?.includes('authentication') || error.message?.includes('Invalid token') || error.message?.includes('Token expired')
           ? 'Authentication failed. Please log in again.'
-          : error.message?.includes('Network')
+          : error.message?.includes('Network') || error.message?.includes('fetch')
           ? 'Network error. Please check your connection.'
-          : 'Failed to load profile data. Please try again.';
+          : `Failed to load profile data: ${error.message || 'Please try again.'}`;
           
         setError(errorMessage);
+        
+        // Auto-redirect to login if authentication failed
+        if (error.message?.includes('401') || error.message?.includes('Invalid token') || error.message?.includes('Token expired') || error.message?.includes('authentication')) {
+          console.log('ClientProfile: Redirecting to login due to auth error');
+          // Clear invalid tokens
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        }
         
         // Don't set mock data anymore - let user know there's an issue
       } finally {
@@ -122,8 +153,8 @@ const ClientProfile = () => {
             
             const mappedData = {
               name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
-              profession: profile?.preferences?.jobTypes?.join(', ') || "Professional",
-              location: user.address ? `${user.address.city}, ${user.address.country}` : "",
+              profession: user.userType === 'client' ? 'Client' : (profile?.preferences?.jobTypes?.join(', ') || "Professional"),
+              location: user.address ? `${user.address.city || ''}, ${user.address.country || ''}`.replace(', ,', ',').trim().replace(/^,|,$/g, '') : "",
               phone: user.phone || "",
               website: profile?.socialLinks?.website || "",
               coverImage: user.coverPhoto || "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop",
@@ -132,7 +163,7 @@ const ClientProfile = () => {
               following: 0,
               posts: 0,
               rating: profile?.ratings?.average || 0,
-              completedJobs: profile?.completedJobs || 0,
+              completedJobs: user.userType === 'client' ? (profile?.completedJobs || 0) : 0,
               bio: profile?.bio || "",
               skills: profile?.skills?.map(skill => skill.name) || [],
               experience: profile?.experience?.map(exp => ({

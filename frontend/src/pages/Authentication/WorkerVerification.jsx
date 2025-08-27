@@ -95,10 +95,25 @@ const WorkerVerification = () => {
       // Submit to backend using apiService
       const response = await apiService.post('/auth/worker-verification', verificationData);
       console.log('Response from backend:', response);
-      return response;
+      
+      if (response.success) {
+        return response;
+      } else {
+        throw new Error(response.message || 'Unknown error occurred');
+      }
     } catch (error) {
       console.error('Error submitting verification data:', error);
-      throw error;
+      
+      // Provide more specific error messages
+      if (error.message.includes('401') || error.message.includes('authentication')) {
+        throw new Error('Authentication failed. Please log in again.');
+      } else if (error.message.includes('400') || error.message.includes('validation')) {
+        throw new Error(error.message || 'Validation failed. Please check all required fields.');
+      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      } else {
+        throw new Error(error.message || 'Server error during worker verification submission. Please try again.');
+      }
     }
   };
 
@@ -191,24 +206,48 @@ const WorkerVerification = () => {
     if (isAllStepsComplete()) {
       try {
         setIsSubmitting(true);
+        
+        // Validate data before submission
+        if (workerData.categories.length === 0) {
+          alert('Please select at least one work category.');
+          return;
+        }
+        
+        if (!workerData.bio.trim()) {
+          alert('Please provide a bio describing yourself.');
+          return;
+        }
+        
+        if (!workerData.phone.trim() || !workerData.phoneVerified) {
+          alert('Please verify your phone number.');
+          return;
+        }
+        
+        console.log('Starting worker verification submission...');
         const response = await submitWorkerVerificationData();
         
-        // Show success message
-        alert('Worker verification submitted successfully! Your profile is now under review.');
-        navigate('/clientprofile');
+        if (response && response.success) {
+          // Show success message
+          alert('Worker verification submitted successfully! Your profile is now under review.');
+          navigate('/clientprofile');
+        } else {
+          throw new Error(response?.message || 'Unknown error occurred');
+        }
       } catch (error) {
         console.error('Error submitting verification data:', error);
         alert(`Failed to save verification data: ${error.message}. Please try again.`);
       } finally {
         setIsSubmitting(false);
       }
+    } else {
+      alert('Please complete all required steps before submitting.');
     }
   };
 
   const isStepValid = (step) => {
     switch (step) {
       case 1:
-        return workerData.categories.length === 2; // Must choose exactly 2 categories
+        return workerData.categories.length >= 1 && workerData.categories.length <= 2; // Must choose 1-2 categories
       case 2:
         return workerData.bio.trim() !== '';
       case 3:
@@ -339,7 +378,7 @@ const WorkerVerification = () => {
             <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2 sm:mb-3">
-                  Select Your Work Categories * (Choose exactly 2)
+                  Select Your Work Categories * (Choose 1-2 categories)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                   {workerCategories.map((category) => (

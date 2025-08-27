@@ -136,13 +136,13 @@ router.post('/register', validateRegister, async (req, res) => {
       });
     }
 
-    // Create user
+    // Create user (without userType - will be set during role selection)
     const user = await User.create({
       firstName,
       lastName,
       email,
       password,
-      userType: userType || 'worker',
+      userType: userType || undefined, // Only set if provided, otherwise leave null
       phone
     });
 
@@ -727,6 +727,9 @@ router.post('/google-signin', async (req, res) => {
 // @access  Private
 router.post('/worker-verification', auth, async (req, res) => {
   try {
+    console.log('Worker verification request received:', req.body);
+    console.log('User ID from auth middleware:', req.user?.id);
+    
     const {
       categories,
       skills,
@@ -745,9 +748,22 @@ router.post('/worker-verification', auth, async (req, res) => {
 
     // Validate required fields
     if (!categories || !bio || !age || !country || !streetAddress || !city || !postalCode || !location || !address || !phone) {
+      const missingFields = [];
+      if (!categories) missingFields.push('categories');
+      if (!bio) missingFields.push('bio');
+      if (!age) missingFields.push('age');
+      if (!country) missingFields.push('country');
+      if (!streetAddress) missingFields.push('streetAddress');
+      if (!city) missingFields.push('city');
+      if (!postalCode) missingFields.push('postalCode');
+      if (!location) missingFields.push('location');
+      if (!address) missingFields.push('address');
+      if (!phone) missingFields.push('phone');
+      
+      console.log('Missing required fields:', missingFields);
       return res.status(400).json({
         success: false,
-        message: 'All required fields must be provided'
+        message: `Missing required fields: ${missingFields.join(', ')}`
       });
     }
 
@@ -756,7 +772,10 @@ router.post('/worker-verification', auth, async (req, res) => {
     
     if (!profile) {
       // Create new profile if doesn't exist
+      console.log('Creating new profile for user:', req.user.id);
       profile = new Profile({ user: req.user.id });
+    } else {
+      console.log('Updating existing profile for user:', req.user.id);
     }
 
     // Parse categories if it's a string
@@ -765,17 +784,46 @@ router.post('/worker-verification', auth, async (req, res) => {
       try {
         parsedCategories = JSON.parse(categories);
       } catch (error) {
+        console.log('Error parsing categories:', error.message);
         return res.status(400).json({
           success: false,
-          message: 'Invalid categories format'
+          message: 'Invalid categories format - must be a valid JSON array'
         });
       }
+    }
+    
+    // Validate categories array
+    if (!Array.isArray(parsedCategories) || parsedCategories.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Categories must be a non-empty array'
+      });
     }
 
     // Update profile with worker verification data
     profile.workerCategories = parsedCategories;
-    profile.skills = skills;
-    profile.experience = experience;
+    
+    // Handle skills - convert string to proper format if needed
+    if (skills && skills.trim()) {
+      const skillsArray = skills.split(',').map(skill => ({
+        name: skill.trim(),
+        level: 'beginner',
+        yearsOfExperience: 0
+      }));
+      profile.skills = skillsArray;
+    }
+    
+    // Handle experience - convert string to proper format if needed
+    if (experience && experience.trim()) {
+      const experienceEntry = {
+        title: 'General Experience',
+        description: experience,
+        isCurrent: true,
+        startDate: new Date()
+      };
+      profile.experience = [experienceEntry];
+    }
+    
     profile.bio = bio;
     profile.age = parseInt(age);
     profile.country = country;
@@ -790,28 +838,159 @@ router.post('/worker-verification', auth, async (req, res) => {
     profile.workerVerificationStatus = 'pending';
     profile.workerVerificationSubmittedAt = new Date();
 
+    console.log('Saving profile with data:', profile.toObject());
     await profile.save();
+    console.log('Profile saved successfully');
 
     // Update user to mark as worker if not already
+    console.log('Finding user by ID:', req.user.id);
     const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      console.error('User not found with ID:', req.user.id);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    console.log('Current user type:', user.userType);
     if (user.userType !== 'worker') {
+      console.log('Updating user type from', user.userType, 'to worker');
       user.userType = 'worker';
-      await user.save();
+      
+      try {
+        await user.save();
+        console.log('User type updated successfully to:', user.userType);
+        
+        // Verify the update
+        const updatedUser = await User.findById(req.user.id);
+        console.log('Verified user type in database:', updatedUser.userType);
+      } catch (userSaveError) {
+        console.error('Error saving user type:', userSaveError);
+        // Don't fail the whole request if user type update fails
+        console.log('Continuing despite user type update failure...');
+      }
+    } else {
+      console.log('User type already set to worker');
     }
 
+    console.log('Worker verification completed successfully');
     res.status(200).json({
       success: true,
       message: 'Worker verification data submitted successfully',
       data: {
-        profile
+        profile: {
+          id: profile._id,
+          workerCategories: profile.workerCategories,
+          bio: profile.bio,
+          age: profile.age,
+          country: profile.country,
+          city: profile.city,
+          workLocation: profile.workLocation,
+          isWorkerVerificationSubmitted: profile.isWorkerVerificationSubmitted,
+          workerVerificationStatus: profile.workerVerificationStatus,
+          workerVerificationSubmittedAt: profile.workerVerificationSubmittedAt
+        }
       }
     });
 
   } catch (error) {
     console.error('Worker verification error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Check for specific MongoDB validation errors
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+    
+    // Check for duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Profile already exists for this user'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Server error during worker verification submission',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+});
+
+// @route   PUT /api/auth/update-role
+// @desc    Update user role (for role selection)
+// @access  Private
+router.put('/update-role', auth, async (req, res) => {
+  try {
+    const { userType } = req.body;
+
+    // Validate userType
+    if (!userType || !['worker', 'client'].includes(userType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid userType is required (worker or client)'
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Allow updating userType if it's currently null/undefined or if user is updating to same type
+    if (user.userType && user.userType !== userType) {
+      return res.status(400).json({
+        success: false,
+        message: 'User role has already been set and cannot be changed'
+      });
+    }
+
+    // Update user role
+    user.userType = userType;
+    await user.save();
+
+    // Create a profile if it doesn't exist
+    let profile = await Profile.findOne({ user: req.user.id });
+    if (!profile) {
+      profile = new Profile({
+        user: req.user.id,
+        bio: '',
+        skills: [],
+        experience: [],
+        portfolio: []
+      });
+      await profile.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User role updated successfully',
+      data: {
+        user: {
+          ...user.toJSON(),
+          userType: user.userType
+        },
+        profile
+      }
+    });
+  } catch (error) {
+    console.error('Update role error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
       error: error.message
     });
   }
@@ -820,6 +999,19 @@ router.post('/worker-verification', auth, async (req, res) => {
 // Test endpoint to verify routes are working
 router.get('/test', (req, res) => {
   res.json({ message: 'Auth routes are working!' });
+});
+
+// Debug endpoint to test authentication
+router.get('/debug', auth, (req, res) => {
+  res.json({ 
+    message: 'Authentication working!',
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      userType: req.user.userType,
+      isActive: req.user.isActive
+    }
+  });
 });
 
 module.exports = router;
