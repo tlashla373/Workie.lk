@@ -153,6 +153,97 @@ const profileSchema = new mongoose.Schema({
       default: 'basic'
     }
   }],
+  
+  // Worker Verification System
+  workerVerification: {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    personalInfo: {
+      age: String,
+      country: String,
+      streetAddress: String,
+      city: String,
+      postalCode: String,
+      location: String,
+      address: String,
+      phone: String
+    },
+    professionalInfo: {
+      categories: [String], // Worker categories like 'Plumber', 'Electrician'
+      skills: String,
+      experience: String,
+      bio: String,
+      companyName: String
+    },
+    documents: {
+      profilePhoto: {
+        url: String,
+        filename: String,
+        size: Number,
+        uploadDate: Date
+      },
+      idPhotoFront: {
+        url: String,
+        filename: String,
+        size: Number,
+        uploadDate: Date
+      },
+      idPhotoBack: {
+        url: String,
+        filename: String,
+        size: Number,
+        uploadDate: Date
+      },
+      certificates: [{
+        url: String,
+        filename: String,
+        size: Number,
+        uploadDate: Date
+      }],
+      portfolioImages: [{
+        url: String,
+        filename: String,
+        size: Number,
+        uploadDate: Date
+      }],
+      verificationDocuments: [{
+        url: String,
+        filename: String,
+        size: Number,
+        uploadDate: Date
+      }]
+    },
+    verification: {
+      emailVerified: {
+        type: Boolean,
+        default: false
+      },
+      phoneVerified: {
+        type: Boolean,
+        default: false
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'under_review', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      submissionDate: Date,
+      reviewDate: Date,
+      reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      adminNotes: String,
+      lastUpdated: Date
+    }
+  },
+  
+  isVerificationSubmitted: {
+    type: Boolean,
+    default: false
+  },
   socialLinks: {
     linkedin: String,
     facebook: String,

@@ -215,6 +215,122 @@ const validateProfile = [
   handleValidationErrors
 ];
 
+// Worker verification validation
+const validateWorkerVerification = [
+  body('categories')
+    .notEmpty()
+    .withMessage('At least one category is required')
+    .custom((value) => {
+      const categories = Array.isArray(value) ? value : value.split(',').map(cat => cat.trim());
+      if (categories.length === 0) {
+        throw new Error('At least one category is required');
+      }
+      if (categories.length > 2) {
+        throw new Error('Maximum 2 categories allowed');
+      }
+      const validCategories = [
+        'Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter', 'Welder',
+        'HVAC Technician', 'Roofer', 'Landscaper', 'Cleaner', 'Mechanic', 'Driver'
+      ];
+      const invalidCategories = categories.filter(cat => !validCategories.includes(cat));
+      if (invalidCategories.length > 0) {
+        throw new Error(`Invalid categories: ${invalidCategories.join(', ')}`);
+      }
+      return true;
+    }),
+
+  body('skills')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Skills description cannot exceed 500 characters'),
+
+  body('experience')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('Experience description cannot exceed 1000 characters'),
+
+  body('bio')
+    .notEmpty()
+    .withMessage('Bio is required')
+    .trim()
+    .isLength({ min: 50, max: 500 })
+    .withMessage('Bio must be between 50 and 500 characters'),
+
+  body('age')
+    .notEmpty()
+    .withMessage('Age is required')
+    .isInt({ min: 18, max: 65 })
+    .withMessage('Age must be between 18 and 65'),
+
+  body('country')
+    .notEmpty()
+    .withMessage('Country is required')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Country must be between 2 and 100 characters'),
+
+  body('streetAddress')
+    .notEmpty()
+    .withMessage('Street address is required')
+    .trim()
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Street address must be between 5 and 200 characters'),
+
+  body('city')
+    .notEmpty()
+    .withMessage('City is required')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('City must be between 2 and 100 characters'),
+
+  body('postalCode')
+    .notEmpty()
+    .withMessage('Postal code is required')
+    .trim()
+    .isLength({ min: 3, max: 20 })
+    .withMessage('Postal code must be between 3 and 20 characters'),
+
+  body('location')
+    .notEmpty()
+    .withMessage('Location is required')
+    .trim()
+    .isLength({ min: 5, max: 200 })
+    .withMessage('Location must be between 5 and 200 characters'),
+
+  body('address')
+    .notEmpty()
+    .withMessage('Address is required')
+    .trim()
+    .isLength({ min: 10, max: 300 })
+    .withMessage('Address must be between 10 and 300 characters'),
+
+  body('phone')
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .isMobilePhone()
+    .withMessage('Please provide a valid phone number'),
+
+  body('companyName')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Company name cannot exceed 100 characters'),
+
+  body('emailVerified')
+    .optional()
+    .isBoolean()
+    .withMessage('Email verified must be a boolean'),
+
+  body('phoneVerified')
+    .optional()
+    .isBoolean()
+    .withMessage('Phone verified must be a boolean'),
+
+  handleValidationErrors
+];
+
 module.exports = {
   validateRegister,
   validateLogin,
@@ -222,5 +338,6 @@ module.exports = {
   validateApplication,
   validateReview,
   validateProfile,
+  validateWorkerVerification,
   handleValidationErrors
 };

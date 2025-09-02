@@ -30,6 +30,11 @@ const WorkerVerification = () => {
   const { isDarkMode } = useDarkMode();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [fileValidationErrors, setFileValidationErrors] = useState({});
+  const [inputValidationErrors, setInputValidationErrors] = useState({});
   const [workerData, setWorkerData] = useState({
     // New fields for added steps
     categories: [],
@@ -61,6 +66,124 @@ const WorkerVerification = () => {
     'Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter', 'Welder',
     'HVAC Technician', 'Roofer', 'Landscaper', 'Cleaner', 'Mechanic', 'Driver'
   ];
+
+  // Input validation functions
+  const validateInput = (field, value) => {
+    let error = '';
+    
+    switch (field) {
+      case 'bio':
+        if (!value || value.trim().length < 50) {
+          error = 'Bio must be at least 50 characters long';
+        } else if (value.trim().length > 500) {
+          error = 'Bio cannot exceed 500 characters';
+        }
+        break;
+        
+      case 'age':
+        const ageNum = parseInt(value);
+        if (!value || isNaN(ageNum)) {
+          error = 'Age is required';
+        } else if (ageNum < 18 || ageNum > 65) {
+          error = 'Age must be between 18 and 65';
+        }
+        break;
+        
+      case 'country':
+        if (!value || value.trim().length < 2) {
+          error = 'Country is required';
+        } else if (value.trim().length > 100) {
+          error = 'Country name is too long';
+        }
+        break;
+        
+      case 'streetAddress':
+        if (!value || value.trim().length < 5) {
+          error = 'Street address must be at least 5 characters';
+        } else if (value.trim().length > 200) {
+          error = 'Street address is too long';
+        }
+        break;
+        
+      case 'city':
+        if (!value || value.trim().length < 2) {
+          error = 'City is required';
+        } else if (value.trim().length > 100) {
+          error = 'City name is too long';
+        }
+        break;
+        
+      case 'postalCode':
+        if (!value || value.trim().length < 3) {
+          error = 'Postal code must be at least 3 characters';
+        } else if (value.trim().length > 20) {
+          error = 'Postal code is too long';
+        }
+        break;
+        
+      case 'location':
+        if (!value || value.trim().length < 5) {
+          error = 'Location must be at least 5 characters';
+        } else if (value.trim().length > 200) {
+          error = 'Location is too long';
+        }
+        break;
+        
+      case 'address':
+        if (!value || value.trim().length < 10) {
+          error = 'Address must be at least 10 characters';
+        } else if (value.trim().length > 300) {
+          error = 'Address is too long';
+        }
+        break;
+        
+      case 'phone':
+        const phoneRegex = /^[\+]?[1-9][\d]{7,14}$/;
+        if (!value || !phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+          error = 'Please enter a valid phone number';
+        }
+        break;
+        
+      case 'skills':
+        if (value && value.length > 500) {
+          error = 'Skills description cannot exceed 500 characters';
+        }
+        break;
+        
+      case 'experience':
+        if (value && value.length > 1000) {
+          error = 'Experience description cannot exceed 1000 characters';
+        }
+        break;
+        
+      case 'companyName':
+        if (value && value.length > 100) {
+          error = 'Company name cannot exceed 100 characters';
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    return error;
+  };
+
+  // Handle input change with validation
+  const handleInputChange = (field, value) => {
+    // Update the value
+    setWorkerData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Validate the input
+    const error = validateInput(field, value);
+    setInputValidationErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+  };
 
   const steps = [
     { id: 1, title: 'Category & Skills', icon: User },
@@ -160,24 +283,37 @@ const WorkerVerification = () => {
   const isStepValid = (step) => {
     switch (step) {
       case 1:
-        return workerData.categories.length >= 1 && workerData.categories.length <= 2; // Must choose at least 1, max 2 categories
+        return workerData.categories.length >= 1 && workerData.categories.length <= 2;
       case 2:
-        return workerData.bio.trim() !== '';
+        return workerData.bio.trim() !== '' && 
+               workerData.bio.trim().length >= 50 && 
+               workerData.bio.trim().length <= 500 &&
+               !inputValidationErrors.bio;
       case 3:
         return workerData.age.trim() !== '' && 
                workerData.country.trim() !== '' && 
                workerData.streetAddress.trim() !== '' && 
                workerData.city.trim() !== '' && 
-               workerData.postalCode.trim() !== '';
+               workerData.postalCode.trim() !== '' &&
+               !inputValidationErrors.age &&
+               !inputValidationErrors.country &&
+               !inputValidationErrors.streetAddress &&
+               !inputValidationErrors.city &&
+               !inputValidationErrors.postalCode;
       case 4:
-        return workerData.location.trim() !== '' && workerData.address.trim() !== '';
+        return workerData.location.trim() !== '' && 
+               !inputValidationErrors.location;
       case 5:
-        return workerData.profilePhoto !== null;
+        return workerData.profilePhoto !== null && !fileValidationErrors.profilePhoto;
       case 6:
-        return workerData.idPhotoFront !== null && workerData.idPhotoBack !== null;
+        return workerData.idPhotoFront !== null && 
+               workerData.idPhotoBack !== null &&
+               !fileValidationErrors.idPhotoFront &&
+               !fileValidationErrors.idPhotoBack;
       case 7:
         return workerData.phone.trim() !== '' && 
-               workerData.phoneVerified;
+               workerData.phoneVerified &&
+               !inputValidationErrors.phone;
       case 8:
         return isStepValid(1) && isStepValid(2) && isStepValid(3) && isStepValid(4) && 
                isStepValid(5) && isStepValid(6) && isStepValid(7);
@@ -382,20 +518,38 @@ const WorkerVerification = () => {
             <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  About Yourself *
+                  About Yourself * (minimum 50 characters)
                 </label>
                 <textarea
-                  placeholder="Write a brief bio about yourself. Tell potential clients about your work style, reliability, and what makes you a great worker."
+                  placeholder="Write a brief bio about yourself. Tell potential clients about your work style, reliability, and what makes you a great worker. This helps clients understand your background and approach to work."
                   value={workerData.bio}
-                  onChange={(e) => setWorkerData({ ...workerData, bio: e.target.value })}
+                  onChange={(e) => handleInputChange('bio', e.target.value)}
                   rows={5}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
-                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 transition-colors resize-none ${
+                    inputValidationErrors.bio 
+                      ? 'border-red-500 focus:ring-red-500'
+                      : workerData.bio.length >= 50 && workerData.bio.length <= 500
+                      ? 'border-green-500 focus:ring-green-500'
+                      : isDarkMode 
+                      ? 'border-gray-600 focus:ring-blue-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
                   }`}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {workerData.bio.length}/500 characters
-                </p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className={`text-xs ${
+                    workerData.bio.length < 50 
+                      ? 'text-orange-500' 
+                      : workerData.bio.length <= 500 
+                      ? 'text-green-600' 
+                      : 'text-red-500'
+                  }`}>
+                    {workerData.bio.length}/500 characters
+                    {workerData.bio.length < 50 && ` (${50 - workerData.bio.length} more needed)`}
+                  </p>
+                  {inputValidationErrors.bio && (
+                    <p className="text-xs text-red-500">{inputValidationErrors.bio}</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -407,18 +561,27 @@ const WorkerVerification = () => {
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Personal Details</h2>
             <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Age *</label>
+                <label className="block text-sm font-medium mb-1">Age * (18-65 years)</label>
                 <input
                   type="number"
                   placeholder="Enter your age"
                   value={workerData.age}
-                  onChange={(e) => setWorkerData({ ...workerData, age: e.target.value })}
+                  onChange={(e) => handleInputChange('age', e.target.value)}
                   min="18"
-                  max="70"
-                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  max="65"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 transition-colors ${
+                    inputValidationErrors.age 
+                      ? 'border-red-500 focus:ring-red-500'
+                      : workerData.age && !inputValidationErrors.age
+                      ? 'border-green-500 focus:ring-green-500'
+                      : isDarkMode 
+                      ? 'border-gray-600 focus:ring-blue-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
                   }`}
                 />
+                {inputValidationErrors.age && (
+                  <p className="text-xs text-red-500 mt-1">{inputValidationErrors.age}</p>
+                )}
               </div>
 
               <div>
@@ -492,22 +655,6 @@ const WorkerVerification = () => {
                     placeholder="Enter your current work location"
                     value={workerData.location}
                     onChange={(e) => setWorkerData({ ...workerData, location: e.target.value })}
-                    className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                      isDarkMode ? 'border-gray-600' : 'border-gray-300'
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Building className="w-5 h-5 text-blue-500" />
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Preferred Work Areas *</label>
-                  <input
-                    type="text"
-                    placeholder="Enter areas where you prefer to work"
-                    value={workerData.address}
-                    onChange={(e) => setWorkerData({ ...workerData, address: e.target.value })}
                     className={`w-full border rounded-lg px-3 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
                     }`}
@@ -690,7 +837,7 @@ const WorkerVerification = () => {
               }`}>
                 <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                   <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                  <label className={`block ${isDarkMode ? 'text-gray-800' : 'text-gray-600'} text-sm font-medium`}>Phone Verification *</label>
+                  <label className={`block ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-medium`}>Phone Verification *</label>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
@@ -699,7 +846,7 @@ const WorkerVerification = () => {
                     value={workerData.phone}
                     onChange={(e) => setWorkerData({ ...workerData, phone: e.target.value })}
                     className={`flex-1 border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode ? 'border-gray-600 text-gray-800' : 'border-gray-300  text-gray-400'
+                      isDarkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300  text-gray-100'
                     }`}
                     disabled={workerData.phoneVerified}
                   />
@@ -735,16 +882,41 @@ const WorkerVerification = () => {
         );
 
       case 8:
-      case 8:
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold mb-4">Complete Setup</h2>
+            
+            {/* Success Message */}
+            {submitSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center">
+                  <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                  <p className="text-green-800 font-medium">
+                    Verification submitted successfully! You will be redirected to your profile.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center">
+                  <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                  <div>
+                    <p className="text-red-800 font-medium">Submission Failed</p>
+                    <p className="text-red-700 text-sm mt-1">{submitError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="text-center py-8">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">Verification Complete!</h3>
+                <h3 className="text-xl font-medium mb-2">Ready to Submit!</h3>
                 <p className="text-gray-600">
-                  All your information has been verified successfully. You can now complete your worker profile setup.
+                  All your information has been verified successfully. Click the button below to submit your worker verification and create your profile.
                 </p>
               </div>
               
@@ -756,7 +928,7 @@ const WorkerVerification = () => {
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Bio Information</span>
+                    <span>Bio Information ({workerData.bio.length} chars)</span>
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
                   <div className="flex items-center justify-between">
@@ -779,6 +951,18 @@ const WorkerVerification = () => {
                     <span>Phone Verification</span>
                     <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    <strong>Selected Categories:</strong> {workerData.categories.join(', ')}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <strong>Location:</strong> {workerData.location}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <strong>Phone:</strong> {workerData.phone}
+                  </p>
                 </div>
               </div>
             </div>
@@ -825,15 +1009,24 @@ const WorkerVerification = () => {
 
           <button
             onClick={currentStep === 8 ? handleComplete : handleNext}
-            disabled={!canProceedToNext()}
+            disabled={!canProceedToNext() || isSubmitting}
             className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
-              canProceedToNext()
+              canProceedToNext() && !isSubmitting
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-400 text-white cursor-not-allowed'
             }`}
           >
-            {currentStep === 8 ? 'Complete Setup' : 'Next'}
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                {currentStep === 8 ? 'Submitting...' : 'Processing...'}
+              </>
+            ) : (
+              <>
+                {currentStep === 8 ? 'Complete Setup' : 'Next'}
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              </>
+            )}
           </button>
         </div>
       </div>
