@@ -16,6 +16,7 @@ const reviewRoutes = require('./routes/reviews');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 const workerVerificationRoutes = require('./routes/workerVerification');
+const mediaRoutes = require('./routes/media');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -64,6 +65,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/worker-verification', workerVerificationRoutes);
+app.use('/api/media', mediaRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

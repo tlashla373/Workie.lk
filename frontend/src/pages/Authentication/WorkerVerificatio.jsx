@@ -846,7 +846,7 @@ const WorkerVerification = () => {
                     value={workerData.phone}
                     onChange={(e) => setWorkerData({ ...workerData, phone: e.target.value })}
                     className={`flex-1 border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      isDarkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300  text-gray-100'
+                      isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-300  text-gray-800'
                     }`}
                     disabled={workerData.phoneVerified}
                   />
