@@ -10,7 +10,9 @@ import {
   Video,
   PanelRightOpen,
   PanelRightClose,
-  Bell
+  Bell,
+  Menu,
+  X
 } from 'lucide-react';
 import profileImage from '../assets/profile.jpeg';
 import Logo from '../assets/Logo.png'
@@ -40,24 +42,16 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   const { user } = useAuth() || {};
 
 
-  // Fetch user data from database
+
+  // Fetch user data and notification count
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        console.log('SideNavbar: Fetching user profile data...');
         const response = await profileService.getCurrentUserProfile();
-        
         if (response.success) {
           const { user: userInfo, profile: profileInfo } = response.data;
-          
-          if (!userInfo) {
-            console.warn('SideNavbar: No user data received from API');
-            return;
-          }
-          
-          console.log('SideNavbar: User data received:', { userInfo, profileInfo });
-          
+          if (!userInfo) return;
           setUserData({
             firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
             lastName: userInfo?.lastName || profileInfo?.lastName || '',
@@ -65,52 +59,28 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
             isActive: userInfo?.isActive || false,
             userType: userInfo?.userType || profileInfo?.userType || 'worker'
           });
-        } else {
-          console.warn('SideNavbar: API response indicated failure:', response);
         }
-      } catch (error) {
-        console.error('SideNavbar: Error fetching user data:', error);
-        
-        // Handle authentication errors specifically
-        if (error.message?.includes('Authentication')) {
-          console.log('SideNavbar: Authentication error detected, redirecting to login');
-          // Don't set default values for auth errors, let the auth system handle it
-          setUserData({
-            firstName: '',
-            lastName: '',
-            profilePicture: null,
-            isActive: false,
-            userType: 'worker'
-          });
-        } else {
-          // Set default values on other errors
-          setUserData({
-            firstName: 'User',
-            lastName: '',
-            profilePicture: null,
-            isActive: false,
-            userType: 'worker'
-          });
-        }
+      } catch {
+        setUserData({
+          firstName: 'User',
+          lastName: '',
+          profilePicture: null,
+          isActive: false,
+          userType: 'worker'
+        });
       } finally {
         setLoading(false);
       }
     };
-
-    // Fetch notification count from database
     const fetchNotificationCount = async () => {
       try {
-        // Using connection service to get real notification count
         const connectionsData = await connectionService.getMyConnections();
         const notificationCount = connectionsData?.data?.unreadCount || 0;
         setNotificationCount(notificationCount);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        // Set to 0 instead of random number on error
+      } catch {
         setNotificationCount(0);
       }
     };
-
     fetchUserData();
     fetchNotificationCount();
   }, []);
@@ -135,19 +105,16 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
                 });
               }
             }
-          } catch (error) {
-            console.error('Error refreshing user data:', error);
+          } catch {
+            // Ignore errors during profile refresh
           }
         };
         fetchUserData();
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
-    
     // Also listen for custom events
     const handleProfileUpdate = () => {
-      // Refetch data when profile is updated
       const fetchUserData = async () => {
         try {
           const response = await profileService.getCurrentUserProfile();
@@ -163,149 +130,13 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
               });
             }
           }
-        } catch (error) {
-          console.error('Error refreshing user data:', error);
+        } catch {
+          // Ignore errors during profile refresh
         }
       };
       fetchUserData();
     };
-    
     window.addEventListener('profileUpdated', handleProfileUpdate);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-    };
-  }, []);
-
-
-  // Fetch user data from database
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        console.log('SideNavbar: Fetching user profile data...');
-        const response = await profileService.getCurrentUserProfile();
-        
-        if (response.success) {
-          const { user: userInfo, profile: profileInfo } = response.data;
-          
-          if (!userInfo) {
-            console.warn('SideNavbar: No user data received from API');
-            return;
-          }
-          
-          console.log('SideNavbar: User data received:', { userInfo, profileInfo });
-          
-          setUserData({
-            firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
-            lastName: userInfo?.lastName || profileInfo?.lastName || '',
-            profilePicture: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
-            isActive: userInfo?.isActive || false
-          });
-        } else {
-          console.warn('SideNavbar: API response indicated failure:', response);
-        }
-      } catch (error) {
-        console.error('SideNavbar: Error fetching user data:', error);
-        
-        // Handle authentication errors specifically
-        if (error.message?.includes('Authentication')) {
-          console.log('SideNavbar: Authentication error detected, redirecting to login');
-          // Don't set default values for auth errors, let the auth system handle it
-          setUserData({
-            firstName: '',
-            lastName: '',
-            profilePicture: null,
-            isActive: false
-          });
-        } else {
-          // Set default values on other errors
-          setUserData({
-            firstName: 'User',
-            lastName: '',
-            profilePicture: null,
-            isActive: false
-          });
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Fetch notification count from database
-    const fetchNotificationCount = async () => {
-      try {
-        // Using connection service to get real notification count
-        const connectionsData = await connectionService.getMyConnections();
-        const notificationCount = connectionsData?.data?.unreadCount || 0;
-        setNotificationCount(notificationCount);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        // Set to 0 instead of random number on error
-        setNotificationCount(0);
-      }
-    };
-
-    fetchUserData();
-    fetchNotificationCount();
-  }, []);
-
-  // Listen for profile updates to refresh data
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'profileUpdated') {
-        // Refetch data when profile is updated
-        const fetchUserData = async () => {
-          try {
-            const response = await profileService.getCurrentUserProfile();
-            if (response.success) {
-              const { user: userInfo, profile: profileInfo } = response.data;
-              if (userInfo) {
-                setUserData({
-                  firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
-                  lastName: userInfo?.lastName || profileInfo?.lastName || '',
-                  profilePicture: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
-                  isActive: userInfo?.isActive || false
-                });
-              }
-            }
-          } catch (error) {
-            console.error('Error refreshing user data:', error);
-          }
-        };
-        fetchUserData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for custom events
-    const handleProfileUpdate = () => {
-      // Refetch data when profile is updated
-      const fetchUserData = async () => {
-        try {
-          const response = await profileService.getCurrentUserProfile();
-          if (response.success) {
-            const { user: userInfo, profile: profileInfo } = response.data;
-            if (userInfo) {
-              setUserData({
-                firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
-                lastName: userInfo?.lastName || profileInfo?.lastName || '',
-                profilePicture: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
-                isActive: userInfo?.isActive || false
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error refreshing user data:', error);
-        }
-      };
-      fetchUserData();
-    };
-    
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('profileUpdated', handleProfileUpdate);
@@ -313,31 +144,41 @@ const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   }, []);
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
-  const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
+  // Removed unused toggleProfileDropdown to clean up lint error
 
-  const navigationLinks = [
+
+  // Navigation links for different user types
+  const clientNavigationLinks = [
+    { icon: Home, label: 'Home', href: '/' },
+    { icon: BriefcaseBusiness, label: 'My Jobs', href: '/myjobs' },
+    { icon: Users, label: 'Friends', href: '/friends' },
+    { icon: Menu, label: 'More', href: '#', isMore: true },
+  ];
+  const workerNavigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
     { icon: Users, label: 'Friends', href: '/friends' },
-
     { icon: Menu, label: 'More', href: '#', isMore: true },
   ];
+  const clientMobileNavLinks = clientNavigationLinks;
+  const workerMobileNavLinks = workerNavigationLinks;
 
   // Additional menu items for mobile "More" section
   const moreMenuItems = [
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: notificationCount > 0 ? notificationCount : null },
     { icon: History, label: 'Work Status', href: '/workhistory' },
-
     { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
     { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
   ];
 
-
   // Select navigation links based on user type
   const userType = userData.userType || 'worker';
   const navigationLinks = userType === 'client' ? clientNavigationLinks : workerNavigationLinks;
   const mobileNavLinks = userType === 'client' ? clientMobileNavLinks : workerMobileNavLinks;
+
+  // Add toggleMobileMenu function for mobile nav
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
   // Handle logout - clear localStorage and user data
   const handleLogout = () => {
