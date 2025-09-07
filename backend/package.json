@@ -16,6 +16,13 @@
     "express",
     "mongodb"
   ],
+  "keywords": [
+    "job",
+    "marketplace",
+    "api",
+    "express",
+    "mongodb"
+  ],
   "author": "Workie.lk Team",
   "license": "MIT",
   "dependencies": {

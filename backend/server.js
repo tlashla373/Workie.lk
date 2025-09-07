@@ -15,6 +15,9 @@ const profileRoutes = require('./routes/profiles');
 const reviewRoutes = require('./routes/reviews');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
+const mediaRoutes = require('./routes/media');
+const connectionRoutes = require('./routes/connections');
+const analyticsRoutes = require('./routes/analytics');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -41,7 +44,10 @@ app.use(cors({
     'http://localhost:5174', // Vite dev server alternative port
     'http://localhost:3000'  // Allow React dev server port too
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // Body parsing middleware
@@ -62,6 +68,9 @@ app.use('/api/profiles', profileRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/connections', connectionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

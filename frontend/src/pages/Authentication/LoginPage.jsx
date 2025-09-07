@@ -22,12 +22,28 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    toast.error(null);
     try {
-      await login(email, password);
-      // After successful login, decide where to go (role not stored yet)
-      navigate('/roleselection');
+      const result = await login(email, password);
+      
+      // Check if user has a role already set
+      const user = result?.data?.user;
+      if (user && user.userType) {
+        // Redirect based on existing user type
+        if (user.userType === 'client') {
+          navigate('/clientprofile');
+        } else if (user.userType === 'worker') {
+          navigate('/workerprofile');
+        } else {
+          navigate('/roleselection');
+        }
+      } else {
+        // User needs to select a role
+        navigate('/roleselection');
+      }
+      
+      toast.success('Login successful!');
     } catch (error) {
+      console.error('Login error:', error);
       toast.error(error.message || 'Login failed');
     }
   };
@@ -49,13 +65,27 @@ export default function LoginPage() {
             try {
               // Send token to backend for verification
               const result = await authService.googleSignIn(response.access_token);
-              if (result.token) {
+              if (result.success && result.data) {
                 toast.success('Signed in with Google!');
-                navigate('/roleselection');
+                
+                // Check user type and redirect appropriately
+                const user = result.data.user;
+                if (user && user.userType) {
+                  if (user.userType === 'client') {
+                    navigate('/clientprofile');
+                  } else if (user.userType === 'worker') {
+                    navigate('/workerprofile');
+                  } else {
+                    navigate('/roleselection');
+                  }
+                } else {
+                  navigate('/roleselection');
+                }
               } else {
                 toast.error(result.message || 'Google Sign-In failed');
               }
             } catch (err) {
+              console.error('Google Sign-In error:', err);
               toast.error('Google Sign-In error: ' + (err.message || 'Unknown error'));
             }
           } else {

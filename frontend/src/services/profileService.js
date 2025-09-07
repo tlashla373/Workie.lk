@@ -109,12 +109,26 @@ export class ProfileService {
   // Private method to actually fetch the data
   async _fetchCurrentUserProfile() {
     try {
-      console.log('Fetching current user profile from API...');
+      console.log('ProfileService: Fetching current user profile from API...');
+      console.log('ProfileService: Auth token:', localStorage.getItem('auth_token') ? 'EXISTS' : 'NOT FOUND');
+      console.log('ProfileService: User data:', localStorage.getItem('auth_user') ? 'EXISTS' : 'NOT FOUND');
+      
       const response = await apiService.get('/auth/me');
-      console.log('Profile API response:', response);
+      console.log('ProfileService: Profile API response:', response);
       return response;
     } catch (error) {
-      console.error('API Error fetching current user profile:', error);
+      console.error('ProfileService: API Error fetching current user profile:', error);
+      console.error('ProfileService: Error name:', error.name);
+      console.error('ProfileService: Error message:', error.message);
+      
+      // Check if it's a specific authentication error
+      if (error.message?.includes('401') || error.message?.includes('Invalid token') || error.message?.includes('Token expired')) {
+        console.log('ProfileService: Authentication error detected');
+        // Clear potentially invalid tokens
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+      }
+      
       throw error;
     }
   }

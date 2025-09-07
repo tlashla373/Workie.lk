@@ -16,7 +16,7 @@ import SignUpPage from './pages/Authentication/SignUpPage';
 import EmailVerification from './pages/Authentication/EmailVerification';
 import RoleSelection from './pages/Authentication/RoleSelection';
 import Friends from './pages/Friend/Friends';
-import WorkerVerification from './pages/Authentication/WorkerVerificatio';
+import WorkerVerification from './pages/Authentication/WorkerVerification';
 import ClientSetup from './pages/Authentication/ClientSetup';
 import AddPostPage from './pages/AddPostPage/AddPostPage';
 import OTPPage from './pages/Authentication/OtpPage';
@@ -33,6 +33,7 @@ import AdminReviews from './pages/Admin/AdminReviews';
 import AdminReports from './pages/Admin/AdminReports';
 import AdminNotifications from './pages/Admin/AdminNotifications';
 import AdminSettings from './pages/Admin/AdminSettings';
+import NotificationsPage from './pages/Notifications/NotificationsPage';
 
 
 const App = () => {
@@ -86,6 +87,10 @@ const App = () => {
         {
           path: 'job-application-page',
           element: <JobApplicationPage />,
+        },
+        {
+          path: 'notifications',
+          element: <NotificationsPage />,
         },
       ],
     },

@@ -23,6 +23,8 @@ import notificationService from '../services/notificationService';
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
@@ -63,6 +65,8 @@ const UpperNavbar = ({ isCollapsed = false }) => {
 
   const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
   const toggleNotificationDropdown = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+  const toggleMobileSearch = () => setIsMobileSearchOpen(!isMobileSearchOpen);
+
 
   // Fetch user data and notifications from database
   useEffect(() => {

@@ -5,27 +5,51 @@ import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import FindWorkImage from '../../assets/FindWork.svg';
 import FindJobImage from '../../assets/find-job.svg';
-import { useUserRole } from '../../components/hooks/UserRole'; // Import the hook
+import { useUserRole } from '../../components/hooks/UserRole.jsx'; // Import the hook
+import authService from '../../services/authService'; // Import auth service
 
 const RoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { setUserRole } = useUserRole(); // Use the hook
   const navigate = useNavigate();
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
+    setError(null); // Clear any previous errors
   };
 
-  const handleContinue = () => {
-    if (selectedRole) {
-      // Save role using the hook
-      setUserRole(selectedRole);
+  const handleContinue = async () => {
+    if (selectedRole && !loading) {
+      setLoading(true);
+      setError(null);
       
-      // Navigate based on selected role
-      if (selectedRole === 'worker') {
-        navigate('/workerverification'); // Worker Profile Navigation
-      } else if (selectedRole === 'client') {
-        navigate('/clientsetup'); // Client Profile navigation
+      try {
+        // Update role in database
+        console.log('Updating user role to:', selectedRole);
+        const response = await authService.updateUserRole(selectedRole);
+        
+        if (response.success) {
+          // Save role locally using the hook
+          setUserRole(selectedRole);
+          
+          console.log('Role updated successfully:', response.data);
+          
+          // Navigate based on selected role
+          if (selectedRole === 'worker') {
+            navigate('/workerverification'); // Worker Profile Navigation
+          } else if (selectedRole === 'client') {
+            navigate('/clientsetup'); // Client Profile navigation
+          }
+        } else {
+          throw new Error(response.message || 'Failed to update role');
+        }
+      } catch (err) {
+        console.error('Role update error:', err);
+        setError(err.message || 'Failed to update role. Please try again.');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -121,17 +145,32 @@ const RoleSelection = () => {
 
         {/* Action Buttons */}
         <div className="max-w-md mx-auto space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+          
           <button
             onClick={handleContinue}
-            disabled={!selectedRole}
+            disabled={!selectedRole || loading}
             className={`w-full flex items-center justify-center px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 ${
-              selectedRole
+              selectedRole && !loading
                 ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            Continue
-            <ArrowRight className="w-6 h-6 ml-2" />
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Updating...
+              </>
+            ) : (
+              <>
+                Continue
+                <ArrowRight className="w-6 h-6 ml-2" />
+              </>
+            )}
           </button>
 
           <button
