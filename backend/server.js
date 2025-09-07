@@ -14,9 +14,7 @@ const applicationRoutes = require('./routes/applications');
 const profileRoutes = require('./routes/profiles');
 const reviewRoutes = require('./routes/reviews');
 const notificationRoutes = require('./routes/notifications');
-const mediaRoutes = require('./routes/media');
-const connectionRoutes = require('./routes/connections');
-const analyticsRoutes = require('./routes/analytics');
+const adminRoutes = require('./routes/admin');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -63,9 +61,7 @@ app.use('/api/applications', applicationRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/media', mediaRoutes);
-app.use('/api/connections', connectionRoutes);
-app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
