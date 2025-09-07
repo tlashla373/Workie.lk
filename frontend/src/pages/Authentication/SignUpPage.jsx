@@ -136,7 +136,7 @@ const SignUpPage = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center sm:text-left">Create new account</h1>
           <p className="text-gray-600 mb-6 sm:mb-8 text-center sm:text-left text-sm sm:text-base">
             have an account?
-            <Link to="/loginpage" className="text-blue-600 hover:underline ml-1">Sign in</Link>
+            <Link to="/loginpage" className="text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors  ml-1">Sign in</Link>
           </p>
 
           {/* Form */}

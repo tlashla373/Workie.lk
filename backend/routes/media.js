@@ -267,3 +267,4 @@ if (cloudinaryConfig && cloudinaryConfig.uploadVerificationDoc) {
 }
 
 module.exports = router;
+

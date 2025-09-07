@@ -10,10 +10,7 @@ import {
   Video,
   PanelRightOpen,
   PanelRightClose,
-  Bell,
-  ImagePlus,
-  Menu,
-  X
+  Bell
 } from 'lucide-react';
 import profileImage from '../assets/profile.jpeg';
 import Logo from '../assets/Logo.png'
@@ -25,16 +22,15 @@ import connectionService from '../services/connectionService';
 import { useAuth } from '../hooks/useAuth';
 
 
-const SideNavbar = ({ 
-  isCollapsed = false, 
-  setIsCollapsed = () => {}
-}) => {
+
+const SideNavbar = ({ isCollapsed = false, setIsCollapsed = () => {} }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState({
     firstName: 'User',
     lastName: '',
     profilePicture: null,
+
     isActive: false,
     userType: 'worker' // Default to worker
   });
@@ -42,6 +38,7 @@ const SideNavbar = ({
   const [loading, setLoading] = useState(true);
   const { isDarkMode } = useDarkMode();
   const { user } = useAuth() || {};
+
 
   // Fetch user data from database
   useEffect(() => {
@@ -181,51 +178,148 @@ const SideNavbar = ({
     };
   }, []);
 
+
+  // Fetch user data from database
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        console.log('SideNavbar: Fetching user profile data...');
+        const response = await profileService.getCurrentUserProfile();
+        
+        if (response.success) {
+          const { user: userInfo, profile: profileInfo } = response.data;
+          
+          if (!userInfo) {
+            console.warn('SideNavbar: No user data received from API');
+            return;
+          }
+          
+          console.log('SideNavbar: User data received:', { userInfo, profileInfo });
+          
+          setUserData({
+            firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
+            lastName: userInfo?.lastName || profileInfo?.lastName || '',
+            profilePicture: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
+            isActive: userInfo?.isActive || false
+          });
+        } else {
+          console.warn('SideNavbar: API response indicated failure:', response);
+        }
+      } catch (error) {
+        console.error('SideNavbar: Error fetching user data:', error);
+        
+        // Handle authentication errors specifically
+        if (error.message?.includes('Authentication')) {
+          console.log('SideNavbar: Authentication error detected, redirecting to login');
+          // Don't set default values for auth errors, let the auth system handle it
+          setUserData({
+            firstName: '',
+            lastName: '',
+            profilePicture: null,
+            isActive: false
+          });
+        } else {
+          // Set default values on other errors
+          setUserData({
+            firstName: 'User',
+            lastName: '',
+            profilePicture: null,
+            isActive: false
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch notification count from database
+    const fetchNotificationCount = async () => {
+      try {
+        // Using connection service to get real notification count
+        const connectionsData = await connectionService.getMyConnections();
+        const notificationCount = connectionsData?.data?.unreadCount || 0;
+        setNotificationCount(notificationCount);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        // Set to 0 instead of random number on error
+        setNotificationCount(0);
+      }
+    };
+
+    fetchUserData();
+    fetchNotificationCount();
+  }, []);
+
+  // Listen for profile updates to refresh data
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'profileUpdated') {
+        // Refetch data when profile is updated
+        const fetchUserData = async () => {
+          try {
+            const response = await profileService.getCurrentUserProfile();
+            if (response.success) {
+              const { user: userInfo, profile: profileInfo } = response.data;
+              if (userInfo) {
+                setUserData({
+                  firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
+                  lastName: userInfo?.lastName || profileInfo?.lastName || '',
+                  profilePicture: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
+                  isActive: userInfo?.isActive || false
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error refreshing user data:', error);
+          }
+        };
+        fetchUserData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events
+    const handleProfileUpdate = () => {
+      // Refetch data when profile is updated
+      const fetchUserData = async () => {
+        try {
+          const response = await profileService.getCurrentUserProfile();
+          if (response.success) {
+            const { user: userInfo, profile: profileInfo } = response.data;
+            if (userInfo) {
+              setUserData({
+                firstName: userInfo?.firstName || profileInfo?.firstName || 'User',
+                lastName: userInfo?.lastName || profileInfo?.lastName || '',
+                profilePicture: profileInfo?.profileImage || userInfo?.profileImage || userInfo?.profilePicture,
+                isActive: userInfo?.isActive || false
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing user data:', error);
+        }
+      };
+      fetchUserData();
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, []);
+
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
 
-  // Navigation links for workers
-  const workerNavigationLinks = [
+  const navigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
+    { icon: Edit3, label: 'Post Jobs', href: '/postjob' },
     { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
-    { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
-    { icon: History, label: 'Work Status', href: '/workhistory' },
-    { icon: Video, label: 'Video', href: '/video' },
-    { icon: Settings, label: 'Settings', href: '/settings' },
-    { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
-  ];
 
-  // Navigation links for clients
-  const clientNavigationLinks = [
-    { icon: Home, label: 'Home', href: '/' },
-    { icon: Edit3, label: 'Post Jobs', href: '/post-job' },
-    { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
-    { icon: History, label: 'Work Status', href: '/workhistory' },
-    { icon: Video, label: 'Video', href: '/video' },
-    { icon: Settings, label: 'Settings', href: '/settings' },
-    { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
-  ];
-
-  // Navigation links for workers (mobile bottom nav)
-  const workerMobileNavLinks = [
-    { icon: Home, label: 'Home', href: '/' },
-    { icon: BriefcaseBusiness, label: 'Jobs', href: '/findjobs' },
-    { icon: ImagePlus, label: 'Post', href: '/add-post'},
-    { icon: Users, label: 'Friends', href: '/friends' },
-    { icon: Menu, label: 'More', href: '#', isMore: true },
-  ];
-
-  // Navigation links for clients (mobile bottom nav)
-  const clientMobileNavLinks = [
-    { icon: Home, label: 'Home', href: '/' },
-    { icon: Edit3, label: 'Post Job', href: '/post-job' },
-    { icon: ImagePlus, label: 'Post', href: '/add-post'},
-    { icon: Users, label: 'Friends', href: '/friends' },
     { icon: Menu, label: 'More', href: '#', isMore: true },
   ];
 
@@ -233,10 +327,12 @@ const SideNavbar = ({
   const moreMenuItems = [
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: notificationCount > 0 ? notificationCount : null },
     { icon: History, label: 'Work Status', href: '/workhistory' },
+
     { icon: Video, label: 'Video', href: '/video' },
     { icon: Settings, label: 'Settings', href: '/settings' },
     { icon: LogOut, label: 'Log Out', href: '/loginpage', danger: true },
   ];
+
 
   // Select navigation links based on user type
   const userType = userData.userType || 'worker';
@@ -252,6 +348,7 @@ const SideNavbar = ({
     localStorage.removeItem('userRole');
   };
 
+
   // Get display name
   const displayName = userData.firstName && userData.lastName 
     ? `${userData.firstName} ${userData.lastName}`
@@ -265,8 +362,8 @@ const SideNavbar = ({
 
   return (
     <>
-      {/* Desktop Sidebar - Hidden on mobile */}
-      <div className={`hidden lg:flex h-full flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5] border-gray-700/50'}`}>
+      {/* Sidebar */}
+      <div className={`h-full flex flex-col ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5] border-gray-700/50'}`}>
         {/* Sidebar Header */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
           <div className="flex items-center justify-between">
@@ -292,7 +389,7 @@ const SideNavbar = ({
 
         {/* User Info */}
         <div className={`p-4 border-b-2 ${isDarkMode ? 'border-gray-700' : 'border-white'}`}>
-          <Link to={userType === 'client' ? '/clientprofile' : '/workerprofile'}>
+          <Link to='/clientprofile'>
             <button
               className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 cursor-pointer ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-700' : 'bg-gray-200/30 hover:bg-gray-700/50'}`}
             >
@@ -346,23 +443,18 @@ const SideNavbar = ({
         {/* Navigation */}
         {!isCollapsed && (
           <div className="px-6 py-3">
-            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-white'}`}>
-              {userType === 'client' ? 'Client Menu' : 'Worker Menu'}
-            </span>
+            <span className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-white'}`}>Menu</span>
           </div>
         )}
 
         <nav className="flex-1 px-4 py-2 space-y-1">
           {navigationLinks.map((link) => {
             const Icon = link.icon;
-            const isLogout = link.danger;
-            
             return (
               <NavLink
                 key={link.label}
                 to={link.href}
                 end={link.href === '/'}
-                onClick={isLogout ? handleLogout : undefined}
                 className={({ isActive }) =>
                   `relative flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
@@ -402,6 +494,7 @@ const SideNavbar = ({
           })}
         </nav>
       </div>
+
 
       {/* Mobile Bottom Navigation - Visible only on mobile */}
       <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#4E6BF5]  border-blue-400'} border-t`}>
@@ -514,6 +607,7 @@ const SideNavbar = ({
       )}
 
       {/* Overlay for desktop profile dropdown */}
+
       {isProfileDropdownOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"

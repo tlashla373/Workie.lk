@@ -85,6 +85,7 @@ export class AuthService {
       if (response.success && response.data.token) {
         apiService.setAuthToken(response.data.token);
         
+
         // Always fetch the latest user data from /auth/me after login
         try {
           const userDataResponse = await apiService.get('/auth/me');
@@ -111,6 +112,7 @@ export class AuthService {
             const userId = response.data.user.id || response.data.user._id;
             profileService.handleLogin(userId);
           }
+
         }
         
         return response;

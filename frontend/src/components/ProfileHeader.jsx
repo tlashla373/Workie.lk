@@ -71,7 +71,7 @@ const ProfileHeader = ({
   };
 
   return (
-    <div className="relative h-48 sm:h-64 lg:h-80 overflow-hidden">
+    <div className="relative h-80 overflow-hidden">
       <img
         src={coverPhotoUrl}
         alt="Cover"
@@ -83,7 +83,7 @@ const ProfileHeader = ({
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
       {/* Cover Actions */}
-      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex space-x-1 sm:space-x-2">
+      <div className="absolute top-4 right-4 flex space-x-2">
         <button
           onClick={() => coverInputRef.current?.click()}
           disabled={isUploading}
@@ -91,7 +91,7 @@ const ProfileHeader = ({
             isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
           }`}
         >
-          <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Camera className="w-5 h-5" />
         </button>
         <button
           onClick={() => setIsEditingCover(!isEditingCover)}
@@ -122,12 +122,12 @@ const ProfileHeader = ({
       />
 
       {/* Profile Info Overlay */}
-      <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 flex flex-col sm:flex-row items-start sm:items-end space-y-3 sm:space-y-0 sm:space-x-4">
+      <div className="absolute bottom-6 left-6 flex items-end space-x-4">
         <div className="relative">
           <img
             src={profileData.profileImage}
             alt={profileData.name}
-            className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full border-2 sm:border-4 border-white object-cover"
+            className="w-32 h-32 rounded-full border-4 border-white object-cover"
           />
           <button
             onClick={() => profileInputRef.current?.click()}
@@ -136,13 +136,13 @@ const ProfileHeader = ({
               isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
             }`}
           >
-            <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
+            <Camera className="w-4 h-4" />
           </button>
         </div>
-        <div className="text-white mb-0 sm:mb-4">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{profileData.name}</h1>
-          <p className="text-sm sm:text-base lg:text-lg opacity-90">{profileData.profession}</p>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 sm:mt-2 text-xs sm:text-sm opacity-80">
+        <div className="text-white mb-4">
+          <h1 className="text-3xl font-bold">{profileData.name}</h1>
+          <p className="text-lg opacity-90">{profileData.profession}</p>
+          <div className="flex items-center space-x-4 mt-2 text-sm opacity-80">
             <span>{profileData.followers} followers</span>
             <span>{profileData.following} following</span>
             <span>{profileData.posts} posts</span>
@@ -152,7 +152,7 @@ const ProfileHeader = ({
 
       {/* Cover Photo Edit Options */}
       {isEditingCover && (
-        <div className={`absolute top-12 sm:top-16 right-2 sm:right-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-2 w-44 sm:min-w-48 transition-colors duration-300 z-20`}>
+        <div className={`absolute top-16 right-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-2 min-w-48 transition-colors duration-300`}>
           <button
             onClick={() => coverInputRef.current?.click()}
             className={`w-full text-left px-3 py-2 ${isDarkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'} rounded text-sm transition-colors`}

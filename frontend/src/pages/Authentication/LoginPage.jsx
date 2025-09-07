@@ -52,7 +52,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     try {
       // Use Google Identity Services (GIS) for client-side sign-in
-      /* global google */
+      // global google /
       if (!window.google) {
         toast.error('Google Sign-In SDK not loaded.');
         return;

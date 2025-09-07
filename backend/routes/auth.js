@@ -7,10 +7,6 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const { auth } = require('../middleware/auth');
 const { validateRegister, validateLogin } = require('../middleware/validation');
-const { sendEmailVerificationCode, sendPasswordResetPin, sendOtpEmail } = require('../utils/emailService');
-const { OAuth2Client } = require('google-auth-library');
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID; // Set this in your .env file
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const router = express.Router();
 
@@ -52,74 +48,6 @@ const generateToken = (id) => {
   });
 };
 
-// @route   POST /api/auth/validate-token
-// @desc    Validate JWT token and return user data
-// @access  Public
-router.post('/validate-token', async (req, res) => {
-  try {
-    const { token } = req.body;
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'No token provided'
-      });
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Find user and populate profile
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token - user not found'
-      });
-    }
-
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated'
-      });
-    }
-
-    // Get user profile
-    const profile = await Profile.findOne({ user: user._id });
-
-    res.status(200).json({
-      success: true,
-      message: 'Token is valid',
-      data: {
-        user,
-        profile
-      }
-    });
-  } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expired'
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server error during token validation',
-      error: error.message
-    });
-  }
-});
-
 // @route   POST /api/auth/register
 // @desc    Register a new user
 // @access  Public
@@ -149,24 +77,12 @@ router.post('/register', validateRegister, async (req, res) => {
     // Create empty profile for the user
     await Profile.create({ user: user._id });
 
-    // Generate 5-digit OTP
-    const otp = Math.floor(10000 + Math.random() * 90000).toString();
-
-    // Store OTP and expiry in user
-    user.emailVerificationCode = otp;
-    user.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-    await user.save();
-
-    // Send OTP email (do not block response on error)
-    sendOtpEmail(user.email, otp, user.firstName)
-      .catch(err => console.error('Failed to send OTP email:', err));
-
     // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully. OTP sent to email for verification.',
+      message: 'User registered successfully',
       data: {
         user,
         token
@@ -276,112 +192,36 @@ router.post('/logout', auth, (req, res) => {
 });
 
 // @route   POST /api/auth/forgot-password
-// @desc    Send password reset PIN to email
+// @desc    Forgot password
 // @access  Public
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-
-    // Check if user exists in database
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'No account found with this email address'
+        message: 'User not found with this email'
       });
     }
 
-    // Only send a new PIN if there is no valid PIN
-    const now = Date.now();
-    if (!user.passwordResetPin || !user.passwordResetPinExpires || user.passwordResetPinExpires < now) {
-      // Generate 5-digit PIN
-      const resetPin = Math.floor(10000 + Math.random() * 90000).toString();
-      user.passwordResetPin = resetPin;
-      user.passwordResetPinExpires = now + 10 * 60 * 1000; // 10 minutes
-      await user.save();
-      // Send PIN via email
-      try {
-        await sendPasswordResetPin(user.email, user.firstName, resetPin);
-      } catch (emailError) {
-        console.error('Failed to send reset PIN email:', emailError);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to send reset PIN. Please try again.'
-        });
-      }
-    } else {
-      // If valid PIN exists, do not send another email
-      return res.status(200).json({
-        success: true,
-        message: 'A valid PIN has already been sent to your email address. Please check your inbox.'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Reset PIN sent to your email address'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @route   POST /api/auth/verify-reset-pin
-// @desc    Verify password reset PIN
-// @access  Public
-router.post('/verify-reset-pin', async (req, res) => {
-  try {
-    const { email, pin } = req.body;
-
-    if (!email || !pin) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and PIN are required'
-      });
-    }
-
-    const user = await User.findOne({
-      email,
-      passwordResetPin: pin,
-      passwordResetPinExpires: { $gt: Date.now() }
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired PIN'
-      });
-    }
-
-    // Generate a temporary token for password reset
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    // Generate reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
     user.passwordResetToken = crypto
       .createHash('sha256')
       .update(resetToken)
       .digest('hex');
-    user.passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
-    
-    // Clear the PIN since it's now verified
-    user.passwordResetPin = undefined;
-    user.passwordResetPinExpires = undefined;
-    
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
     await user.save();
 
+    // In a real application, you would send an email here
+    // For now, we'll just return the token (remove this in production)
     res.status(200).json({
       success: true,
-      message: 'PIN verified successfully',
-      resetToken // This will be used for the final password reset
+      message: 'Password reset email sent',
+      resetToken // Remove this in production
     });
   } catch (error) {
     res.status(500).json({
@@ -479,245 +319,157 @@ router.put('/change-password', auth, async (req, res) => {
   }
 });
 
-// @route   POST /api/auth/verify-otp
-// @desc    Verify OTP for email verification
-// @access  Public
-router.post('/verify-otp', async (req, res) => {
-  console.log('Verify OTP endpoint hit:', req.body); // Debug log
+// @route   POST /api/auth/worker-verification
+// @desc    Submit worker verification data (without file uploads for now)
+// @access  Private
+router.post('/worker-verification', auth, async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    console.log('Worker verification endpoint hit');
+    console.log('User from auth middleware:', req.user);
+    console.log('Request body:', req.body);
 
-    if (!email || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and OTP are required'
-      });
+    const {
+      categories, skills, experience, bio, age, country, streetAddress,
+      city, postalCode, location, address, companyName, phone
+    } = req.body;
+
+    // Parse categories if it's a string
+    let parsedCategories;
+    try {
+      parsedCategories = typeof categories === 'string' ? JSON.parse(categories) : categories;
+    } catch (error) {
+      console.log('Error parsing categories:', error);
+      parsedCategories = [];
     }
 
-    // Find user with matching email and OTP
-    const user = await User.findOne({ 
-      email, 
-      emailVerificationCode: otp,
-      emailVerificationExpires: { $gt: Date.now() }
-    });
+    // Map frontend categories to backend enum values
+    const categoryMapping = {
+      'Plumber': 'plumbing',
+      'Electrician': 'electrical',
+      'Carpenter': 'carpentry',
+      'Mason': 'repair-services',
+      'Painter': 'painting',
+      'Welder': 'repair-services',
+      'HVAC Technician': 'repair-services',
+      'Roofer': 'repair-services',
+      'Landscaper': 'gardening',
+      'Cleaner': 'cleaning',
+      'Mechanic': 'repair-services',
+      'Driver': 'delivery'
+    };
+
+    const mappedJobTypes = parsedCategories.map(category => 
+      categoryMapping[category] || 'other'
+    );
+
+    console.log('Original categories:', parsedCategories);
+    console.log('Mapped job types:', mappedJobTypes);
+    console.log('Skills from request:', skills);
+    console.log('Experience from request:', experience);
+
+    // Update user information
+    const updateUserData = {
+      phone,
+      userType: 'worker',
+      isVerified: true, // Mark as verified since they completed the process
+      address: {
+        street: streetAddress,
+        city,
+        zipCode: postalCode,
+        country
+      }
+    };
+
+    console.log('Updating user with data:', updateUserData);
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      updateUserData,
+      { new: true, runValidators: true }
+    );
 
     if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired OTP'
-      });
-    }
-
-    // Mark email as verified
-    user.isEmailVerified = true;
-    user.emailVerificationCode = undefined;
-    user.emailVerificationExpires = undefined;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully'
-    });
-
-  } catch (error) {
-    console.error('Email verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
-});
-
-// @route   POST /api/auth/resend-otp
-// @desc    Resend OTP for email verification
-// @access  Public
-router.post('/resend-otp', async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
+      console.log('User not found with ID:', req.user._id);
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified'
-      });
-    }
+    console.log('User updated successfully:', user._id);
 
-    // Generate new 5-digit OTP
-    const otp = Math.floor(10000 + Math.random() * 90000).toString();
-
-    // Update user with new OTP
-    user.emailVerificationCode = otp;
-    user.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-    await user.save();
-
-    // Send OTP email
-    await sendOtpEmail(user.email, otp, user.firstName);
-
-    res.status(200).json({
-      success: true,
-      message: 'OTP sent successfully'
-    });
-
-  } catch (error) {
-    console.error('Resend OTP error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to send OTP',
-      error: error.message
-    });
-  }
-});
-
-// @route   POST /api/auth/google-signin
-// @desc    Google Sign-In authentication
-// @access  Public
-router.post('/google-signin', async (req, res) => {
-  console.log('Google Sign-In request body:', req.body); // Debug log
-  try {
-    const { accessToken, userInfo } = req.body;
-        
-    if (!accessToken && !userInfo) {
-      return res.status(400).json({
-        success: false,
-        message: 'No access token or user info provided'
-      });
-    }
-
-    let payload;
-
-    // Try to verify accessToken first
-    if (accessToken) {
-      try {
-        // Verify accessToken by making a request to Google's userinfo endpoint
-        const response = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`);
-        if (response.ok) {
-          const userProfile = await response.json();
-          payload = {
-            sub: userProfile.id,
-            email: userProfile.email,
-            given_name: userProfile.given_name,
-            family_name: userProfile.family_name,
-            picture: userProfile.picture,
-            email_verified: userProfile.verified_email
-          };
-        }
-      } catch (error) {
-        console.error('Access Token verification failed:', error);
-      }
-    }
-
-    // If accessToken verification failed, use userInfo as fallback
-    if (!payload && userInfo && userInfo.email) {
-      payload = {
-        sub: userInfo.id,
-        email: userInfo.email,
-        given_name: userInfo.displayName ? userInfo.displayName.split(' ')[0] : '',
-        family_name: userInfo.displayName ? userInfo.displayName.split(' ').slice(1).join(' ') : '',
-        picture: userInfo.photoUrl,
-        email_verified: true // Assume verified from Google
-      };
-    }
-
-    if (!payload || !payload.email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Unable to verify Google authentication. Please try again.'
-      });
-    }
-
-    // Find or create user
-    let user = await User.findOne({ email: payload.email });
+    // Update or create profile
+    const skillsArray = [];
     
-    if (!user) {
-      // Create new user
-      user = await User.create({
-        firstName: payload.given_name || '',
-        lastName: payload.family_name || '',
-        email: payload.email,
-        password: crypto.randomBytes(16).toString('hex'), // Generate a random password
-        googleId: payload.sub, // Store Google ID
-        isGoogleUser: true, // Flag for Google users
-        phone: '', // Phone not available from Google
-        emailVerificationCode: undefined, // No need for verification code
-        emailVerificationExpires: undefined,
-        isEmailVerified: payload.email_verified || true,
-        userType: 'worker', // Default user type
-        isVerified: true,
-        isActive: true,
-        profilePicture: payload.picture || '',
+    // Add selected categories as primary skills
+    if (parsedCategories && parsedCategories.length > 0) {
+      parsedCategories.forEach(category => {
+        skillsArray.push({
+          name: category,
+          level: 'intermediate',
+          yearsOfExperience: 1
+        });
       });
+    }
+    
+    // Add additional skills if provided
+    if (skills && skills.trim()) {
+      // Split skills by comma and create skill objects
+      const additionalSkills = skills.split(',').map(skill => ({
+        name: skill.trim(),
+        level: 'beginner'
+      })).filter(skill => skill.name); // Remove empty skills
       
-      // Create empty profile for the user
-      await Profile.create({ user: user._id });
-    } else {
-      // Update existing user with Google info if needed
-      let updateFields = {};
-      if (!user.googleId && payload.sub) {
-        updateFields.googleId = payload.sub;
-        updateFields.isGoogleUser = true;
-      }
-      if (!user.profilePicture && payload.picture) {
-        updateFields.profilePicture = payload.picture;
-      }
-      if (!user.isEmailVerified && payload.email_verified) {
-        updateFields.isEmailVerified = true;
-      }
-      
-      if (Object.keys(updateFields).length > 0) {
-        await User.findByIdAndUpdate(user._id, updateFields);
-        user = await User.findById(user._id); // Refresh user data
-      }
+      skillsArray.push(...additionalSkills);
     }
 
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated. Please contact support.'
+    const experienceArray = [];
+    if (experience && experience.trim()) {
+      experienceArray.push({
+        title: 'General Experience',
+        description: experience,
+        isCurrent: true
       });
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    const profileData = {
+      bio,
+      skills: skillsArray,
+      experience: experienceArray,
+      preferences: {
+        jobTypes: mappedJobTypes,
+        workLocationPreference: 'any'
+      },
+      isVerified: true
+    };
 
-    // Generate JWT token
-    const token = generateToken(user._id);
+    console.log('Creating/updating profile with data:', profileData);
+    console.log('Skills array being saved:', skillsArray);
+    console.log('Experience array being saved:', experienceArray);
 
-    // Remove password from response
-    user.password = undefined;
+    const profile = await Profile.findOneAndUpdate(
+      { user: req.user._id },
+      profileData,
+      { new: true, upsert: true, runValidators: true }
+    );
+
+    console.log('Profile updated successfully:', profile._id);
 
     res.status(200).json({
       success: true,
-      message: 'Google sign-in successful',
+      message: 'Worker verification data submitted successfully',
       data: {
         user,
-        token,
-      },
+        profile
+      }
     });
   } catch (error) {
-    console.error('Google Sign-In Error:', error);
+    console.error('Worker verification error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Google sign-in failed',
-      error: error.message,
+      message: 'Server error during verification submission',
+      error: error.message
     });
   }
 });
