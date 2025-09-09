@@ -1,5 +1,4 @@
 import { useState } from 'react';
-//import ApiTester from '../../components/ApiTester.jsx';
 import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import Welder from '../../assets/welder.svg'
@@ -333,7 +332,6 @@ export default function MainFeed() {
 
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-black'}`}>
-  {/*<div className="px-2 pt-2"><ApiTester /></div>*/}
   {/* Category Section */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-2 mb-2 shadow-sm border`}>
         {/*<h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Categories</h2>*/}

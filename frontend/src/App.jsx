@@ -11,6 +11,7 @@ import WorkerProfile from './pages/Profile/WorkerProfile';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import Video from './pages/Video/Video';
 import ClientProfile from './pages/Profile/ClientProfile';
+import EditProfile from './pages/EditProfile/EditProfile';
 import LoginPage from './pages/Authentication/LoginPage';
 import SignUpPage from './pages/Authentication/SignUpPage';
 import EmailVerification from './pages/Authentication/EmailVerification';
@@ -34,6 +35,7 @@ import AdminReports from './pages/Admin/AdminReports';
 import AdminNotifications from './pages/Admin/AdminNotifications';
 import AdminSettings from './pages/Admin/AdminSettings';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
+import AdminRegistration from './components/AdminRegistration';
 
 
 const App = () => {
@@ -59,6 +61,14 @@ const App = () => {
         {
           path: 'clientprofile',
           element: <ClientProfile />,
+        },
+        {
+          path: 'profile/:userId',
+          element: <ClientProfile />,
+        },
+        {
+          path: 'edit-profile',
+          element: <EditProfile />,
         },
         {
           path: 'post-job',
@@ -163,6 +173,10 @@ const App = () => {
     {
       path: '/clientsetup',
       element: <ClientSetup/>,
+    },
+    {
+      path: '/admin-register',
+      element: <AdminRegistration/>,
     },
     {
       path: '/workerprofile',

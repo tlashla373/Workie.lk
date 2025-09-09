@@ -175,14 +175,25 @@ const profileSchema = new mongoose.Schema({
   workerCategories: [{
     type: String
   }],
+  dateOfBirth: {
+    type: Date
+  },
   age: {
     type: Number,
     min: 18,
     max: 100
   },
+  // Profile photo and ID verification photos
+  profilePicture: String,
+  profilePicturePublicId: String,
+  idPhotoFront: String,
+  idPhotoFrontPublicId: String,
+  idPhotoBack: String,
+  idPhotoBackPublicId: String,
   country: String,
   streetAddress: String,
   city: String,
+  province: String,
   postalCode: String,
   workLocation: String,
   preferredWorkAreas: String,

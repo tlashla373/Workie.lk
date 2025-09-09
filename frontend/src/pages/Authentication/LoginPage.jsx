@@ -29,7 +29,9 @@ export default function LoginPage() {
       const user = result?.data?.user;
       if (user && user.userType) {
         // Redirect based on existing user type
-        if (user.userType === 'client') {
+        if (user.userType === 'admin') {
+          navigate('/admin');
+        } else if (user.userType === 'client') {
           navigate('/clientprofile');
         } else if (user.userType === 'worker') {
           navigate('/workerprofile');
@@ -71,7 +73,9 @@ export default function LoginPage() {
                 // Check user type and redirect appropriately
                 const user = result.data.user;
                 if (user && user.userType) {
-                  if (user.userType === 'client') {
+                  if (user.userType === 'admin') {
+                    navigate('/admin');
+                  } else if (user.userType === 'client') {
                     navigate('/clientprofile');
                   } else if (user.userType === 'worker') {
                     navigate('/workerprofile');

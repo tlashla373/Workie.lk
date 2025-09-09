@@ -7,6 +7,7 @@ const ProfileHeader = ({
   onCoverPhotoUpdate,
   onProfilePhotoUpdate,
   isDarkMode = false,
+  isOwnProfile = false, // New prop to determine if user can edit
 }) => {
   const [isEditingCover, setIsEditingCover] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -82,28 +83,30 @@ const ProfileHeader = ({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
-      {/* Cover Actions */}
-      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex space-x-1 sm:space-x-2">
-        <button
-          onClick={() => coverInputRef.current?.click()}
-          disabled={isUploading}
-          className={`p-2 bg-black/20 backdrop-blur-sm rounded-lg text-white transition-colors ${
-            isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
-          }`}
-        >
-          <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-        <button
-          onClick={() => setIsEditingCover(!isEditingCover)}
-          disabled={isUploading}
-          className={`px-4 py-2 bg-black/20 backdrop-blur-sm rounded-lg text-white transition-colors flex items-center space-x-2 ${
-            isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
-          }`}
-        >
-          <Edit className="w-4 h-4" />
-          <span>{isUploading ? 'Uploading...' : 'Edit Cover'}</span>
-        </button>
-      </div>
+      {/* Cover Actions - Only show for profile owner */}
+      {isOwnProfile && (
+        <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex space-x-1 sm:space-x-2">
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            disabled={isUploading}
+            className={`p-2 bg-black/20 backdrop-blur-sm rounded-lg text-white transition-colors ${
+              isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
+            }`}
+          >
+            <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          <button
+            onClick={() => setIsEditingCover(!isEditingCover)}
+            disabled={isUploading}
+            className={`px-4 py-2 bg-black/20 backdrop-blur-sm rounded-lg text-white transition-colors flex items-center space-x-2 ${
+              isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/30'
+            }`}
+          >
+            <Edit className="w-4 h-4" />
+            <span>{isUploading ? 'Uploading...' : 'Edit Cover'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Hidden file inputs */}
       <input
@@ -129,15 +132,18 @@ const ProfileHeader = ({
             alt={profileData.name}
             className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full border-2 sm:border-4 border-white object-cover"
           />
-          <button
-            onClick={() => profileInputRef.current?.click()}
-            disabled={isUploading}
-            className={`absolute bottom-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white transition-colors ${
-              isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
-            }`}
-          >
-            <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
-          </button>
+          {/* Profile Photo Edit Button - Only show for profile owner */}
+          {isOwnProfile && (
+            <button
+              onClick={() => profileInputRef.current?.click()}
+              disabled={isUploading}
+              className={`absolute bottom-2 right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white transition-colors ${
+                isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+              }`}
+            >
+              <Camera className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
+          )}
         </div>
         <div className="text-white mb-0 sm:mb-4">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{profileData.name}</h1>
@@ -150,8 +156,8 @@ const ProfileHeader = ({
         </div>
       </div>
 
-      {/* Cover Photo Edit Options */}
-      {isEditingCover && (
+      {/* Cover Photo Edit Options - Only show for profile owner */}
+      {isOwnProfile && isEditingCover && (
         <div className={`absolute top-12 sm:top-16 right-2 sm:right-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-2 w-44 sm:min-w-48 transition-colors duration-300 z-20`}>
           <button
             onClick={() => coverInputRef.current?.click()}

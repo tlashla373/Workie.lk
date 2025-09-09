@@ -42,8 +42,8 @@ const validateRegister = [
   
   body('userType')
     .optional()
-    .isIn(['worker', 'client'])
-    .withMessage('User type must be either worker or client'),
+    .isIn(['worker', 'client', 'admin'])
+    .withMessage('User type must be either worker, client, or admin'),
   
   body('phone')
     .optional()

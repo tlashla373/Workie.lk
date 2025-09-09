@@ -3,7 +3,7 @@ import authService from '../services/authService.js';
 
 // Lightweight auth state hook (could be expanded into context later)
 export function useAuth() {
-	const [user, setUser] = useState(() => authService.isAuthenticated() ? authService.getUserRole() : null);
+	const [user, setUser] = useState(() => authService.isAuthenticated() ? authService.getUser() : null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 

@@ -1,131 +1,143 @@
 import React, { useState } from 'react';
-import { Search, Filter, UserPlus, Users, Grid3X3, List } from 'lucide-react';
+import { Search, Filter, UserPlus, Users, Grid3X3, List, Loader2, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useAuth } from '../../hooks/useAuth';
 import FriendCard from '../../components/FriendCard';
+import AuthChecker from '../../components/AuthChecker';
+import useConnections from '../../hooks/useConnections';
+import useDiscoverPeople from '../../hooks/useDiscoverPeople';
 
 const Friends = () => {
   const { isDarkMode } = useDarkMode();
+  const { user } = useAuth(); // Get current logged-in user
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
+  const [showConnections, setShowConnections] = useState(true); // Toggle between connections and discover
 
-  const friends = [
-    {
-      id: 1,
-      name: "Jane Cooper",
-      profession: "Paradigm Representative",
-      avatar: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "jane.cooper@example.com",
-      phone: "+1 (555) 123-4567",
-      category: "carpenter"
-    },
-    {
-      id: 2,
-      name: "Cody Fisher",
-      profession: "Lead Security Associate",
-      avatar: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "cody.fisher@example.com",
-      phone: "+1 (555) 234-5678",
-      category: "plumber"
-    },
-    {
-      id: 3,
-      name: "Esther Howard",
-      profession: "Assurance Administrator",
-      avatar: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "esther.howard@example.com",
-      phone: "+1 (555) 345-6789",
-      category: "painter"
-    },
-    {
-      id: 4,
-      name: "Jenny Wilson",
-      profession: "Chief Accountability Analyst",
-      avatar: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "jenny.wilson@example.com",
-      phone: "+1 (555) 456-7890",
-      category: "welder"
-    },
-    {
-      id: 5,
-      name: "Kristin Watson",
-      profession: "Investor Data Orchestrator",
-      avatar: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "kristin.watson@example.com",
-      phone: "+1 (555) 567-8901",
-      category: "mason"
-    },
-    {
-      id: 6,
-      name: "Cameron Williamson",
-      profession: "Product Infrastructure Executive",
-      avatar: "https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "cameron.williamson@example.com",
-      phone: "+1 (555) 678-9012",
-      category: "electrician"
-    },
-    {
-      id: 7,
-      name: "Courtney Henry",
-      profession: "Investor Factors Associate",
-      avatar: "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "courtney.henry@example.com",
-      phone: "+1 (555) 789-0123",
-      category: "carpenter"
-    },
-    {
-      id: 8,
-      name: "Theresa Webb",
-      profession: "Global Division Officer",
-      avatar: "https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "theresa.webb@example.com",
-      phone: "+1 (555) 890-1234",
-      category: "plumber"
-    },
-    {
-      id: 9,
-      name: "Theresa Webb",
-      profession: "Global Division Officer",
-      avatar: "https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
-      role: "Admin",
-      email: "theresa.webb@example.com",
-      phone: "+1 (555) 890-1234",
-      category: "plumber"
-    }
-  ];
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('auth_token');
+  
+  // If not authenticated, show auth checker
+  if (!isAuthenticated) {
+    return <AuthChecker />;
+  }
 
-  const filteredFriends = friends.filter(friend => {
+  // Custom hooks for data fetching
+  const { 
+    connections, 
+    loading: connectionsLoading, 
+    error: connectionsError, 
+    stats,
+    refetch: refetchConnections,
+    sendConnectionRequest,
+    removeConnection 
+  } = useConnections();
+
+  const { 
+    people, 
+    loading: peopleLoading, 
+    error: peopleError, 
+    refetch: refetchPeople 
+  } = useDiscoverPeople();
+
+  // Determine which data to show
+  const currentData = showConnections ? connections : people;
+  const currentLoading = showConnections ? connectionsLoading : peopleLoading;
+  const currentError = showConnections ? connectionsError : peopleError;
+
+  const filteredFriends = currentData.filter(friend => {
     const matchesSearch =
       friend.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       friend.profession.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterBy === 'all' || friend.category === filterBy;
-    return matchesSearch && matchesFilter;
+    
+    // Exclude the current logged-in user from both connections and discover pages
+    // Handle both id and _id field formats
+    const friendId = friend.id || friend._id;
+    const userId = user?.id || user?._id;
+    
+    // Also check name-based filtering as a fallback
+    const currentUserName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '';
+    const friendName = friend.name;
+    const isNotCurrentUserById = friendId !== userId;
+    const isNotCurrentUserByName = !currentUserName || !friendName || 
+      currentUserName.toLowerCase() !== friendName.toLowerCase();
+    
+    const isNotCurrentUser = isNotCurrentUserById && isNotCurrentUserByName;
+    
+    return matchesSearch && matchesFilter && isNotCurrentUser;
   });
 
-  const handleEmailClick = (friend) => {
-    console.log(`Opening email to ${friend.name} at ${friend.email}`);
+  const handleEmailClick = async (friend) => {
+    // Create mailto link
+    const subject = encodeURIComponent(`Hello ${friend.name}`);
+    const body = encodeURIComponent(`Hi ${friend.name},\n\nI hope this message finds you well.\n\nBest regards`);
+    window.open(`mailto:${friend.email}?subject=${subject}&body=${body}`);
   };
 
   const handleCallClick = (friend) => {
-    console.log(`Calling ${friend.name} at ${friend.phone}`);
+    // Create tel link for mobile devices or show phone number
+    if (navigator.userAgent.match(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i)) {
+      window.open(`tel:${friend.phone}`);
+    } else {
+      // For desktop, copy to clipboard or show alert
+      navigator.clipboard.writeText(friend.phone).then(() => {
+        alert(`Phone number ${friend.phone} copied to clipboard`);
+      }).catch(() => {
+        alert(`Call ${friend.name} at ${friend.phone}`);
+      });
+    }
+  };
+
+  const handleConnectClick = async (friend) => {
+    try {
+      if (showConnections) {
+        // Remove connection
+        await removeConnection(friend.id);
+        alert(`Removed connection with ${friend.name}`);
+      } else {
+        // Send connection request
+        await sendConnectionRequest(friend.id);
+        alert(`Connection request sent to ${friend.name}`);
+      }
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  const handleRefresh = () => {
+    if (showConnections) {
+      refetchConnections();
+    } else {
+      refetchPeople();
+    }
+  };
+
+  const handleViewProfileClick = (friend) => {
+    // Navigate to ClientProfile page with the user's ID
+    const userId = friend.id || friend._id || friend.userId;
+    
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    } else {
+      console.error('User ID not found for profile:', friend);
+      alert('Unable to view profile: User ID not found');
+    }
   };
 
   const categories = [
-    { value: 'all', label: 'All Friends' },
+    { value: 'all', label: 'All People' },
     { value: 'carpenter', label: 'Carpenters' },
     { value: 'plumber', label: 'Plumbers' },
     { value: 'painter', label: 'Painters' },
     { value: 'welder', label: 'Welders' },
     { value: 'mason', label: 'Masons' },
-    { value: 'electrician', label: 'Electricians' }
+    { value: 'electrician', label: 'Electricians' },
+    { value: 'general', label: 'General Workers' },
+    { value: 'client', label: 'Clients' }
   ];
 
   return (
@@ -136,69 +148,30 @@ const Friends = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4 sm:gap-0">
             <div>
               <h1 className={`text-2xl sm:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-                Connections
+                {showConnections ? 'My Connections' : 'Discover People'}
               </h1>
               <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Connect with skilled professionals in your network
+                {showConnections 
+                  ? `Connect with people in your network${stats ? ` (${stats.totalConnections} connections)` : ''}`
+                  : 'Find and connect with skilled workers and clients'
+                }
               </p>
             </div>
-            <button className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base">
-              <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>New Connection</span>
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            {/* Total Friends */}
-            <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-4 sm:p-6 border shadow-sm`}>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-xl sm:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {friends.length}
-                  </p>
-                  <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} truncate`}>
-                    Total Friends
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Online Now */}
-            <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-4 sm:p-6 border shadow-sm`}>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full"></div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-xl sm:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {Math.floor(friends.length * 0.7)}
-                  </p>
-                  <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} truncate`}>
-                    Online Now
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* New Requests */}
-            <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-4 sm:p-6 border shadow-sm sm:col-span-2 lg:col-span-1`}>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-xl sm:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    12
-                  </p>
-                  <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} truncate`}>
-                    New Requests
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={handleRefresh}
+                disabled={currentLoading}
+                className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg border transition-colors ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              >
+                <RefreshCw className={`w-4 h-4 ${currentLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button 
+                onClick={() => setShowConnections(!showConnections)}
+                className={`flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base ${showConnections ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+              >
+                <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>{showConnections ? 'Discover People' : 'My Connections'}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -211,7 +184,7 @@ const Friends = () => {
                 <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                 <input
                   type="text"
-                  placeholder="Search friends..."
+                  placeholder={`Search ${showConnections ? 'connections' : 'people'}...`}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={`pl-10 pr-4 py-2 w-full sm:w-64 rounded-lg border text-sm ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -250,33 +223,90 @@ const Friends = () => {
           </div>
         </div>
 
-        {/* Friends Grid */}
-        {filteredFriends.length === 0 ? (
+        {/* Loading State */}
+        {currentLoading && (
           <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 sm:p-8 border shadow-sm text-center`}>
-            <div className={`mx-auto w-16 h-16 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-full flex items-center justify-center mb-4`}>
-              <Users className={`w-8 h-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            <div className="flex items-center justify-center space-x-3">
+              <Loader2 className={`w-6 h-6 animate-spin ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Loading {showConnections ? 'connections' : 'people'}...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {currentError && !currentLoading && (
+          <div className={`${isDarkMode ? 'bg-red-900/20 border-red-700' : 'bg-red-50 border-red-200'} rounded-2xl p-6 sm:p-8 border shadow-sm text-center`}>
+            <div className={`mx-auto w-16 h-16 ${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'} rounded-full flex items-center justify-center mb-4`}>
+              <Users className={`w-8 h-8 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`} />
             </div>
             <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-              No friends found
+              {currentError.includes('log in') ? 'Authentication Required' : 'Error loading data'}
             </h3>
-            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm sm:text-base mb-4`}>
-              Try adjusting your search or filter criteria
+            <p className={`${isDarkMode ? 'text-red-400' : 'text-red-600'} text-sm sm:text-base mb-4`}>
+              {currentError.includes('log in') 
+                ? 'Please log in to view connections and discover people.'
+                : currentError
+              }
             </p>
+            {!currentError.includes('log in') && (
+              <button
+                onClick={handleRefresh}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Try Again
+              </button>
+            )}
           </div>
-        ) : (
-          <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-6' 
-            : 'space-y-3 sm:space-y-4'
-          }>
-            {filteredFriends.map((friend) => (
-              <FriendCard
-                key={friend.id}
-                friend={friend}
-                onEmailClick={handleEmailClick}
-                onCallClick={handleCallClick}
-              />
-            ))}
-          </div>
+        )}
+
+        {/* Friends Grid */}
+        {!currentLoading && !currentError && (
+          <>
+            {filteredFriends.length === 0 ? (
+              <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 sm:p-8 border shadow-sm text-center`}>
+                <div className={`mx-auto w-16 h-16 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-full flex items-center justify-center mb-4`}>
+                  <Users className={`w-8 h-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                </div>
+                <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  {showConnections ? 'No connections found' : 'No people found'}
+                </h3>
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm sm:text-base mb-4`}>
+                  {showConnections 
+                    ? 'You haven\'t connected with anyone yet. Try discovering new people!'
+                    : 'Try adjusting your search or filter criteria'
+                  }
+                </p>
+                {showConnections && (
+                  <button
+                    onClick={() => setShowConnections(false)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Discover People
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' 
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-6' 
+                : 'space-y-3 sm:space-y-4'
+              }>
+                {filteredFriends.map((friend) => (
+                  <FriendCard
+                    key={friend.id}
+                    friend={friend}
+                    onEmailClick={handleEmailClick}
+                    onCallClick={handleCallClick}
+                    onConnectClick={showConnections ? undefined : () => handleConnectClick(friend)}
+                    onViewProfileClick={handleViewProfileClick}
+                    isConnected={showConnections}
+                    showConnectButton={!showConnections}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -40,10 +40,12 @@ const WorkerVerification = () => {
     skills: '',
     experience: '',
     bio: '',
+    dateOfBirth: '',
     age: '',
     country: '',
     streetAddress: '',
     city: '',
+    province: '',
     postalCode: '',
     // Existing fields
     location: '',
@@ -63,6 +65,32 @@ const WorkerVerification = () => {
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
 
+  // Function to calculate age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return '';
+    
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age.toString();
+  };
+
+  // Handle date of birth change
+  const handleDateOfBirthChange = (date) => {
+    const age = calculateAge(date);
+    setWorkerData(prev => ({
+      ...prev,
+      dateOfBirth: date,
+      age: age
+    }));
+  };
+
   // Function to submit worker verification data to backend
   const submitWorkerVerificationData = async () => {
     try {
@@ -72,21 +100,27 @@ const WorkerVerification = () => {
         throw new Error('You must be logged in to submit verification data');
       }
 
-      // Prepare data as JSON (no file uploads for now)
+      // Prepare data as JSON (including uploaded file URLs)
       const verificationData = {
         categories: JSON.stringify(workerData.categories),
         skills: workerData.skills,
         experience: workerData.experience,
         bio: workerData.bio,
+        dateOfBirth: workerData.dateOfBirth,
         age: workerData.age,
         country: workerData.country,
         streetAddress: workerData.streetAddress,
         city: workerData.city,
+        province: workerData.province,
         postalCode: workerData.postalCode,
         location: workerData.location,
         address: workerData.address,
         companyName: workerData.companyName,
-        phone: workerData.phone
+        phone: workerData.phone,
+        // Include uploaded file URLs
+        profilePhotoUrl: workerData.profilePhotoUrl,
+        idPhotoFrontUrl: workerData.idPhotoFrontUrl,
+        idPhotoBackUrl: workerData.idPhotoBackUrl
       };
 
       console.log('Submitting verification data:', verificationData);
@@ -119,8 +153,20 @@ const WorkerVerification = () => {
 
   // Available worker categories
   const workerCategories = [
-    'Plumber', 'Electrician', 'Carpenter', 'Mason', 'Painter', 'Welder',
-    'HVAC Technician', 'Roofer', 'Landscaper', 'Cleaner', 'Mechanic', 'Driver'
+    'Plumber', 'Carpenter', 'Mason', 'Painter', 'Welder'
+  ];
+
+  // Sri Lankan provinces
+  const sriLankanProvinces = [
+    'Western Province',
+    'Central Province', 
+    'Southern Province',
+    'Northern Province',
+    'Eastern Province',
+    'North Western Province',
+    'North Central Province',
+    'Uva Province',
+    'Sabaragamuwa Province'
   ];
 
   const steps = [
@@ -251,10 +297,11 @@ const WorkerVerification = () => {
       case 2:
         return workerData.bio.trim() !== '';
       case 3:
-        return workerData.age.trim() !== '' && 
+        return workerData.dateOfBirth.trim() !== '' && 
                workerData.country.trim() !== '' && 
                workerData.streetAddress.trim() !== '' && 
                workerData.city.trim() !== '' && 
+               workerData.province.trim() !== '' &&
                workerData.postalCode.trim() !== '';
       case 4:
         return workerData.location.trim() !== '' && workerData.address.trim() !== '';
@@ -388,13 +435,13 @@ const WorkerVerification = () => {
                       className={`p-2 sm:p-3 rounded-lg border text-sm font-medium transition-all ${
                         workerData.categories.includes(category)
                           ? 'bg-blue-500 text-white border-blue-500'
-                          : workerData.categories.length >= 2
+                          : workerData.categories.length === 2
                           ? 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed'
                           : isDarkMode
                           ? 'border-gray-600 hover:border-blue-500 hover:bg-gray-800'
                           : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
                       }`}
-                      disabled={!workerData.categories.includes(category) && workerData.categories.length >= 2}
+                      disabled={!workerData.categories.includes(category) && workerData.categories.length === 2}
                     >
                       {category}
                     </button>
@@ -472,18 +519,22 @@ const WorkerVerification = () => {
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Personal Details</h2>
             <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Age *</label>
+                <label className="block text-sm font-medium mb-1">Date of Birth *</label>
                 <input
-                  type="number"
-                  placeholder="Enter your age"
-                  value={workerData.age}
-                  onChange={(e) => setWorkerData({ ...workerData, age: e.target.value })}
-                  min="18"
-                  max="70"
+                  type="date"
+                  value={workerData.dateOfBirth}
+                  onChange={(e) => handleDateOfBirthChange(e.target.value)}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                  min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
                   className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'
                   }`}
                 />
+                {workerData.age && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Age: {workerData.age} years old
+                  </p>
+                )}
               </div>
 
               <div>
@@ -524,6 +575,32 @@ const WorkerVerification = () => {
                       isDarkMode ? 'border-gray-600' : 'border-gray-300'
                     }`}
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Province *</label>
+                  <select
+                    value={workerData.province}
+                    onChange={(e) => setWorkerData({ ...workerData, province: e.target.value })}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'
+                    }`}
+                  >
+                    <option value="" disabled className={isDarkMode ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-500'}>
+                      Select your province
+                    </option>
+                    {sriLankanProvinces.map((province) => (
+                      <option 
+                        key={province} 
+                        value={province}
+                        className={isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
+                      >
+                        {province}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -604,6 +681,41 @@ const WorkerVerification = () => {
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Profile Photo</h2>
             <div className="max-w-md mx-auto">
+              {/* Custom Profile Photo Preview */}
+              <div className="flex flex-col items-center space-y-4 mb-6">
+                {/* Circular Preview */}
+                <div className={`relative w-32 h-32 rounded-full border-4 ${
+                  isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-100'
+                } overflow-hidden group`}>
+                  {profileImagePreview ? (
+                    <>
+                      <img
+                        src={profileImagePreview}
+                        alt="Profile preview"
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Camera className="w-6 h-6 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Camera className={`w-8 h-8 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Photo Info */}
+                {profileImagePreview && (
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-green-600">Profile photo selected</p>
+                    <p className="text-xs text-gray-500">{workerData.profilePhoto?.name}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* File Upload Component */}
               <FileUpload
                 uploadType="profile"
                 maxFiles={1}
@@ -624,8 +736,9 @@ const WorkerVerification = () => {
                     profilePhotoUrl: null
                   }));
                 }}
-                uploadText="Upload your profile photo"
-                showPreview={true}
+                uploadText={workerData.profilePhoto ? 'Change Photo' : 'Upload Photo'}
+                showPreview={false}
+                className="w-full"
               />
               
               <div className="text-center mt-4">
@@ -650,18 +763,58 @@ const WorkerVerification = () => {
                 
                 {/* ID Front Photo */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium mb-2">ID Front Photo</label>
+                  <label className="block text-sm font-medium mb-3">ID Front Photo</label>
+                  
+                  {/* Custom ID Front Preview */}
+                  <div className="flex flex-col items-center space-y-3 mb-4">
+                    <div className={`relative w-64 h-40 rounded-lg border-2 border-dashed ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
+                    } overflow-hidden group`}>
+                      {idFrontImagePreview ? (
+                        <>
+                          <img
+                            src={idFrontImagePreview}
+                            alt="ID Front preview"
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Upload className="w-6 h-6 text-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center">
+                          <CreditCard className={`w-8 h-8 mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                          <span className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            Front of ID
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Photo Info */}
+                    {idFrontImagePreview && (
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-green-600">ID front photo selected</p>
+                        <p className="text-xs text-gray-500">{workerData.idPhotoFront?.name}</p>
+                      </div>
+                    )}
+                  </div>
+
                   <FileUpload
                     uploadType="verification"
+                    verificationDocType="idPhotoFront"
                     maxFiles={1}
                     maxSizeInMB={10}
                     acceptedTypes={['image/jpeg', 'image/png']}
                     onFileUpload={(result, files) => {
                       console.log('ID front uploaded:', result);
+                      console.log('Result structure:', result);
+                      // The backend returns { files: { idPhotoFront: { url, publicId } } }
                       setWorkerData(prev => ({
                         ...prev,
                         idPhotoFront: files[0],
-                        idPhotoFrontUrl: result?.files?.idPhotoFront?.url
+                        idPhotoFrontUrl: result?.files?.idPhotoFront?.url || result?.url
                       }));
                     }}
                     onFileRemove={() => {
@@ -671,26 +824,66 @@ const WorkerVerification = () => {
                         idPhotoFrontUrl: null
                       }));
                     }}
-                    uploadText="Upload front of ID"
-                    showPreview={true}
+                    uploadText={workerData.idPhotoFront ? 'Change Front ID' : 'Upload Front ID'}
+                    showPreview={false}
                     className="mb-4"
                   />
                 </div>
 
                 {/* ID Back Photo */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium mb-2">ID Back Photo</label>
+                  <label className="block text-sm font-medium mb-3">ID Back Photo</label>
+                  
+                  {/* Custom ID Back Preview */}
+                  <div className="flex flex-col items-center space-y-3 mb-4">
+                    <div className={`relative w-64 h-40 rounded-lg border-2 border-dashed ${
+                      isDarkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
+                    } overflow-hidden group`}>
+                      {idBackImagePreview ? (
+                        <>
+                          <img
+                            src={idBackImagePreview}
+                            alt="ID Back preview"
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Upload className="w-6 h-6 text-white" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center">
+                          <CreditCard className={`w-8 h-8 mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                          <span className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            Back of ID
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Photo Info */}
+                    {idBackImagePreview && (
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-green-600">ID back photo selected</p>
+                        <p className="text-xs text-gray-500">{workerData.idPhotoBack?.name}</p>
+                      </div>
+                    )}
+                  </div>
+
                   <FileUpload
                     uploadType="verification"
+                    verificationDocType="idPhotoBack"
                     maxFiles={1}
                     maxSizeInMB={10}
                     acceptedTypes={['image/jpeg', 'image/png']}
                     onFileUpload={(result, files) => {
                       console.log('ID back uploaded:', result);
+                      console.log('Result structure:', result);
+                      // The backend returns { files: { idPhotoBack: { url, publicId } } }
                       setWorkerData(prev => ({
                         ...prev,
                         idPhotoBack: files[0],
-                        idPhotoBackUrl: result?.files?.idPhotoBack?.url
+                        idPhotoBackUrl: result?.files?.idPhotoBack?.url || result?.url
                       }));
                     }}
                     onFileRemove={() => {
@@ -700,8 +893,8 @@ const WorkerVerification = () => {
                         idPhotoBackUrl: null
                       }));
                     }}
-                    uploadText="Upload back of ID"
-                    showPreview={true}
+                    uploadText={workerData.idPhotoBack ? 'Change Back ID' : 'Upload Back ID'}
+                    showPreview={false}
                   />
                 </div>
               </div>

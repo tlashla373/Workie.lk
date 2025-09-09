@@ -241,6 +241,11 @@ export class AuthService {
     const user = apiService.getUser();
     return user?.userType || null;
   }
+
+  // Get full user object from stored user data
+  getUser() {
+    return apiService.getUser();
+  }
 }
 
 // Export singleton instance

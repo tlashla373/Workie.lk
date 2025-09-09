@@ -24,88 +24,14 @@ const connectionSchema = {
 // @access  Private
 router.get('/my-connections', auth, async (req, res) => {
   try {
-    // For now, return mock data until we implement full connection system
-    // In the future, this would query a Connection/Friend model
-    const mockConnections = [
-      {
-        _id: '507f1f77bcf86cd799439011',
-        firstName: 'John',
-        lastName: 'Doe',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'worker',
-        status: 'accepted',
-        connectionDate: new Date('2024-01-15')
-      },
-      {
-        _id: '507f1f77bcf86cd799439012',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'client',
-        status: 'accepted',
-        connectionDate: new Date('2024-01-20')
-      },
-      {
-        _id: '507f1f77bcf86cd799439013',
-        firstName: 'Mike',
-        lastName: 'Johnson',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'worker',
-        status: 'accepted',
-        connectionDate: new Date('2024-01-25')
-      },
-      {
-        _id: '507f1f77bcf86cd799439014',
-        firstName: 'Sarah',
-        lastName: 'Wilson',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'client',
-        status: 'accepted',
-        connectionDate: new Date('2024-02-01')
-      },
-      {
-        _id: '507f1f77bcf86cd799439015',
-        firstName: 'David',
-        lastName: 'Brown',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'worker',
-        status: 'accepted',
-        connectionDate: new Date('2024-02-05')
-      },
-      {
-        _id: '507f1f77bcf86cd799439016',
-        firstName: 'Emily',
-        lastName: 'Davis',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'client',
-        status: 'accepted',
-        connectionDate: new Date('2024-02-10')
-      },
-      {
-        _id: '507f1f77bcf86cd799439017',
-        firstName: 'Chris',
-        lastName: 'Miller',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'worker',
-        status: 'accepted',
-        connectionDate: new Date('2024-02-15')
-      },
-      {
-        _id: '507f1f77bcf86cd799439018',
-        firstName: 'Lisa',
-        lastName: 'Anderson',
-        profilePicture: 'https://via.placeholder.com/150',
-        userType: 'client',
-        status: 'accepted',
-        connectionDate: new Date('2024-02-20')
-      }
-    ];
-
+    // TODO: Implement actual connection system when Connection model is ready
+    // For now, return empty connections since we don't have a connection system yet
+    
     res.status(200).json({
       success: true,
       data: {
-        connections: mockConnections,
-        totalCount: mockConnections.length
+        connections: [],
+        totalCount: 0
       }
     });
   } catch (error) {
@@ -122,14 +48,15 @@ router.get('/my-connections', auth, async (req, res) => {
 // @access  Private
 router.get('/stats', auth, async (req, res) => {
   try {
-    // For now, return mock statistics
+    // TODO: Implement actual connection statistics when Connection model is ready
+    // For now, return empty stats since we don't have a connection system yet
     const stats = {
-      totalConnections: 8,
-      pendingRequests: 2,
-      sentRequests: 1,
-      profileViews: 150,
-      profileViewsThisMonth: 35,
-      profileViewsIncrease: 25.5
+      totalConnections: 0,
+      pendingRequests: 0,
+      sentRequests: 0,
+      profileViews: 0,
+      profileViewsThisMonth: 0,
+      profileViewsIncrease: 0
     };
 
     res.status(200).json({

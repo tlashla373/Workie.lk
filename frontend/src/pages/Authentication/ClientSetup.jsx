@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   User,
   Camera,
-  Mail,
   Phone,
   CheckCircle,
   ArrowLeft,
@@ -17,18 +16,12 @@ const ClientSetup = () => {
   const navigate = useNavigate();
   const [clientData, setClientData] = useState({
     profilePhoto: null,
-    email: '',
     phone: '',
-    emailVerified: false,
     phoneVerified: false
   });
 
   const handleFileUpload = (file) => {
     setClientData((prev) => ({ ...prev, profilePhoto: file }));
-  };
-
-  const handleVerifyEmail = () => {
-    setClientData((prev) => ({ ...prev, emailVerified: true }));
   };
 
   const handleVerifyPhone = () => {
@@ -107,47 +100,8 @@ const ClientSetup = () => {
             {/* Contact Verification */}
             <div className="space-y-4 sm:space-y-6">
               <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Contact Verification (Optional)
+                Phone Verification (Optional)
               </h3>
-
-              {/* Email Verification */}
-              <div>
-                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Email Address
-                </label>
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={clientData.email}
-                    onChange={(e) => setClientData((prev) => ({ ...prev, email: e.target.value }))}
-                    className={`flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm sm:text-base ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  />
-                  <button
-                    onClick={handleVerifyEmail}
-                    disabled={!clientData.email || clientData.emailVerified}
-                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
-                  >
-                    {clientData.emailVerified ? (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Verified</span>
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-4 h-4" />
-                        <span>Verify</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                {clientData.emailVerified && (
-                  <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-2 flex items-center space-x-1">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Email verified successfully</span>
-                  </p>
-                )}
-              </div>
 
               {/* Phone Verification */}
               <div>
@@ -192,7 +146,7 @@ const ClientSetup = () => {
             {/* Benefits */}
             <div className={`p-4 sm:p-6 rounded-lg ${isDarkMode ? 'bg-blue-900/20 border-blue-500/30' : 'bg-blue-50 border-blue-200'} border`}>
               <h4 className={`font-semibold text-sm sm:text-base ${isDarkMode ? 'text-blue-300' : 'text-blue-800'} mb-3`}>
-                Why verify your contact details?
+                Why verify your phone number?
               </h4>
               <ul className={`space-y-2 text-xs sm:text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
                 <li className="flex items-start space-x-2">
@@ -201,11 +155,11 @@ const ClientSetup = () => {
                 </li>
                 <li className="flex items-start space-x-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Receive important notifications about your projects</span>
+                  <span>Receive SMS notifications about your projects</span>
                 </li>
                 <li className="flex items-start space-x-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Improved account security and recovery options</span>
+                  <span>Enhanced account security with 2FA</span>
                 </li>
               </ul>
             </div>

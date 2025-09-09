@@ -40,7 +40,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
-  const { user } = useAuth() || {};
+  const { user, authenticated } = useAuth() || {};
 
   // Helper function to get notification type icon
   const getNotificationTypeIcon = (type) => {
@@ -247,7 +247,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
     '/': 'Home',
     '/postjob': 'Post Job',
     '/post-job': 'Post Job',
-    '/friends': 'Friends',
+    '/friends': 'Connections',
     '/notifications': 'Notifications',
     '/findjobs': 'Find Jobs',
     '/workhistory': 'Work Status',
@@ -301,23 +301,24 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             </div>
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center space-x-3 pl-4">
-            <Link className="relative" to="/clientprofile">
-              <button
-                className={`w-full flex items-center space-x-3 p-2 rounded-xl transition-all border duration-200 group ${isDarkMode ? 'bg-gray-700 border-gray-800 hover:bg-gray-600' : 'bg-[#F0F3FF] border-gray-300 hover:bg-gray-400/50'}`}
-              >
-                <div className="relative">
-                  {loading ? (
-                    <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
-                  ) : (
-                    <img
-                      className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100"
-                      src={displayProfileImage}
-                      alt="Profile"
-                      onError={(e) => {
-                        // Try multiple fallback sources
-                        if (e.target.src !== profileImage) {
+          {/* Right Actions - Only show when authenticated */}
+          {authenticated && (
+            <div className="flex items-center space-x-3 pl-4">
+              <Link className="relative" to="/clientprofile">
+                <button
+                  className={`w-full flex items-center space-x-3 p-2 rounded-xl transition-all border duration-200 group ${isDarkMode ? 'bg-gray-700 border-gray-800 hover:bg-gray-600' : 'bg-[#F0F3FF] border-gray-300 hover:bg-gray-400/50'}`}
+                >
+                  <div className="relative">
+                    {loading ? (
+                      <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+                    ) : (
+                      <img
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100"
+                        src={displayProfileImage}
+                        alt="Profile"
+                        onError={(e) => {
+                          // Try multiple fallback sources
+                          if (e.target.src !== profileImage) {
                           if (userData.profileImage && e.target.src === userData.profileImage) {
                             e.target.src = user?.profileImage || user?.profilePicture || profileImage;
                           } else {
@@ -454,6 +455,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
               )}
             </div>
           </div>
+          )}
         </div>
       </header>
 
@@ -500,22 +502,25 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                 <Search className="w-5 h-5" />
               </button>
 
-              {/* Messages Button */}
-              <button className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
-                <MessageCircle className="w-5 h-5" />
-              </button>
+              {/* Messages and Notifications - Only show when authenticated */}
+              {authenticated && (
+                <>
+                  {/* Messages Button */}
+                  <button className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
+                    <MessageCircle className="w-5 h-5" />
+                  </button>
 
-              {/* Notifications Button */}
-              <button 
-                onClick={toggleNotificationDropdown}
-                className={`relative p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-              >
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
+                  {/* Notifications Button */}
+                  <button 
+                    onClick={toggleNotificationDropdown}
+                    className={`relative p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
               </button>
 
               {/* Profile Button */}
@@ -531,6 +536,8 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                   </div>
                 </button>
               </Link>
+                </>
+              )}
             </div>
           </>
         )}

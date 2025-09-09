@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, Phone, Globe, Star, Mail } from 'lucide-react';
+import { Briefcase, MapPin, Phone, Globe, Star, Mail, Edit } from 'lucide-react';
 import profileService from '../services/profileService';
+import EditProfileModal from './EditProfileModal';
 
-const ProfileAbout = ({ profileData, isDarkMode = false }) => {
+const ProfileAbout = ({ 
+  profileData, 
+  isDarkMode = false, 
+  isOwnProfile = false, 
+  isEditModalOpen = false, 
+  setIsEditModalOpen 
+}) => {
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Use external edit modal state if provided, otherwise use internal state
+  const modalOpen = isEditModalOpen !== undefined ? isEditModalOpen : false;
+  const setModalOpen = setIsEditModalOpen || (() => {});
 
   useEffect(() => {
     const fetchAboutData = async () => {
@@ -73,7 +84,18 @@ const ProfileAbout = ({ profileData, isDarkMode = false }) => {
       <div className="lg:col-span-1 space-y-4 sm:space-y-6">
         {/* Basic Info */}
         <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 border transition-colors duration-300`}>
-          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>About</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</h3>
+            {isOwnProfile && (
+              <button
+                onClick={() => setModalOpen(true)}
+                className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+                title="Edit Profile"
+              >
+                <Edit className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+            )}
+          </div>
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <Briefcase className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -181,6 +203,21 @@ const ProfileAbout = ({ profileData, isDarkMode = false }) => {
           </div>
         )}
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        profileData={profileData}
+        onSave={() => {
+          // Refresh the component data after save
+          setLoading(true);
+          setTimeout(() => {
+            window.location.reload(); // Simple refresh for now
+          }, 1000);
+        }}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 };

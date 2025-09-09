@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, MoreHorizontal } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import connectionService from '../services/connectionService';
 
 const NavigationTabs = ({ 
@@ -7,10 +8,13 @@ const NavigationTabs = ({
   setActiveTab, 
   isFollowing, 
   setIsFollowing,
-  isDarkMode = false 
+  isDarkMode = false,
+  isOwnProfile = false, // New prop to determine if viewing own profile
+  onEditProfile // New prop for edit profile callback
 }) => {
   const [friendCount, setFriendCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Fetch friend count from API
   useEffect(() => {
@@ -66,23 +70,40 @@ const NavigationTabs = ({
             ))}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Different for own profile vs others */}
           <div className="flex items-center justify-center sm:justify-end space-x-2 sm:space-x-3 pt-3 sm:pt-0 pb-3 sm:pb-0">
-            <button
-              onClick={() => setIsFollowing(!isFollowing)}
-              className={`px-4 sm:px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
-                isFollowing
-                  ? isDarkMode
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  : 'bg-blue-500 text-white hover:bg-blue-600'
-              }`}
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </button>
-            <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
-              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
+            {isOwnProfile ? (
+              // Own profile - show edit button
+              <button
+                onClick={() => navigate('/edit-profile')}
+                className={`px-4 sm:px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  isDarkMode
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+              >
+                Edit Profile
+              </button>
+            ) : (
+              // Other user's profile - show follow/message buttons
+              <>
+                <button
+                  onClick={() => setIsFollowing(!isFollowing)}
+                  className={`px-4 sm:px-6 py-2 rounded-lg font-medium text-sm transition-colors ${
+                    isFollowing
+                      ? isDarkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
+                <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
+                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </>
+            )}
             <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
               <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>

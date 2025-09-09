@@ -10,6 +10,7 @@ const FileUpload = ({
   maxSizeInMB = 5,
   allowVideo = false,
   uploadType = 'general', // 'profile', 'verification', 'portfolio', 'job', 'document'
+  verificationDocType = 'idPhotoFront', // 'idPhotoFront' or 'idPhotoBack' for verification uploads
   existingFiles = [],
   className = '',
   disabled = false,
@@ -88,10 +89,15 @@ const FileUpload = ({
           break;
 
         case 'verification':
-          // Assuming first file is front ID, second is back ID
+          // Handle single ID document upload based on verificationDocType prop
           const verificationFiles = {};
-          if (validFiles[0]) verificationFiles.idPhotoFront = validFiles[0];
-          if (validFiles[1]) verificationFiles.idPhotoBack = validFiles[1];
+          if (validFiles.length === 1) {
+            verificationFiles[verificationDocType] = validFiles[0];
+          } else {
+            // Handle multiple files (legacy support)
+            if (validFiles[0]) verificationFiles.idPhotoFront = validFiles[0];
+            if (validFiles[1]) verificationFiles.idPhotoBack = validFiles[1];
+          }
           result = await mediaService.uploadVerificationDocuments(verificationFiles);
           break;
 
@@ -213,7 +219,7 @@ const FileUpload = ({
     <div className={`w-full ${className}`}>
       {/* Upload Area */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-6 transition-all duration-200 ${
+        className={`relative border-2  w-45 rounded-lg p-2 transition-all duration-200 ${
           dragActive
             ? 'border-blue-500 bg-blue-50'
             : disabled
@@ -252,13 +258,13 @@ const FileUpload = ({
             </div>
           ) : uploadType === 'profile' ? (
             <>
-              <Camera className="w-12 h-12 text-gray-400 mb-4" />
+              
               <p className="text-sm font-medium text-gray-700 mb-1">Upload Profile Picture</p>
               <p className="text-xs text-gray-500">{uploadText}</p>
             </>
           ) : (
             <>
-              <Upload className="w-12 h-12 text-gray-400 mb-4" />
+              
               <p className="text-sm font-medium text-gray-700 mb-1">{uploadText}</p>
               <p className="text-xs text-gray-500">
                 {allowVideo ? 'Images and videos' : 'Images'} up to {maxSizeInMB}MB
