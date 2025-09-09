@@ -7,19 +7,6 @@ class CrashDetector {
     this.startTime = Date.now();
   }
 
-  // Start monitoring the application
-  startMonitoring() {
-    logger.info('Starting crash detection monitoring');
-
-    // Monitor health every 30 seconds
-    this.healthCheckInterval = setInterval(() => {
-      this.performHealthCheck();
-    }, 30000);
-
-    // Monitor process events
-    this.setupProcessMonitors();
-  }
-
   // Perform application health check
   performHealthCheck() {
     try {
