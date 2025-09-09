@@ -132,8 +132,8 @@ const ClientProfile = () => {
             website: profile?.socialLinks?.website || "",
             
             // Images
-            coverImage: user.coverPhoto || "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop",
-            profileImage: user.profilePicture || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+            coverImage: user.coverPhoto || "https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png",
+            profileImage: user.profilePicture || "https://res.cloudinary.com/workielk/image/upload/v1757008620/pngwing.com_i2gmx5.png",
             
             // Stats
             followers: 0, // Not implemented yet

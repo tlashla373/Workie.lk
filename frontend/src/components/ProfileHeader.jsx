@@ -19,7 +19,7 @@ const ProfileHeader = ({
   const coverPhotoUrl = profileData?.coverImage || 
                        profileData?.coverPhoto || 
                        profileData?.user?.coverPhoto || 
-                       'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop';
+                       'https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png';
 
   const handleCoverPhotoChange = async (event) => {
     const file = event.target.files?.[0];
@@ -78,7 +78,7 @@ const ProfileHeader = ({
         alt="Cover"
         className="w-full h-full object-cover"
         onError={(e) => {
-          e.target.src = 'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop';
+          e.target.src = 'https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png';
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -167,7 +167,7 @@ const ProfileHeader = ({
           </button>
           <button
             onClick={() => {
-              onCoverPhotoUpdate('https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800&h=300&fit=crop');
+              onCoverPhotoUpdate('https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png');
               setIsEditingCover(false);
             }}
             className={`w-full text-left px-3 py-2 ${isDarkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'} rounded text-sm transition-colors`}
