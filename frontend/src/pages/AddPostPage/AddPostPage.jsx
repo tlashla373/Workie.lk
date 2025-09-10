@@ -232,7 +232,7 @@ const AddPostPage = () => {
       
       // Update status for media upload
       if (selectedFiles.length > 0) {
-        setUploadStatus(`Uploading ${selectedFiles.length} file(s) to Cloudinary...`);
+        setUploadStatus(`Uploading ${selectedFiles.length} file(s) ...`);
       }
       
       // Create post with Cloudinary integration
@@ -245,7 +245,7 @@ const AddPostPage = () => {
       
       // Show success message
       setTimeout(() => {
-        alert(`Post created successfully! ${response.mediaUploaded} media files uploaded to Cloudinary.`);
+        alert(`Post created successfully! ${response.mediaUploaded}`);
         
         // Reset form
         setPostText('');
@@ -667,7 +667,7 @@ const AddPostPage = () => {
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   <span>
-                    {selectedFiles.length > 0 ? 'Uploading to Cloudinary...' : 'Creating Post...'}
+                    {selectedFiles.length > 0 ? 'Uploading...' : 'Creating Post...'}
                   </span>
                 </>
               ) : (
