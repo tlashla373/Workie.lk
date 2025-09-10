@@ -156,10 +156,25 @@ class PostService {
   // Add comment
   async addComment(postId, comment) {
     try {
+      console.log('💬 Adding comment to post:', postId);
       const response = await apiService.post(`/posts/${postId}/comments`, { comment });
+      console.log('✅ Comment added successfully');
       return response;
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error('❌ Error adding comment:', error);
+      throw error;
+    }
+  }
+
+  // Get comments for a post
+  async getComments(postId, page = 1, limit = 20) {
+    try {
+      console.log('📖 Fetching comments for post:', postId);
+      const response = await apiService.get(`/posts/${postId}/comments?page=${page}&limit=${limit}`);
+      console.log('✅ Comments fetched successfully');
+      return response;
+    } catch (error) {
+      console.error('❌ Error fetching comments:', error);
       throw error;
     }
   }

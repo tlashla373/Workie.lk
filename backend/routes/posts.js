@@ -278,11 +278,57 @@ router.post('/:postId/comments', auth, async (req, res) => {
     const { comment } = req.body;
     const userId = req.user._id;
 
-    // TODO: Implement when Post model is created
+    // Validate comment
+    if (!comment || comment.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment content is required'
+      });
+    }
+
+    // Get user information for the comment
+    const user = await User.findById(userId).select('firstName lastName profilePicture');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Find and update the post
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    // Create comment object
+    const newComment = {
+      userId: userId,
+      userInfo: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profilePicture: user.profilePicture || ''
+      },
+      comment: comment.trim(),
+      commentedAt: new Date()
+    };
+
+    // Add comment to post
+    post.comments.unshift(newComment); // Add to beginning for newest first
+    await post.save();
+
+    console.log('✅ Comment added successfully to post:', postId);
 
     res.json({
       success: true,
-      message: 'Comment added successfully'
+      message: 'Comment added successfully',
+      data: {
+        comment: newComment,
+        totalComments: post.comments.length
+      }
     });
 
   } catch (error) {
@@ -290,6 +336,46 @@ router.post('/:postId/comments', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error adding comment',
+      error: error.message
+    });
+  }
+});
+
+// Get comments for a post
+router.get('/:postId/comments', async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+
+    const post = await Post.findById(postId).select('comments');
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    // Calculate pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + parseInt(limit);
+    const paginatedComments = post.comments.slice(startIndex, endIndex);
+
+    res.json({
+      success: true,
+      data: {
+        comments: paginatedComments,
+        totalComments: post.comments.length,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        hasMore: endIndex < post.comments.length
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching comments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching comments',
       error: error.message
     });
   }
