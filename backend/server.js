@@ -18,6 +18,7 @@ const adminRoutes = require('./routes/admin');
 const mediaRoutes = require('./routes/media');
 const connectionRoutes = require('./routes/connections');
 const analyticsRoutes = require('./routes/analytics');
+const postRoutes = require('./routes/posts'); // New: Posts route
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -148,6 +149,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/posts', postRoutes); // New: Posts routes
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

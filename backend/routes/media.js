@@ -24,6 +24,132 @@ router.get('/test', (req, res) => {
   });
 });
 
+// Post media upload route (multiple files for posts)
+if (cloudinaryConfig && cloudinaryConfig.uploadPostMedia) {
+  const upload = cloudinaryConfig.uploadPostMedia.array('postMedia', 5); // Max 5 files
+  
+  router.post('/post-media', auth, (req, res, next) => {
+    console.log('📤 Post media upload request received');
+    console.log('User ID:', req.user._id);
+    console.log('Request body:', req.body);
+    
+    upload(req, res, async (err) => {
+      if (err) {
+        console.error('❌ File upload error:', err);
+        return res.status(400).json({ 
+          success: false,
+          message: 'File upload error', 
+          error: err.message 
+        });
+      }
+      
+      try {
+        if (!req.files || req.files.length === 0) {
+          return res.status(400).json({ 
+            success: false,
+            message: 'No files uploaded' 
+          });
+        }
+
+        console.log('📁 Files uploaded to Cloudinary:', req.files.length);
+        
+        // Process uploaded files
+        const uploadedFiles = req.files.map(file => ({
+          url: file.path,
+          secureUrl: file.path,
+          publicId: file.filename,
+          originalName: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+          fileType: file.mimetype.startsWith('video/') ? 'video' : 'image',
+          folder: `posts/${req.user._id}`,
+          uploadedAt: new Date()
+        }));
+
+        console.log('✅ Post media processed:', uploadedFiles);
+
+        res.json({
+          success: true,
+          message: 'Post media uploaded successfully',
+          data: {
+            files: uploadedFiles,
+            count: uploadedFiles.length,
+            userId: req.user._id
+          }
+        });
+
+      } catch (error) {
+        console.error('❌ Error processing post media:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Error processing uploaded files',
+          error: error.message
+        });
+      }
+    });
+  });
+}
+
+// Single post file upload route
+if (cloudinaryConfig && cloudinaryConfig.uploadSingleFile) {
+  const upload = cloudinaryConfig.uploadSingleFile.single('postFile');
+  
+  router.post('/single-post-file', auth, (req, res, next) => {
+    console.log('📤 Single post file upload request received');
+    
+    upload(req, res, async (err) => {
+      if (err) {
+        console.error('❌ Single file upload error:', err);
+        return res.status(400).json({ 
+          success: false,
+          message: 'File upload error', 
+          error: err.message 
+        });
+      }
+      
+      try {
+        if (!req.file) {
+          return res.status(400).json({ 
+            success: false,
+            message: 'No file uploaded' 
+          });
+        }
+
+        const fileData = {
+          url: req.file.path,
+          secureUrl: req.file.path,
+          publicId: req.file.filename,
+          originalName: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          fileType: req.body.fileType || (req.file.mimetype.startsWith('video/') ? 'video' : 'image'),
+          folder: req.body.folder || `posts/${req.user._id}`,
+          uploadedAt: new Date()
+        };
+
+        console.log('✅ Single post file processed:', fileData);
+
+        res.json({
+          success: true,
+          message: 'File uploaded successfully',
+          data: fileData,
+          url: fileData.url,
+          secure_url: fileData.secureUrl,
+          public_id: fileData.publicId
+        });
+
+      } catch (error) {
+        console.error('❌ Error processing single file:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Error processing uploaded file',
+          error: error.message
+        });
+      }
+    });
+  });
+}
+
 // Profile picture upload route (uploads to Cloudinary + saves URL to MongoDB)
 if (cloudinaryConfig && cloudinaryConfig.uploadProfilePicture) {
   const upload = cloudinaryConfig.uploadProfilePicture.single('profilePicture');

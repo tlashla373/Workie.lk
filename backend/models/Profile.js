@@ -183,13 +183,6 @@ const profileSchema = new mongoose.Schema({
     min: 18,
     max: 100
   },
-  // Profile photo and ID verification photos
-  profilePicture: String,
-  profilePicturePublicId: String,
-  idPhotoFront: String,
-  idPhotoFrontPublicId: String,
-  idPhotoBack: String,
-  idPhotoBackPublicId: String,
   country: String,
   streetAddress: String,
   city: String,

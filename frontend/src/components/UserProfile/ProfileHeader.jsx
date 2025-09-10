@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Edit } from 'lucide-react';
-import mediaService from '../services/mediaService';
+import mediaService from '../../services/mediaService';
 
 const ProfileHeader = ({
   profileData,

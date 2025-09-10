@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
-import ProfileHeader from '../../components/ProfileHeader';
-import NavigationTabs from '../../components/NavigationTab';
-import ProfileAbout from '../../components/AboutTab';
-import ProfilePhotos from '../../components/ProfilePhotos';
-import ProfileTimeline from '../../components/TimelineTab';
-import ProfileFriends from '../../components/FriendsTab';
+import ProfileHeader from '../../components/UserProfile/ProfileHeader';
+import NavigationTabs from '../../components/UserProfile/NavigationTab';
+import ProfileAbout from '../../components/UserProfile/AboutTab';
+import ProfilePhotos from '../../components/UserProfile/PhotosTab';
+import ProfileTimeline from '../../components/UserProfile/TimelineTab';
+import ProfileFriends from '../../components/UserProfile/FriendsTab';
 import profileService from '../../services/profileService';
 
-const ClientProfile = () => {
+const Profile = () => {
   const { isDarkMode } = useDarkMode();
   const { userId } = useParams(); // Get userId from URL params
   const navigate = useNavigate();
@@ -115,6 +115,11 @@ const ClientProfile = () => {
           
           console.log('Client Profile - User data:', user);
           console.log('Client Profile - Profile data:', profile);
+          console.log('Client Profile - User address:', user?.address);
+          console.log('Client Profile - Profile location fields:', {
+            country: profile?.country,
+            city: profile?.city
+          });
           
           // Validate that user data exists
           if (!user) {
@@ -126,14 +131,55 @@ const ClientProfile = () => {
             // Basic user information
             name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
             profession: user.userType === 'client' ? 'Client' : (profile?.preferences?.jobTypes?.join(', ') || profile?.skills?.map(skill => skill.name)?.join(', ') || "Professional"),
-            location: user.address ? `${user.address.city || ''}, ${user.address.country || ''}`.replace(', ,', ',').trim().replace(/^,|,$/g, '') : "",
+            location: (() => {
+              console.log('Location mapping - user.address:', user?.address);
+              console.log('Location mapping - profile location:', { country: profile?.country, city: profile?.city });
+              
+              // Try to get location from profile first (country, city)
+              if (profile?.country && profile?.city) {
+                console.log('Using profile location: country + city');
+                return `${profile.country}, ${profile.city}`;
+              }
+              
+              // Try to get location from user address (country, city)
+              if (user?.address?.country && user?.address?.city) {
+                console.log('Using user address location: country + city');
+                return `${user.address.country}, ${user.address.city}`;
+              }
+              
+              // Try to get location from profile country only
+              if (profile?.country) {
+                console.log('Using profile country only');
+                return profile.country;
+              }
+              
+              // Try to get location from user address country only
+              if (user?.address?.country) {
+                console.log('Using user address country only');
+                return user.address.country;
+              }
+              
+              // Try city from either source
+              if (profile?.city) {
+                console.log('Using profile city only');
+                return profile.city;
+              }
+              
+              if (user?.address?.city) {
+                console.log('Using user address city only');
+                return user.address.city;
+              }
+              
+              console.log('No location found, returning Not specified');
+              return "Not specified";
+            })(),
             phone: user.phone || "",
             email: user.email || "",
             website: profile?.socialLinks?.website || "",
             
             // Images
             coverImage: user.coverPhoto || "https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png",
-            profileImage: user.profilePicture || "https://res.cloudinary.com/workielk/image/upload/v1757008620/pngwing.com_i2gmx5.png",
+            profileImage: user.profilePicture || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
             
             // Stats
             followers: 0, // Not implemented yet
@@ -259,13 +305,54 @@ const ClientProfile = () => {
               // Basic user information
               name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
               profession: user.userType === 'client' ? 'Client' : (profile?.preferences?.jobTypes?.join(', ') || profile?.skills?.map(skill => skill.name)?.join(', ') || "Professional"),
-              location: user.address ? `${user.address.city || ''}, ${user.address.country || ''}`.replace(', ,', ',').trim().replace(/^,|,$/g, '') : "",
+              location: (() => {
+                console.log('Retry - Location mapping - user.address:', user?.address);
+                console.log('Retry - Location mapping - profile location:', { country: profile?.country, city: profile?.city });
+                
+                // Try to get location from profile first (country, city)
+                if (profile?.country && profile?.city) {
+                  console.log('Retry - Using profile location: country + city');
+                  return `${profile.country}, ${profile.city}`;
+                }
+                
+                // Try to get location from user address (country, city)
+                if (user?.address?.country && user?.address?.city) {
+                  console.log('Retry - Using user address location: country + city');
+                  return `${user.address.country}, ${user.address.city}`;
+                }
+                
+                // Try to get location from profile country only
+                if (profile?.country) {
+                  console.log('Retry - Using profile country only');
+                  return profile.country;
+                }
+                
+                // Try to get location from user address country only
+                if (user?.address?.country) {
+                  console.log('Retry - Using user address country only');
+                  return user.address.country;
+                }
+                
+                // Try city from either source
+                if (profile?.city) {
+                  console.log('Retry - Using profile city only');
+                  return profile.city;
+                }
+                
+                if (user?.address?.city) {
+                  console.log('Retry - Using user address city only');
+                  return user.address.city;
+                }
+                
+                console.log('Retry - No location found, returning Not specified');
+                return "Not specified";
+              })(),
               phone: user.phone || "",
               email: user.email || "",
               website: profile?.socialLinks?.website || "",
               
               // Images
-              coverImage: user.coverPhoto || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEBNC5QQQqyu8DeKNhuhTzHJhEPOflFO5XUQ&s",
+              coverImage: user.coverPhoto || "https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png",
               profileImage: user.profilePicture || "https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg",
               
               // Stats
@@ -432,7 +519,15 @@ const ClientProfile = () => {
           />
         );
       case 'photos':
-        return <ProfilePhotos photos={profileData.portfolio} isDarkMode={isDarkMode} isOwnProfile={isOwnProfile} />;
+        return (
+          <ProfilePhotos 
+            photos={profileData.portfolio} 
+            isDarkMode={isDarkMode} 
+            isOwnProfile={isOwnProfile}
+            userId={userId || currentUserId}
+            profileData={profileData}
+          />
+        );
       case 'timeline':
         return <ProfileTimeline isDarkMode={isDarkMode} isOwnProfile={isOwnProfile} />;
       case 'friends':
@@ -479,4 +574,4 @@ const ClientProfile = () => {
   );
 };
 
-export default ClientProfile;
+export default Profile;

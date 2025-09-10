@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Share, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
+// Mock photos array for fallback
+const mockPhotos = [
+  'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1565008576018-969c8ac78450?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1609205258346-d940fcd6ff6a?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop'
+];
+
 const ProfilePhotos = ({ photos = [], isDarkMode = false, profileData }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -97,7 +107,7 @@ const ProfilePhotos = ({ photos = [], isDarkMode = false, profileData }) => {
                       navigator
                         .share({
                           title: "Check this out!",
-                          text: "Here’s a cool portfolio photo I found.",
+                          text: "Here's a cool portfolio photo I found.",
                           url: window.location.href, // Share the current page URL
                         })
                         .then(() => console.log("Shared successfully"))
@@ -234,7 +244,7 @@ const ProfilePhotos = ({ photos = [], isDarkMode = false, profileData }) => {
                         navigator
                           .share({
                             title: "Check this out!",
-                            text: "Here’s a cool thing I wanted to share with you.",
+                            text: "Here's a cool thing I wanted to share with you.",
                             url: window.location.href, // current page link
                           })
                           .then(() => console.log("Shared successfully"))

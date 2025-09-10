@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, MessageCircle, Check } from 'lucide-react';
-import connectionService from '../services/connectionService';
+
+import connectionService from '../../services/connectionService';
 
 const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
   const [friends, setFriends] = useState([]);
@@ -23,7 +24,8 @@ const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
             avatar: connection.profilePicture || 'https://via.placeholder.com/150',
             mutualFriends: Math.floor(Math.random() * 20) + 1, // Random for now
             isConnected: true, // They are already connected
-            location: 'Sri Lanka' // Default for now
+
+            location: ''
           }));
           
           setFriends(transformedFriends);

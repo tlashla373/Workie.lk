@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
-import EditProfileModal from '../../components/EditProfileModal';
+import EditProfileModal from '../../components/UserProfile/EditProfileModal';
 import profileService from '../../services/profileService';
 
 const EditProfile = () => {

@@ -10,7 +10,10 @@ const FileUpload = ({
   maxSizeInMB = 5,
   allowVideo = false,
   uploadType = 'general', // 'profile', 'verification', 'portfolio', 'job', 'document'
+<<<<<<< HEAD
   verificationDocType = 'idPhotoFront', // 'idPhotoFront' or 'idPhotoBack' for verification uploads
+=======
+>>>>>>> 7e8eb14856c59a266e44ebf9c6953653ee0afaaf
   existingFiles = [],
   className = '',
   disabled = false,
@@ -89,6 +92,7 @@ const FileUpload = ({
           break;
 
         case 'verification':
+<<<<<<< HEAD
           // Handle single ID document upload based on verificationDocType prop
           const verificationFiles = {};
           if (validFiles.length === 1) {
@@ -98,6 +102,12 @@ const FileUpload = ({
             if (validFiles[0]) verificationFiles.idPhotoFront = validFiles[0];
             if (validFiles[1]) verificationFiles.idPhotoBack = validFiles[1];
           }
+=======
+          // Assuming first file is front ID, second is back ID
+          const verificationFiles = {};
+          if (validFiles[0]) verificationFiles.idPhotoFront = validFiles[0];
+          if (validFiles[1]) verificationFiles.idPhotoBack = validFiles[1];
+>>>>>>> 7e8eb14856c59a266e44ebf9c6953653ee0afaaf
           result = await mediaService.uploadVerificationDocuments(verificationFiles);
           break;
 

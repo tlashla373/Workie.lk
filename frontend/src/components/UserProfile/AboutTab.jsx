@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, MapPin, Phone, Globe, Star, Mail, Edit } from 'lucide-react';
-import profileService from '../services/profileService';
+import profileService from '../../services/profileService';
 import EditProfileModal from './EditProfileModal';
 
 const ProfileAbout = ({ 

@@ -66,42 +66,33 @@ const useDiscoverPeople = () => {
 
       if (data.success && data.data.profiles) {
         // Transform profile data to match frontend expectations
-        const transformedPeople = data.data.profiles.map(profile => {
-          // Try to get user ID from multiple possible locations
-          const userId = profile.userInfo?._id || 
-                        profile.userInfo?.id || 
-                        profile.user || 
-                        profile._id || 
-                        profile.id;
-
-          return {
-            id: userId,
-            name: `${profile.userInfo?.firstName || ''} ${profile.userInfo?.lastName || ''}`.trim() || 'Unknown User',
-            profession: profile.userInfo?.userType === 'worker' 
-              ? (profile.skills && profile.skills.length > 0 
-                  ? profile.skills.map(skill => skill.name).join(', ')
-                  : 'Skilled Worker')
-              : 'Client',
-            avatar: profile.userInfo?.profilePicture || 
-              `https://ui-avatars.com/api/?name=${profile.userInfo?.firstName || 'User'}+${profile.userInfo?.lastName || ''}&background=random`,
-            role: profile.userInfo?.userType === 'worker' ? 'Worker' : 'Client',
-            email: `${(profile.userInfo?.firstName || 'user').toLowerCase()}.${(profile.userInfo?.lastName || 'unknown').toLowerCase()}@example.com`,
-            phone: '+1 (555) 000-0000',
-            category: profile.userInfo?.userType === 'worker' 
-              ? (profile.skills && profile.skills.length > 0 
-                  ? profile.skills[0].name.toLowerCase()
-                  : 'general')
-              : 'client',
-            userType: profile.userInfo?.userType || 'worker',
-            location: profile.userInfo?.city || 'Sri Lanka',
-            rating: profile.rating || 0,
-            totalReviews: profile.totalReviews || 0,
-            availability: profile.availability?.status || 'available',
-            skills: profile.skills || [],
-            bio: profile.bio || '',
-            verified: profile.userInfo?.isVerified || false
-          };
-        });
+        const transformedPeople = data.data.profiles.map(profile => ({
+          id: profile.userInfo._id,
+          name: `${profile.userInfo.firstName} ${profile.userInfo.lastName}`,
+          profession: profile.userInfo.userType === 'worker' 
+            ? (profile.skills && profile.skills.length > 0 
+                ? profile.skills.map(skill => skill.name).join(', ')
+                : 'Skilled Worker')
+            : 'Client',
+          avatar: profile.userInfo.profilePicture || 
+            `https://ui-avatars.com/api/?name=${profile.userInfo.firstName}+${profile.userInfo.lastName}&background=random`,
+          role: profile.userInfo.userType === 'worker' ? 'Worker' : 'Client',
+          email: `${profile.userInfo.firstName.toLowerCase()}.${profile.userInfo.lastName.toLowerCase()}@example.com`,
+          phone: '+1 (555) 000-0000',
+          category: profile.userInfo.userType === 'worker' 
+            ? (profile.skills && profile.skills.length > 0 
+                ? profile.skills[0].name.toLowerCase()
+                : 'general')
+            : 'client',
+          userType: profile.userInfo.userType,
+          location: profile.userInfo.city || 'Sri Lanka',
+          rating: profile.rating || 0,
+          totalReviews: profile.totalReviews || 0,
+          availability: profile.availability?.status || 'available',
+          skills: profile.skills || [],
+          bio: profile.bio || '',
+          verified: profile.userInfo.isVerified || false
+        }));
 
         setPeople(transformedPeople);
       } else {

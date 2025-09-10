@@ -100,7 +100,7 @@ const WorkerVerification = () => {
         throw new Error('You must be logged in to submit verification data');
       }
 
-      // Prepare data as JSON (including uploaded file URLs)
+
       const verificationData = {
         categories: JSON.stringify(workerData.categories),
         skills: workerData.skills,
@@ -803,18 +803,16 @@ const WorkerVerification = () => {
 
                   <FileUpload
                     uploadType="verification"
-                    verificationDocType="idPhotoFront"
                     maxFiles={1}
                     maxSizeInMB={10}
                     acceptedTypes={['image/jpeg', 'image/png']}
                     onFileUpload={(result, files) => {
                       console.log('ID front uploaded:', result);
-                      console.log('Result structure:', result);
-                      // The backend returns { files: { idPhotoFront: { url, publicId } } }
                       setWorkerData(prev => ({
                         ...prev,
                         idPhotoFront: files[0],
-                        idPhotoFrontUrl: result?.files?.idPhotoFront?.url || result?.url
+                        idPhotoFrontUrl: result?.files?.idPhotoFront?.url
+
                       }));
                     }}
                     onFileRemove={() => {

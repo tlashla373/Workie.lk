@@ -119,6 +119,141 @@ class MediaService {
     }
   }
 
+  // Upload post media (images and videos) to Cloudinary
+  async uploadPostMedia(files, userId) {
+    try {
+      console.log('📤 Uploading post media to Cloudinary...', { fileCount: files.length, userId });
+      
+      const formData = new FormData();
+      
+      // Add all files to form data
+      files.forEach((file, index) => {
+        formData.append('postMedia', file);
+      });
+      
+      // Add user ID for folder organization
+      formData.append('userId', userId);
+      
+      // Add folder specification for Cloudinary
+      formData.append('folder', `posts/${userId}`);
+
+      const response = await apiService.postFormData('/media/post-media', formData, {
+        timeout: 30000, // 30 second timeout for multiple files
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
+      });
+      
+      console.log('✅ Post media uploaded successfully:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Error uploading post media:', error);
+      throw error;
+    }
+  }
+
+  // Upload single post file with folder organization
+  async uploadSinglePostFile(file, userId, fileType = 'image') {
+    try {
+      console.log('📤 Uploading single post file:', { fileName: file.name, fileType, userId });
+      
+      const formData = new FormData();
+      formData.append('postFile', file);
+      formData.append('userId', userId);
+      formData.append('fileType', fileType);
+      formData.append('folder', `posts/${userId}/${fileType}s`); // posts/userId/images or posts/userId/videos
+
+      const response = await apiService.postFormData('/media/single-post-file', formData);
+      
+      console.log('✅ Single post file uploaded:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Error uploading single post file:', error);
+      throw error;
+    }
+  }
+
+  // Batch upload post media with progress tracking
+  async batchUploadPostMedia(files, userId, progressCallback = null) {
+    try {
+      console.log('📦 Starting batch upload for post media...', { fileCount: files.length });
+      
+      const uploadResults = [];
+      const totalFiles = files.length;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileType = file.type.startsWith('video/') ? 'video' : 'image';
+        
+        try {
+          console.log(`📤 Uploading file ${i + 1}/${totalFiles}: ${file.name}`);
+          
+          const result = await this.uploadSinglePostFile(file, userId, fileType);
+          
+          uploadResults.push({
+            success: true,
+            file: file,
+            fileName: file.name,
+            fileType: fileType,
+            cloudinaryUrl: result.data?.url || result.url,
+            publicId: result.data?.public_id || result.public_id,
+            secureUrl: result.data?.secure_url || result.secure_url,
+            folder: `posts/${userId}/${fileType}s`
+          });
+
+          // Progress callback
+          if (progressCallback) {
+            progressCallback({
+              completed: i + 1,
+              total: totalFiles,
+              percentage: Math.round(((i + 1) / totalFiles) * 100),
+              currentFile: file.name,
+              fileType: fileType
+            });
+          }
+
+        } catch (error) {
+          console.error(`❌ Failed to upload ${file.name}:`, error);
+          
+          uploadResults.push({
+            success: false,
+            file: file,
+            fileName: file.name,
+            error: error.message
+          });
+
+          if (progressCallback) {
+            progressCallback({
+              completed: i + 1,
+              total: totalFiles,
+              percentage: Math.round(((i + 1) / totalFiles) * 100),
+              currentFile: file.name,
+              error: error.message
+            });
+          }
+        }
+      }
+
+      console.log('✅ Batch upload completed:', {
+        total: totalFiles,
+        successful: uploadResults.filter(r => r.success).length,
+        failed: uploadResults.filter(r => !r.success).length
+      });
+
+      return {
+        results: uploadResults,
+        successful: uploadResults.filter(r => r.success),
+        failed: uploadResults.filter(r => !r.success),
+        totalFiles: totalFiles
+      };
+
+    } catch (error) {
+      console.error('❌ Batch upload failed:', error);
+      throw error;
+    }
+  }
+
   // Delete media file
   async deleteMediaFile(publicId, resourceType = 'image') {
     try {

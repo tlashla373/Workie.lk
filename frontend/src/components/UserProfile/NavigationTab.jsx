@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import connectionService from '../services/connectionService';
+import connectionService from '../../services/connectionService';
 
 const NavigationTabs = ({ 
   activeTab, 

@@ -7,10 +7,9 @@ import FindJobs from './pages/FindJobs/FindJobs';
 import PostJob from './pages/JobPosting/PostJob';
 import WorkHistory from './pages/WorkHistory/WorkHistory';
 import Settings from './pages/Settings';
-import WorkerProfile from './pages/Profile/WorkerProfile';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import Video from './pages/Video/Video';
-import ClientProfile from './pages/Profile/ClientProfile';
+import Profile from './pages/Profile/Profile';
 import EditProfile from './pages/EditProfile/EditProfile';
 import LoginPage from './pages/Authentication/LoginPage';
 import SignUpPage from './pages/Authentication/SignUpPage';
@@ -60,11 +59,15 @@ const App = () => {
         },
         {
           path: 'clientprofile',
-          element: <ClientProfile />,
+          element: <Profile />,
+        },
+        {
+          path: 'workerprofile',
+          element: <Profile />,
         },
         {
           path: 'profile/:userId',
-          element: <ClientProfile />,
+          element: <Profile />,
         },
         {
           path: 'edit-profile',
@@ -177,10 +180,6 @@ const App = () => {
     {
       path: '/admin-register',
       element: <AdminRegistration/>,
-    },
-    {
-      path: '/workerprofile',
-      element: <WorkerProfile />,
     }
   ]);
 
