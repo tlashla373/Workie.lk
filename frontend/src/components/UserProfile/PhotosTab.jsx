@@ -14,6 +14,7 @@ import { useDarkMode } from '../../contexts/DarkModeContext';
 import profileService from '../../services/profileService';
 import postService from '../../services/postService';
 import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'react-toastify';
 
 // Photos Tab Component
 const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
@@ -186,18 +187,18 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
     
     setCommentsLoading(true);
     try {
-      console.log('📖 Loading comments for post:', item.source._id);
+      console.log('Loading comments for post:', item.source._id);
       const response = await postService.getComments(item.source._id, 1, 20);
       
       if (response.success && response.data) {
         setComments(response.data.comments || []);
-        console.log('✅ Comments loaded:', response.data.comments?.length || 0);
+        console.log('Comments loaded:', response.data.comments?.length || 0);
       } else {
-        console.warn('⚠️ No comments data in response');
+        console.warn('No comments data in response');
         setComments([]);
       }
     } catch (error) {
-      console.error('❌ Error loading comments:', error);
+      console.error('Error loading comments:', error);
       setComments([]);
     } finally {
       setCommentsLoading(false);
@@ -228,7 +229,7 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
       setComments(prev => [optimisticComment, ...prev]);
       setNewComment('');
 
-      console.log('💬 Adding comment to post:', selectedItem.source._id);
+      console.log('Adding comment to post:', selectedItem.source._id);
       
       // Make actual API call
       const response = await postService.addComment(selectedItem.source._id, commentText);
@@ -242,17 +243,17 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
               : comment
           )
         );
-        console.log('✅ Comment added successfully');
+        console.log('Comment added successfully');
       } else {
         throw new Error('Failed to add comment');
       }
       
     } catch (error) {
-      console.error('❌ Error adding comment:', error);
+      console.error('Error adding comment:', error);
       // Remove the optimistic comment on error
       setComments(prev => prev.filter(c => c._id !== tempId));
       setNewComment(commentText); // Restore the comment text
-      alert('Failed to add comment. Please try again.');
+      toast.error('Failed to add comment. Please try again.');
     }
   };
 
@@ -475,7 +476,7 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                       });
                     } else {
                       navigator.clipboard.writeText(item.url);
-                      alert("Link copied to clipboard!");
+                      toast.success("Link copied to clipboard!");
                     }
                   }}
                 >
@@ -507,9 +508,9 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
 
       {/* Full Screen Modal - Similar to Home Page */}
       {selectedItem && (
-        <div className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+        <div className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}  `}>
           {/* Header Bar */}
-          <div className={`flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex items-center justify-between p-2 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
             <div className="flex items-center space-x-3">
               {selectedItem.type === 'post' && selectedItem.source.userInfo ? (
                 // Post owner profile
@@ -679,7 +680,7 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                         });
                       } else {
                         navigator.clipboard.writeText(selectedItem.url);
-                        alert("Link copied to clipboard!");
+                        toast.success("Link copied to clipboard!");
                       }
                     }}
                   >
@@ -793,14 +794,6 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
               {/* Additional Info */}
               <div className="flex-1 overflow-y-auto p-3 md:p-4">
                 <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} space-y-2`}>
-                  <div>
-                    <span className="font-medium">Type:</span> {selectedItem.type === 'portfolio' ? 'Portfolio Item' : 'Post Media'}
-                  </div>
-                  {selectedItem.fileType && (
-                    <div>
-                      <span className="font-medium">Format:</span> {selectedItem.fileType.toUpperCase()}
-                    </div>
-                  )}
                   {selectedItem.createdAt && (
                     <div>
                       <span className="font-medium">Created:</span> {new Date(selectedItem.createdAt).toLocaleDateString()}

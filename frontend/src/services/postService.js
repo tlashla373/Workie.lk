@@ -5,14 +5,14 @@ class PostService {
   // Create a new post with media files
   async createPost(postData) {
     try {
-      console.log('📝 Creating new post...', postData);
+      console.log('Creating new post...', postData);
 
       const { text, files, privacy, location, taggedFriends, userId, userEmail } = postData;
 
       // First, upload media files to Cloudinary if any
       let mediaUrls = [];
       if (files && files.length > 0) {
-        console.log('📤 Uploading media files to Cloudinary...');
+        console.log('Uploading media files to Cloudinary...');
         
         // Convert file objects to actual files for upload
         const filesToUpload = files.map(fileObj => fileObj.file);
@@ -34,10 +34,10 @@ class PostService {
           folder: result.folder
         }));
 
-        console.log('✅ Media uploaded successfully:', mediaUrls);
+        console.log('Media uploaded successfully:', mediaUrls);
 
         if (uploadResult.failed.length > 0) {
-          console.warn('⚠️ Some files failed to upload:', uploadResult.failed);
+          console.warn('Some files failed to upload:', uploadResult.failed);
         }
       }
 
@@ -54,12 +54,12 @@ class PostService {
         hasMedia: mediaUrls.length > 0
       };
 
-      console.log('💾 Saving post to database...', postPayload);
+      console.log('Saving post to database...', postPayload);
 
       // Save post to database
       const response = await apiService.post('/posts', postPayload);
 
-      console.log('✅ Post created successfully:', response);
+      console.log('Post created successfully:', response);
       return {
         success: true,
         post: response.data,
@@ -68,7 +68,7 @@ class PostService {
       };
 
     } catch (error) {
-      console.error('❌ Error creating post:', error);
+      console.error('Error creating post:', error);
       throw error;
     }
   }
@@ -98,7 +98,7 @@ class PostService {
   // Delete post and its media
   async deletePost(postId) {
     try {
-      console.log('🗑️ Deleting post:', postId);
+      console.log('Deleting post:', postId);
 
       // Get post details first to delete media from Cloudinary
       const postResponse = await apiService.get(`/posts/${postId}`);
@@ -106,15 +106,15 @@ class PostService {
 
       // Delete media from Cloudinary if exists
       if (post.media && post.media.length > 0) {
-        console.log('🗑️ Deleting media from Cloudinary...');
+        console.log('Deleting media from Cloudinary...');
         
         for (const media of post.media) {
           if (media.publicId) {
             try {
               await mediaService.deleteMediaFile(media.publicId, media.fileType);
-              console.log(`✅ Deleted ${media.fileName} from Cloudinary`);
+              console.log(`Deleted ${media.fileName} from Cloudinary`);
             } catch (error) {
-              console.warn(`⚠️ Failed to delete ${media.fileName} from Cloudinary:`, error);
+              console.warn(`Failed to delete ${media.fileName} from Cloudinary:`, error);
             }
           }
         }
@@ -123,10 +123,10 @@ class PostService {
       // Delete post from database
       const response = await apiService.delete(`/posts/${postId}`);
       
-      console.log('✅ Post deleted successfully');
+      console.log('Post deleted successfully');
       return response;
     } catch (error) {
-      console.error('❌ Error deleting post:', error);
+      console.error('Error deleting post:', error);
       throw error;
     }
   }
@@ -156,12 +156,12 @@ class PostService {
   // Add comment
   async addComment(postId, comment) {
     try {
-      console.log('💬 Adding comment to post:', postId);
+      console.log('Adding comment to post:', postId);
       const response = await apiService.post(`/posts/${postId}/comments`, { comment });
-      console.log('✅ Comment added successfully');
+      console.log('Comment added successfully');
       return response;
     } catch (error) {
-      console.error('❌ Error adding comment:', error);
+      console.error('Error adding comment:', error);
       throw error;
     }
   }
@@ -169,12 +169,12 @@ class PostService {
   // Get comments for a post
   async getComments(postId, page = 1, limit = 20) {
     try {
-      console.log('📖 Fetching comments for post:', postId);
+      console.log('Fetching comments for post:', postId);
       const response = await apiService.get(`/posts/${postId}/comments?page=${page}&limit=${limit}`);
-      console.log('✅ Comments fetched successfully');
+      console.log('Comments fetched successfully');
       return response;
     } catch (error) {
-      console.error('❌ Error fetching comments:', error);
+      console.error('Error fetching comments:', error);
       throw error;
     }
   }
@@ -186,6 +186,18 @@ class PostService {
       return response;
     } catch (error) {
       console.error('Error sharing post:', error);
+      throw error;
+    }
+  }
+
+  // Get video posts for video feed
+  async getVideoPosts(page = 1, limit = 10) {
+    try {
+      console.log('Fetching video posts...', { page, limit });
+      const response = await apiService.get(`/posts/videos?page=${page}&limit=${limit}`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching video posts:', error);
       throw error;
     }
   }

@@ -157,6 +157,90 @@ router.get('/feed', auth, async (req, res) => {
   }
 });
 
+// Get video posts for video feed (placed before /:postId to avoid conflicts)
+router.get('/videos', async (req, res) => {
+  try {
+    console.log('🎥 Video endpoint hit!');
+    console.log('📝 Query params:', req.query);
+    
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    console.log('🔍 Searching for video posts...');
+    
+    // Find posts that have video media
+    const posts = await Post.find({
+      'media.fileType': 'video',
+      privacy: { $in: ['public'] }
+    })
+    .populate('userId', 'firstName lastName profilePicture')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit))
+    .lean();
+
+    console.log('📊 Found posts with videos:', posts.length);
+    console.log('🎬 Raw posts:', posts);
+    
+    // Let's also check total posts and posts with any media
+    const totalPosts = await Post.countDocuments();
+    const postsWithMedia = await Post.countDocuments({ 'media': { $exists: true, $ne: [] } });
+    const allVideoFileTypes = await Post.distinct('media.fileType');
+    
+    console.log('📈 Database stats:');
+    console.log('   Total posts:', totalPosts);
+    console.log('   Posts with media:', postsWithMedia);
+    console.log('   All file types found:', allVideoFileTypes);
+
+    // Transform posts for video feed
+    const videoPosts = posts.map(post => {
+      const videoMedia = post.media.find(m => m.fileType === 'video');
+      return {
+        id: post._id,
+        title: post.content ? post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '') : 'Video Post',
+        description: post.content || 'No description available',
+        creator: `${post.userInfo.firstName} ${post.userInfo.lastName}`,
+        avatar: post.userInfo.profilePicture || '',
+        verified: false, // You can add verification logic here
+        likes: post.likes.length,
+        comments: post.comments.length,
+        views: `${Math.floor(Math.random() * 50)}K`, // You can implement actual view tracking
+        duration: "0:00", // You can store actual duration in media object
+        category: "General", // You can add category field to posts
+        thumbnail: videoMedia ? videoMedia.url : '',
+        videoUrl: videoMedia ? videoMedia.url : '',
+        createdAt: post.createdAt,
+        location: post.location || '',
+        userId: post.userId._id
+      };
+    });
+
+    const totalVideos = await Post.countDocuments({
+      'media.fileType': 'video',
+      privacy: { $in: ['public'] }
+    });
+
+    res.json({
+      success: true,
+      data: videoPosts,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalVideos,
+        pages: Math.ceil(totalVideos / parseInt(limit))
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching video posts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching video posts',
+      error: error.message
+    });
+  }
+});
+
 // Get single post
 router.get('/:postId', auth, async (req, res) => {
   try {
@@ -346,19 +430,33 @@ router.get('/:postId/comments', async (req, res) => {
   try {
     const { postId } = req.params;
     const { page = 1, limit = 20 } = req.query;
+    
+    console.log('📖 Fetching comments for post:', postId, 'page:', page, 'limit:', limit);
 
-    const post = await Post.findById(postId).select('comments');
+    const post = await Post.findById(postId)
+      .select('comments')
+      .populate({
+        path: 'comments.userId',
+        select: 'firstName lastName profilePicture'
+      });
+      
     if (!post) {
+      console.log('❌ Post not found:', postId);
       return res.status(404).json({
         success: false,
         message: 'Post not found'
       });
     }
 
+    console.log('📋 Post found with', post.comments.length, 'comments');
+    console.log('📋 Sample comment:', post.comments[0]);
+
     // Calculate pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + parseInt(limit);
     const paginatedComments = post.comments.slice(startIndex, endIndex);
+    
+    console.log('📤 Sending', paginatedComments.length, 'comments');
 
     res.json({
       success: true,

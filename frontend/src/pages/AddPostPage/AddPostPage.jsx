@@ -24,6 +24,7 @@ import {
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../hooks/useAuth';
 import postService from '../../services/postService';
+import { toast } from 'react-toastify';
 
 
 const AddPostPage = () => {
@@ -203,12 +204,12 @@ const AddPostPage = () => {
 
   const handleSubmit = async () => {
     if (!postText.trim() && selectedFiles.length === 0) {
-      alert('Please add some content or media to your post');
+      toast.error('Please add some content or media to your post');
       return;
     }
     
     if (!authenticated || !user) {
-      alert('You must be logged in to create a post');
+      toast.error('You must be logged in to create a post');
       return;
     }
     
@@ -217,7 +218,7 @@ const AddPostPage = () => {
     setUploadStatus('Preparing post...');
     
     try {
-      console.log('📝 Creating post for user:', userName);
+      console.log('Creating post for user:', userName);
       
       // Prepare post data
       const postData = {
@@ -238,14 +239,14 @@ const AddPostPage = () => {
       // Create post with Cloudinary integration
       const response = await postService.createPost(postData);
       
-      console.log('✅ Post created successfully:', response);
+      console.log('Post created successfully:', response);
       
       setUploadProgress(100);
       setUploadStatus('Post created successfully!');
       
       // Show success message
       setTimeout(() => {
-        alert(`Post created successfully! ${response.mediaUploaded}`);
+        toast.success(`Post created successfully! ${response.mediaUploaded}`);
         
         // Reset form
         setPostText('');
@@ -262,7 +263,7 @@ const AddPostPage = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('❌ Error creating post:', error);
+      console.error('Error creating post:', error);
       
       setUploadStatus('Upload failed');
       setIsUploading(false);
@@ -270,7 +271,7 @@ const AddPostPage = () => {
       
       // Show detailed error message
       const errorMessage = error.response?.data?.message || error.message || 'Failed to create post. Please try again.';
-      alert(`Error: ${errorMessage}`);
+      toast.error(`Error: ${errorMessage}`);
     }
   };
 

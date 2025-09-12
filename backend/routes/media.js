@@ -156,12 +156,19 @@ if (cloudinaryConfig && cloudinaryConfig.uploadProfilePicture) {
   router.post('/profile-picture', auth, (req, res, next) => {
     upload(req, res, async (err) => {
       if (err) {
-        return res.status(400).json({ message: 'File upload error', error: err.message });
+        return res.status(400).json({ 
+          success: false,
+          message: 'File upload error', 
+          error: err.message 
+        });
       }
       
       try {
         if (!req.file) {
-          return res.status(400).json({ message: 'No file uploaded' });
+          return res.status(400).json({ 
+            success: false,
+            message: 'No file uploaded' 
+          });
         }
 
         // STEP 1: Image is already uploaded to Cloudinary by multer
@@ -179,28 +186,38 @@ if (cloudinaryConfig && cloudinaryConfig.uploadProfilePicture) {
         ).select('-password');
 
         if (!updatedUser) {
-          return res.status(404).json({ message: 'User not found' });
+          return res.status(404).json({ 
+            success: false,
+            message: 'User not found' 
+          });
         }
 
         // STEP 3: Return success response with MongoDB data
         res.json({
+          success: true,
           message: 'Profile picture uploaded and saved successfully!',
-          user: {
-            id: updatedUser._id,
-            profilePicture: updatedUser.profilePicture,
-            profilePicturePublicId: updatedUser.profilePicturePublicId
-          },
-          cloudinary: {
-            url: cloudinaryUrl,
-            publicId: publicId,
-            optimizedUrl: cloudinaryConfig.generateOptimizedUrl ? 
-              cloudinaryConfig.generateOptimizedUrl(publicId) : cloudinaryUrl
+          data: {
+            user: {
+              id: updatedUser._id,
+              profilePicture: updatedUser.profilePicture,
+              profilePicturePublicId: updatedUser.profilePicturePublicId
+            },
+            cloudinary: {
+              url: cloudinaryUrl,
+              publicId: publicId,
+              optimizedUrl: cloudinaryConfig.generateOptimizedUrl ? 
+                cloudinaryConfig.generateOptimizedUrl(publicId) : cloudinaryUrl
+            }
           }
         });
 
       } catch (error) {
         console.error('Profile picture upload error:', error);
-        res.status(500).json({ message: 'Server error during file upload' });
+        res.status(500).json({ 
+          success: false,
+          message: 'Server error during file upload',
+          error: error.message 
+        });
       }
     });
   });
