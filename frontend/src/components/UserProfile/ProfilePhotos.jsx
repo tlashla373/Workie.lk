@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Share, X, ChevronLeft, ChevronRight , MoreHorizontal } from 'lucide-react';
 
-// Mock photos array for fallback
-const mockPhotos = [
-  'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1565008576018-969c8ac78450?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1609205258346-d940fcd6ff6a?w=400&h=400&fit=crop',
-  'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop'
-];
+
+
 
 const ProfilePhotos = ({ photos = [], isDarkMode = false, profileData }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
@@ -87,6 +80,8 @@ const ProfilePhotos = ({ photos = [], isDarkMode = false, profileData }) => {
               alt={`Portfolio ${index + 1}`}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
+
+
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
                 <button 
@@ -121,7 +116,6 @@ const ProfilePhotos = ({ photos = [], isDarkMode = false, profileData }) => {
                     >               
                   <Share className="w-5 h-5" />
                 </button>
-
               </div>
             </div>
           </div>

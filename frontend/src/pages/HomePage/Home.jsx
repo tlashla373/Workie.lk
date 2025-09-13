@@ -27,6 +27,7 @@ export default function MainFeed() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [likedPosts, setLikedPosts] = useState(new Set()); // Track liked posts
   const { isDarkMode } = useDarkMode();
   const { user } = useAuth();
 
@@ -60,6 +61,20 @@ export default function MainFeed() {
             timeAgo: getTimeAgo(post.createdAt),
             originalPost: post // Keep original data for comments API
           }));
+          
+          // Initialize liked posts set based on user's likes in fetched posts
+          if (user?._id) {
+            const userLikedPostIds = new Set();
+            fetchedPosts.forEach(post => {
+              // Check if user has liked this post
+              const userLike = post.likes?.find(like => like.userId === user._id);
+              if (userLike) {
+                userLikedPostIds.add(post._id);
+              }
+            });
+            setLikedPosts(userLikedPostIds);
+            console.log('👍 User liked posts loaded:', userLikedPostIds.size);
+          }
           
           setPosts(transformedPosts);
           setHasMore(response.data.hasMore || false);
@@ -339,6 +354,97 @@ export default function MainFeed() {
     }
   };
 
+  // Handle like/unlike functionality
+  const handleLike = async (postId, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    if (!user) {
+      console.warn('User must be logged in to like posts');
+      return;
+    }
+
+    try {
+      console.log('👍 Toggling like for post:', postId);
+      
+      // Optimistic update
+      const wasLiked = likedPosts.has(postId);
+      const newLikedPosts = new Set(likedPosts);
+      
+      if (wasLiked) {
+        newLikedPosts.delete(postId);
+      } else {
+        newLikedPosts.add(postId);
+      }
+      
+      setLikedPosts(newLikedPosts);
+      
+      // Update posts state to reflect like count change
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, likes: wasLiked ? post.likes - 1 : post.likes + 1 }
+            : post
+        )
+      );
+
+      // Make API call
+      const response = await postService.toggleLike(postId);
+      
+      if (response.success) {
+        console.log('✅ Like toggled successfully:', response.data);
+        
+        // Update with actual data from server
+        if (response.data) {
+          const { isLiked, likesCount } = response.data;
+          
+          // Update liked posts set based on server response
+          const updatedLikedPosts = new Set(likedPosts);
+          if (isLiked) {
+            updatedLikedPosts.add(postId);
+          } else {
+            updatedLikedPosts.delete(postId);
+          }
+          setLikedPosts(updatedLikedPosts);
+          
+          // Update posts with actual like count
+          setPosts(prevPosts => 
+            prevPosts.map(post => 
+              post.id === postId 
+                ? { ...post, likes: likesCount }
+                : post
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to toggle like:', error);
+      
+      // Revert optimistic update on error
+      const revertedLikedPosts = new Set(likedPosts);
+      const wasLiked = likedPosts.has(postId);
+      
+      if (!wasLiked) {
+        revertedLikedPosts.delete(postId);
+      } else {
+        revertedLikedPosts.add(postId);
+      }
+      
+      setLikedPosts(revertedLikedPosts);
+      
+      // Revert posts like count
+      setPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === postId 
+            ? { ...post, likes: wasLiked ? post.likes + 1 : post.likes - 1 }
+            : post
+        )
+      );
+    }
+  };
+
   // Load comments from database for a specific post
   const loadCommentsForPost = async (postId) => {
     // Don't reload if we already have database comments for this post
@@ -444,11 +550,36 @@ export default function MainFeed() {
         </div>
         
         <div className={`flex items-center justify-between pt-2 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-          <button className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
-            <Heart className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            <span className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
+          <button 
+            type="button"
+            onClick={(e) => handleLike(post.id, e)}
+            className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${
+              likedPosts.has(post.id)
+                ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400'
+                : isDarkMode 
+                  ? 'hover:bg-gray-700' 
+                  : 'hover:bg-gray-100'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${
+              likedPosts.has(post.id) 
+                ? 'text-red-600 fill-current dark:text-red-400' 
+                : isDarkMode 
+                  ? 'text-gray-300' 
+                  : 'text-gray-600'
+            }`} />
+            <span className={`text-xs md:text-sm font-medium ${
+              likedPosts.has(post.id)
+                ? 'text-red-600 dark:text-red-400'
+                : isDarkMode 
+                  ? 'text-gray-300' 
+                  : 'text-gray-600'
+            }`}>
+              Like
+            </span>
           </button>
           <button 
+            type="button"
             className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
             onClick={() => handlePostClick(post)}
           >
@@ -456,6 +587,7 @@ export default function MainFeed() {
             <span className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Comment</span>
           </button>
           <button 
+          type="button"
           className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
           onClick={() => {
                       if (navigator.share) {
@@ -655,11 +787,36 @@ export default function MainFeed() {
 
                 {/* Action Buttons */}
                 <div className={`flex items-center justify-between mt-3 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <button className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                    <Heart className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className={`font-medium text-xs md:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
+                  <button 
+                    type="button"
+                    onClick={(e) => handleLike(selectedPost.id, e)}
+                    className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${
+                      likedPosts.has(selectedPost.id)
+                        ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400'
+                        : isDarkMode 
+                          ? 'hover:bg-gray-700' 
+                          : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 md:w-5 md:h-5 ${
+                      likedPosts.has(selectedPost.id) 
+                        ? 'text-red-600 fill-current dark:text-red-400' 
+                        : isDarkMode 
+                          ? 'text-gray-300' 
+                          : 'text-gray-600'
+                    }`} />
+                    <span className={`font-medium text-xs md:text-sm ${
+                      likedPosts.has(selectedPost.id)
+                        ? 'text-red-600 dark:text-red-400'
+                        : isDarkMode 
+                          ? 'text-gray-300' 
+                          : 'text-gray-600'
+                    }`}>
+                      Like
+                    </span>
                   </button>
                   <button 
+                  type="button"
                   className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                   onClick={() => {
                       if (navigator.share) {
@@ -743,6 +900,7 @@ export default function MainFeed() {
                       onKeyPress={(e) => e.key === 'Enter' && handleAddComment(selectedPost.id)}
                     />
                     <button
+                      type="button"
                       onClick={() => handleAddComment(selectedPost.id)}
                       disabled={!newComment.trim()}
                       className={`p-2 md:p-3 text-blue-600 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'hover:bg-blue-900' : 'hover:bg-blue-50'}`}

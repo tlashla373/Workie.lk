@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Heart, 
-  Share,
-  Upload,
-  Plus,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  MessageCircle,
-  Send
-} from 'lucide-react';
+import { Heart, Share,  Upload,Plus, X, ChevronLeft, ChevronRight, MessageCircle, Send, MoreHorizontal } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import profileService from '../../services/profileService';
 import postService from '../../services/postService';
+import apiService from '../../services/apiService';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 
 // Photos Tab Component
 const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
+  console.log('PhotosTab rendered with props:', { profileData: !!profileData, isDarkMode, isOwnProfile, userId });
+  
   const { user } = useAuth();
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
@@ -29,6 +22,9 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [likedPosts, setLikedPosts] = useState(new Set()); // Track liked posts
 
   // Get the target user ID (either from props or current user)
   const targetUserId = userId || user?.id || user?._id;
@@ -73,6 +69,22 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
           }
         }
         setUserPosts(posts);
+        console.log('PhotosTab: Final posts loaded:', posts.length);
+        console.log('PhotosTab: Sample post data:', posts[0]);
+
+        // Initialize liked posts set based on user's likes in fetched posts
+        if (user?._id) {
+          const userLikedPostIds = new Set();
+          posts.forEach(post => {
+            // Check if user has liked this post
+            const userLike = post.likes?.find(like => like.userId === user._id);
+            if (userLike) {
+              userLikedPostIds.add(post._id);
+            }
+          });
+          setLikedPosts(userLikedPostIds);
+          console.log('👍 User liked posts loaded in PhotosTab:', userLikedPostIds.size);
+        }
 
       } catch (error) {
         console.error('Error fetching photos data:', error);
@@ -93,6 +105,7 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
 
     // Add portfolio items
     if (portfolioItems && portfolioItems.length > 0) {
+      console.log('Adding portfolio items to grid:', portfolioItems.length);
       portfolioItems.forEach((item, index) => {
         if (item.images && item.images.length > 0) {
           item.images.forEach((imageUrl, imgIndex) => {
@@ -125,10 +138,18 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
 
     // Add post media
     if (userPosts && userPosts.length > 0) {
+      console.log('Adding post media to grid:', userPosts.length);
       userPosts.forEach((post, postIndex) => {
+        console.log(`Post ${postIndex}:`, {
+          id: post._id,
+          userId: post.userId,
+          authorId: post.authorId,
+          userInfo: post.userInfo
+        });
+        
         if (post.media && post.media.length > 0) {
           post.media.forEach((media, mediaIndex) => {
-            allItems.push({
+            const mediaItem = {
               id: `post-${post._id || postIndex}-${mediaIndex}`,
               url: media.url,
               title: post.content ? post.content.substring(0, 50) + '...' : `Post ${postIndex + 1}`,
@@ -136,8 +157,19 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
               type: 'post',
               fileType: media.fileType,
               createdAt: post.createdAt,
-              source: post
-            });
+              source: {
+                ...post,
+                userId: post.userId || post.authorId, // Ensure we have userId
+                userInfo: post.userInfo || {
+                  userId: post.userId || post.authorId,
+                  firstName: post.author?.firstName || 'Unknown',
+                  lastName: post.author?.lastName || 'User',
+                  profilePicture: post.author?.profilePicture || ''
+                }
+              }
+            };
+            console.log(`Media item ${mediaIndex} source:`, mediaItem.source);
+            allItems.push(mediaItem);
           });
         }
       });
@@ -165,6 +197,7 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
 
   // Modal functions
   const handleItemClick = (item, imageIndex = 0) => {
+    console.log('Item clicked:', item);
     setSelectedItem(item);
     setCurrentImageIndex(imageIndex);
     setComments([]); // Reset comments
@@ -178,7 +211,118 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
     setCurrentImageIndex(0);
     setComments([]);
     setNewComment('');
+    setShowDropdown(false); // Close dropdown when modal closes
+    setDeleteLoading(false); // Reset delete loading state
     document.body.style.overflow = 'unset'; // Restore background scrolling
+  };
+
+  // Dropdown functions
+  const toggleDropdown = () => {
+    console.log('Toggle dropdown - current state:', showDropdown);
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleEditPost = () => {
+    setShowDropdown(false);
+    
+    if (!selectedItem) return;
+    
+    if (selectedItem.type === 'post') {
+      // For posts, you could implement an edit modal or redirect to edit page
+      console.log('Edit post clicked for:', selectedItem.source._id);
+      toast.info('Post editing functionality will be implemented soon!');
+      
+      // TODO: Implement post editing
+      // Options:
+      // 1. Open an edit modal with the post content
+      // 2. Navigate to a dedicated edit page
+      // 3. Make the content inline editable
+      
+    } else if (selectedItem.type === 'portfolio') {
+      // For portfolio items, implement edit functionality
+      console.log('Edit portfolio item clicked for:', selectedItem.source._id);
+      toast.info('Portfolio editing functionality will be implemented soon!');
+      
+      // TODO: Implement portfolio editing
+      // Options:
+      // 1. Open an edit modal with portfolio details
+      // 2. Navigate to portfolio edit page
+      // 3. Make the fields inline editable
+    }
+  };
+
+  const handleDeletePost = async () => {
+    setShowDropdown(false);
+    
+    if (!selectedItem || deleteLoading) return;
+    
+    // Show confirmation dialog
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete this ${selectedItem.type === 'post' ? 'post' : 'portfolio item'}? This action cannot be undone.`
+    );
+    
+    if (!confirmDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      
+      if (selectedItem.type === 'post') {
+        // Delete post from database and Cloudinary
+        console.log('Deleting post:', selectedItem.source._id);
+        const response = await postService.deletePost(selectedItem.source._id);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to delete post');
+        }
+        
+        // Remove the post from local state
+        setUserPosts(prevPosts => 
+          prevPosts.filter(post => post._id !== selectedItem.source._id)
+        );
+        
+        toast.success('Post and its media deleted successfully!');
+      } else if (selectedItem.type === 'portfolio') {
+        // For portfolio items, we need to implement the delete functionality
+        console.log('Deleting portfolio item:', selectedItem.source._id);
+        
+        // First, get the current user ID
+        const userId = user?.id || user?._id;
+        if (!userId) {
+          throw new Error('User not authenticated');
+        }
+        
+        // Make API call to delete portfolio item using apiService
+        const response = await apiService.delete(`/profiles/${userId}/portfolio/${selectedItem.source._id}`);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to delete portfolio item');
+        }
+        
+        // Remove the portfolio item from local state
+        setPortfolioItems(prevItems => 
+          prevItems.filter(item => item._id !== selectedItem.source._id)
+        );
+        
+        toast.success('Portfolio item deleted successfully!');
+      }
+      
+      // Close the modal after successful deletion
+      closeModal();
+      
+    } catch (error) {
+      console.error(`Error deleting ${selectedItem.type}:`, error);
+      toast.error(`Failed to delete ${selectedItem.type}. Please try again.`);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  const handleDropdownClose = () => {
+    if (showDropdown) {
+      console.log('Closing dropdown from outside click');
+      setShowDropdown(false);
+    }
   };
 
   // Comment functions
@@ -257,12 +401,119 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
     }
   };
 
+  // Handle like/unlike functionality
+  const handleLike = async (postId) => {
+    if (!user) {
+      console.warn('User must be logged in to like posts');
+      return;
+    }
+
+    try {
+      console.log('👍 Toggling like for post:', postId);
+      
+      // Optimistic update
+      const wasLiked = likedPosts.has(postId);
+      const newLikedPosts = new Set(likedPosts);
+      
+      if (wasLiked) {
+        newLikedPosts.delete(postId);
+      } else {
+        newLikedPosts.add(postId);
+      }
+      
+      setLikedPosts(newLikedPosts);
+      
+      // Update posts state to reflect like count change
+      setUserPosts(prevPosts => 
+        prevPosts.map(post => 
+          post._id === postId 
+            ? { ...post, likes: wasLiked ? (post.likes || []).filter(like => like.userId !== user._id) : [...(post.likes || []), { userId: user._id, likedAt: new Date() }] }
+            : post
+        )
+      );
+
+      // Make API call
+      const response = await postService.toggleLike(postId);
+      
+      if (response.success) {
+        console.log('✅ Like toggled successfully:', response.data);
+        
+        // Update with actual data from server
+        if (response.data) {
+          const { isLiked, likesCount, likes } = response.data;
+          
+          // Update liked posts set based on server response
+          const updatedLikedPosts = new Set(likedPosts);
+          if (isLiked) {
+            updatedLikedPosts.add(postId);
+          } else {
+            updatedLikedPosts.delete(postId);
+          }
+          setLikedPosts(updatedLikedPosts);
+          
+          // Update posts with actual like data
+          setUserPosts(prevPosts => 
+            prevPosts.map(post => 
+              post._id === postId 
+                ? { ...post, likes: likes || [] }
+                : post
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to toggle like:', error);
+      
+      // Revert optimistic update on error
+      const revertedLikedPosts = new Set(likedPosts);
+      const wasLiked = likedPosts.has(postId);
+      
+      if (!wasLiked) {
+        revertedLikedPosts.delete(postId);
+      } else {
+        revertedLikedPosts.add(postId);
+      }
+      
+      setLikedPosts(revertedLikedPosts);
+      
+      // Revert posts like data
+      setUserPosts(prevPosts => 
+        prevPosts.map(post => 
+          post._id === postId 
+            ? { ...post, likes: wasLiked ? [...(post.likes || []), { userId: user._id, likedAt: new Date() }] : (post.likes || []).filter(like => like.userId !== user._id) }
+            : post
+        )
+      );
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleAddComment();
     }
   };
+
+  // Handle keyboard events for modal and dropdown
+  const handleModalKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      if (showDropdown) {
+        setShowDropdown(false);
+      } else if (selectedItem) {
+        closeModal();
+      }
+    }
+  };
+
+  // Add keyboard event listener for modal
+  useEffect(() => {
+    if (selectedItem) {
+      document.addEventListener('keydown', handleModalKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleModalKeyDown);
+      };
+    }
+  }, [selectedItem, showDropdown]);
 
   const nextImage = () => {
     if (selectedItem) {
@@ -455,13 +706,19 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
                 <button 
-                  className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+                  className={`p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors ${
+                    item.source && likedPosts.has(item.source._id) ? 'text-red-400' : ''
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Add like functionality here
+                    if (item.source && item.source._id) {
+                      handleLike(item.source._id);
+                    }
                   }}
                 >
-                  <Heart className="w-5 h-5" />
+                  <Heart className={`w-5 h-5 ${
+                    item.source && likedPosts.has(item.source._id) ? 'fill-current text-red-400' : ''
+                  }`} />
                 </button>
                 <button 
                   className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
@@ -508,7 +765,10 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
 
       {/* Full Screen Modal - Similar to Home Page */}
       {selectedItem && (
-        <div className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}  `}>
+        <div 
+          className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}  `}
+          onClick={handleDropdownClose}
+        >
           {/* Header Bar */}
           <div className={`flex items-center justify-between p-2 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
             <div className="flex items-center space-x-3">
@@ -545,12 +805,85 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={closeModal}
-              className={`p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
-            >
-              <X className={`w-5 h-5 md:w-6 md:h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            </button>
+            
+            {/* Action buttons */}
+            <div className="flex items-center space-x-2">
+              {/* More Options Dropdown - TEMP: Always show on own profile for debugging */}
+              {selectedItem && isOwnProfile && (
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Dropdown button clicked - TEMP DEBUG MODE');
+                      console.log('Selected item:', selectedItem);
+                      toggleDropdown();
+                    }}
+                    className={`p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+                  >
+                    <MoreHorizontal className={`w-5 h-5 md:w-6 md:h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {showDropdown && (
+                    <div 
+                      className={`absolute right-0 top-full mt-2 w-48 rounded-lg shadow-lg border z-10 ${
+                        isDarkMode 
+                          ? 'bg-gray-800 border-gray-700' 
+                          : 'bg-white border-gray-200'
+                      }`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="py-1">
+                        <button
+                          onClick={handleEditPost}
+                          className={`w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
+                            isDarkMode 
+                              ? 'text-gray-200 hover:bg-gray-700' 
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {selectedItem.type === 'post' ? 'Edit Post' : 'Edit Portfolio Item'}
+                        </button>
+                        <button
+                          onClick={handleDeletePost}
+                          disabled={deleteLoading}
+                          className={`w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
+                            deleteLoading
+                              ? 'opacity-50 cursor-not-allowed'
+                              : isDarkMode 
+                              ? 'text-red-400 hover:bg-gray-700' 
+                              : 'text-red-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {deleteLoading ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Deleting...
+                            </span>
+                          ) : (
+                            `${selectedItem.type === 'post' ? 'Delete Post' : 'Delete Portfolio Item'}`
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Close button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  closeModal();
+                }}
+                className={`p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+              >
+                <X className={`w-5 h-5 md:w-6 md:h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              </button>
+            </div>
           </div>
 
           {/* Main Content Area */}
@@ -659,11 +992,46 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                   </p>
                 )}
 
+                {/* Post Stats */}
+                {selectedItem.type === 'post' && selectedItem.source && (
+                  <div className={`flex items-center justify-between mt-3 mb-3 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span>{(selectedItem.source.likes || []).length} likes</span>
+                    <span>{comments.length} comments</span>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
                 <div className={`flex items-center justify-between mt-4 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <button className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center mr-1 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                    <Heart className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className={`font-medium text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Like</span>
+                  <button 
+                    onClick={() => {
+                      if (selectedItem.source && selectedItem.source._id) {
+                        handleLike(selectedItem.source._id);
+                      }
+                    }}
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center mr-1 ${
+                      selectedItem.source && likedPosts.has(selectedItem.source._id)
+                        ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400'
+                        : isDarkMode 
+                          ? 'hover:bg-gray-700' 
+                          : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${
+                      selectedItem.source && likedPosts.has(selectedItem.source._id) 
+                        ? 'text-red-600 fill-current dark:text-red-400' 
+                        : isDarkMode 
+                          ? 'text-gray-300' 
+                          : 'text-gray-600'
+                    }`} />
+                    <span className={`font-medium text-xs ${
+                      selectedItem.source && likedPosts.has(selectedItem.source._id)
+                        ? 'text-red-600 dark:text-red-400'
+                        : isDarkMode 
+                          ? 'text-gray-300' 
+                          : 'text-gray-600'
+                    }`}>
+                      Like
+                    </span>
                   </button>
                   <button className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center mx-1 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
                     <MessageCircle className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />

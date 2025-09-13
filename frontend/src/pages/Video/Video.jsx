@@ -1,21 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Heart, 
-  MessageCircle, 
-  Share, 
-  MoreVertical,
-  User,
-  Verified,
-  ThumbsUp,
-  ThumbsDown,
-  Bookmark,
-  Loader,
-  Send
-} from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Heart,   MessageCircle, Share, MoreVertical, User,  Verified, ThumbsUp, ThumbsDown,  Bookmark,  Loader,  Send } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../hooks/useAuth';
 import postService from '../../services/postService';
@@ -66,8 +50,27 @@ const Video = () => {
           
           if (page === 1) {
             setVideos(videoData);
+            
+            // Initialize liked videos state based on backend data
+            if (user && user._id) {
+              const userLikedVideos = videoData
+                .filter(video => video.isLiked)
+                .map(video => video._id || video.id);
+              
+              setLikedVideos(userLikedVideos);
+              console.log('Initialized liked videos:', userLikedVideos);
+            }
           } else {
             setVideos(prev => [...prev, ...videoData]);
+            
+            // Add newly liked videos to the state for pagination
+            if (user && user._id) {
+              const newLikedVideos = videoData
+                .filter(video => video.isLiked)
+                .map(video => video._id || video.id);
+              
+              setLikedVideos(prev => [...new Set([...prev, ...newLikedVideos])]);
+            }
           }
           
           // Check if there are more pages - safely handle pagination
@@ -92,7 +95,7 @@ const Video = () => {
     };
 
     fetchVideos();
-  }, [page]);
+  }, [page, user]);
 
   // auto-play with Intersection Observer
   useEffect(() => {
@@ -216,12 +219,66 @@ const Video = () => {
     }
   };
 
-  const toggleLike = (videoId) => {
-    setLikedVideos(prev => 
-      prev.includes(videoId) 
-        ? prev.filter(id => id !== videoId)
-        : [...prev, videoId]
-    );
+  const toggleLike = async (videoId, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!user) {
+      toast.error('Please login to like videos');
+      return;
+    }
+
+    try {
+      // Only optimistically update the liked state (visual), not the count
+      const wasLiked = likedVideos.includes(videoId);
+      setLikedVideos(prev => 
+        wasLiked 
+          ? prev.filter(id => id !== videoId)
+          : [...prev, videoId]
+      );
+
+      // Call backend API
+      const response = await postService.toggleLike(videoId);
+      
+      if (response.success) {
+        console.log('Like toggled successfully:', response.data);
+        
+        // Update with actual backend data (both count and liked state)
+        setVideos(prev => prev.map(video => {
+          if ((video._id || video.id) === videoId) {
+            return {
+              ...video,
+              likes: response.data.likesCount // Use actual count from backend
+            };
+          }
+          return video;
+        }));
+
+        // Update liked videos set based on backend response
+        setLikedVideos(prev => {
+          if (response.data.isLiked) {
+            return prev.includes(videoId) ? prev : [...prev, videoId];
+          } else {
+            return prev.filter(id => id !== videoId);
+          }
+        });
+
+        toast.success(response.data.isLiked ? 'Video liked!' : 'Video unliked!');
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      
+      // Revert optimistic update on error (only the liked state)
+      setLikedVideos(prev => 
+        prev.includes(videoId) 
+          ? prev.filter(id => id !== videoId)
+          : [...prev, videoId]
+      );
+
+      toast.error('Failed to like video. Please try again.');
+    }
   };
 
   const toggleSave = (videoId) => {
@@ -557,7 +614,7 @@ const Video = () => {
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center space-x-2 sm:space-x-4">
                         <button
-                          onClick={() => toggleLike(videoId)}
+                          onClick={(event) => toggleLike(videoId, event)}
                           className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 ${
                             likedVideos.includes(videoId)
                               ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
@@ -567,7 +624,7 @@ const Video = () => {
                           }`}
                         >
                           <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${likedVideos.includes(videoId) ? 'fill-current' : ''}`} />
-                          <span className="text-xs sm:text-sm font-medium">{video.likes + (likedVideos.includes(videoId) ? 1 : 0)}</span>
+                          <span className="text-xs sm:text-sm font-medium">{video.likes}</span>
                         </button>
 
                         <button className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors`}>

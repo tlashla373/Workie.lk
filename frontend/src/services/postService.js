@@ -100,30 +100,10 @@ class PostService {
     try {
       console.log('Deleting post:', postId);
 
-      // Get post details first to delete media from Cloudinary
-      const postResponse = await apiService.get(`/posts/${postId}`);
-      const post = postResponse.data;
-
-      // Delete media from Cloudinary if exists
-      if (post.media && post.media.length > 0) {
-        console.log('Deleting media from Cloudinary...');
-        
-        for (const media of post.media) {
-          if (media.publicId) {
-            try {
-              await mediaService.deleteMediaFile(media.publicId, media.fileType);
-              console.log(`Deleted ${media.fileName} from Cloudinary`);
-            } catch (error) {
-              console.warn(`Failed to delete ${media.fileName} from Cloudinary:`, error);
-            }
-          }
-        }
-      }
-
-      // Delete post from database
+      // Delete post from database (backend will handle Cloudinary cleanup)
       const response = await apiService.delete(`/posts/${postId}`);
       
-      console.log('Post deleted successfully');
+      console.log('Post deleted successfully:', response);
       return response;
     } catch (error) {
       console.error('Error deleting post:', error);
