@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, DollarSign, Clock, Building, Heart, ExternalLink, Filter, X, User, Calendar, Phone, Mail, Star, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import axios from 'axios';
 import Mason from '../../assets/mason.svg'
 import Welder from '../../assets/welder.svg'
 import Plumber from '../../assets/plumber.svg'
@@ -11,178 +13,108 @@ import JobDetailsPage from './JobDetailsPage';
 
 // Main FindJobs Component
 const FindJobs = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [jobTypeFilter, setJobTypeFilter] = useState('');
   const [selectedJob, setSelectedJob] = useState(null);
   const [currentView, setCurrentView] = useState('list'); // 'list' or 'details'
   const [currentPage, setCurrentPage] = useState(1);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { isDarkMode } = useDarkMode();
 
   // Pagination settings
   const jobsPerPage = 5;
 
-  // Enhanced job data with client information
-  const jobs = [
-    {
-      id: 1,
-      title: 'Skilled Masons',
-      company: 'Individual',
-      location: 'Colombo, Sri Lanka',
-      type: 'Full Time',
-      salary: 'Rs 60,000 - Rs 80,000',
-      posted: '2 days ago',
-      publishedOn: '2025-01-06',
-      description: 'We are looking for skilled Mason specialists to join our construction project...',
-      fullDescription: 'We are seeking experienced and skilled masons to work on a large-scale residential construction project in Colombo. The ideal candidate will have extensive experience in brickwork, stone masonry, and tile installation. This is a full-time position offering competitive compensation and the opportunity to work on high-quality construction projects. The successful candidate will be responsible for laying bricks, stones, and other masonry materials according to architectural plans and specifications. Attention to detail and quality craftsmanship are essential.',
-      tags: ['Mason', 'Bricks', 'Tile work'],
-      logo: Mason ,
-      clientName: 'Rajesh Perera',
-      clientType: 'Individual Client',
-      memberSince: 'Jan 2023',
-      jobsPosted: '5',
-      clientRating: '4.8',
-      requirements: [
-        'Minimum 5 years of experience in masonry work',
-        'Expertise in brick laying and stone work',
-        'Knowledge of tile installation techniques',
-        'Ability to read construction blueprints',
-        'Own transportation preferred'
-      ],
-      contactInfo: {
-        phone: '+94 77 123 4567',
-        email: 'rajesh.perera@email.com'
-      },
-      deadline: 'January 20, 2025'
-    },
-    {
-      id: 2,
-      title: 'Painter',
-      company: 'Individual',
-      location: 'Kandy, Sri Lanka',
-      type: 'Part Time',
-      salary: 'Rs 40,000 - Rs 55,000',
-      posted: '1 week ago',
-      publishedOn: '2025-01-01',
-      description: 'We are looking for skilled Painters to join our renovation project...',
-      fullDescription: 'Looking for experienced painters to handle interior and exterior painting work for residential properties in Kandy. Must be familiar with various paint brands and application techniques. The work involves preparation of surfaces, selection of appropriate materials, and application of paint to achieve a high-quality finish.',
-      tags: ['Painter', 'Nipollac', 'Haris'],
-      logo: Painter,
-      clientName: 'Kumari Silva',
-      clientType: 'Homeowner',
-      memberSince: 'Mar 2023',
-      jobsPosted: '3',
-      clientRating: '4.5',
-      requirements: [
-        'Experience with interior and exterior painting',
-        'Knowledge of different paint types and brands',
-        'Attention to detail and quality finish',
-        'Own painting equipment preferred'
-      ],
-      contactInfo: {
-        phone: '+94 81 234 5678'
-      },
-      deadline: 'January 15, 2025'
-    },
-    {
-      id: 3,
-      title: 'Skilled Carpenter',
-      company: 'Individual',
-      location: 'Nugegoda, Sri Lanka',
-      type: 'Contract',
-      salary: 'Rs 70,000 - Rs 90,000',
-      posted: '3 days ago',
-      publishedOn: '2025-01-05',
-      description: 'Looking for a versatile Carpenter to work on exciting furniture projects...',
-      fullDescription: 'We need an experienced carpenter for custom furniture making, door and window installation, and general woodworking projects. This is a contract position with potential for long-term collaboration. The ideal candidate should have excellent craftsmanship skills and experience working with various types of wood.',
-      tags: ['Furniture','Door','Window'],
-      logo: Carpenter,
-      clientName: 'Nimal Fernando',
-      clientType: 'Business Owner',
-      memberSince: 'Jun 2022',
-      jobsPosted: '12',
-      clientRating: '4.9',
-      requirements: [
-        'Expertise in furniture making and woodworking',
-        'Experience with door and window installation',
-        'Proficiency with carpentry tools',
-        'Ability to work with various wood types',
-        'Custom design experience preferred'
-      ],
-      contactInfo: {
-        phone: '+94 11 345 6789',
-        email: 'nimal.furniture@email.com'
-      }
-    },
-    {
-      id: 4,
-      title: 'Plumber',
-      company: 'Individual',
-      location: 'Galle, Sri Lanka',
-      type: 'Full Time',
-      salary: 'Rs 35,000 - Rs 50,000',
-      posted: '5 days ago',
-      publishedOn: '2025-01-03',
-      description: 'We are looking for skilled Plumbers to join our renovation project...',
-      fullDescription: 'Seeking qualified plumbers for residential plumbing work including bathroom and kitchen installations, pipe repairs, and general plumbing maintenance. The successful candidate will work on various residential projects requiring expertise in modern plumbing systems.',
-      tags: ['Bathroom', 'Kitchen', 'Garden'],
-      logo: Plumber,
-      clientName: 'Chaminda Jayawardena',
-      clientType: 'Property Developer',
-      memberSince: 'Sep 2022',
-      jobsPosted: '8',
-      clientRating: '4.6',
-      requirements: [
-        'Licensed plumber with 3+ years experience',
-        'Experience with bathroom and kitchen plumbing',
-        'Knowledge of modern plumbing systems',
-        'Problem-solving skills for repairs'
-      ],
-      contactInfo: {
-        phone: '+94 91 456 7890'
-      },
-      deadline: 'January 25, 2025'
-    },
-    {
-      id: 5,
-      title: 'Skilled Welders',
-      company: 'Individual',
-      location: 'Colombo, Sri Lanka',
-      type: 'Full Time',
-      salary: 'Rs 80,000 - Rs 100,000',
-      posted: '1 day ago',
-      publishedOn: '2025-01-07',
-      description: 'We are looking for skilled Welders to join our metalwork project...',
-      fullDescription: 'Professional welders needed for metal fabrication work including aluminum welding, TIG welding, and gas welding for various construction and manufacturing projects. This position offers excellent compensation for skilled professionals.',
-      tags: ['Aluminium', 'TIG Welding', 'Gas Welding'],
-      logo: Welder,
-      clientName: 'Pradeep Industries',
-      clientType: 'Manufacturing Company',
-      memberSince: 'Dec 2021',
-      jobsPosted: '15',
-      clientRating: '4.7',
-      requirements: [
-        'Certified welder with 5+ years experience',
-        'Expertise in TIG and gas welding',
-        'Experience with aluminum welding',
-        'Ability to read welding blueprints',
-        'Safety certification required'
-      ],
-      contactInfo: {
-        phone: '+94 11 567 8901',
-        email: 'jobs@pradeepindustries.lk'
-      }
-    }
-  ];
+  // Category icons mapping
+  const categoryIcons = {
+    'carpentry': Carpenter,
+    'painting': Painter,
+    'plumbing': Plumber,
+    'other': Mason,
+    'repair-services': Welder,
+    'masonry': Mason,
+    'welding': Welder,
+    'cleaning': Mason,
+    'gardening': Mason,
+    'electrical': Welder,
+    'delivery': Mason,
+    'tutoring': Mason,
+    'pet-care': Mason,
+    'elderly-care': Mason,
+    'cooking': Mason,
+    'photography': Mason,
+    'event-planning': Mason,
+    'moving': Mason
+  };
 
-  const jobTypes = ['Full Time', 'Part Time', 'Contract'];
+  // Fetch jobs from API
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      
+      // Fetch all available jobs with status=open
+      const response = await axios.get('/api/jobs?status=open', config);
+      
+      if (response.data && response.data.success) {
+        const jobsData = response.data.data.jobs.map(job => ({
+          id: job._id,
+          title: job.title,
+          company: job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : 'Unknown Client',
+          location: `${job.location?.city || ''}, ${job.location?.state || ''}`.trim() || 'Location not specified',
+          type: job.category || 'Not specified',
+          salary: job.budget?.amount ? `Rs. ${job.budget.amount} (${job.budget.type || 'fixed'})` : 'Negotiable',
+          posted: new Date(job.createdAt).toLocaleDateString(),
+          publishedOn: new Date(job.createdAt).toLocaleDateString(),
+          description: job.description,
+          fullDescription: job.description,
+          tags: job.skills || [],
+          logo: categoryIcons[job.category] || Mason,
+          clientName: job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : 'Unknown Client',
+          clientType: 'Client',
+          memberSince: job.client?.createdAt ? new Date(job.client.createdAt).getFullYear().toString() : 'Unknown',
+          jobsPosted: '0', // This would need a separate API call to get client's job count
+          clientRating: '0', // This would need to be calculated from reviews
+          requirements: job.requirements || [],
+          benefits: job.benefits,
+          contactInfo: {
+            phone: job.client?.phone,
+            email: job.client?.email
+          },
+          deadline: job.applicationClosingDate ? new Date(job.applicationClosingDate).toLocaleDateString() : null,
+          urgency: job.urgency || 'medium'
+        }));
+        setJobs(jobsData);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch jobs');
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      setError(error.response?.data?.message || error.message || 'Failed to load jobs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const jobTypes = ['carpentry', 'painting', 'plumbing', 'repair-services', 'other'];
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+                          job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          job.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = !locationFilter || job.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesType = !jobTypeFilter || job.type === jobTypeFilter;
+    const matchesType = !jobTypeFilter || 
+                       job.type.toLowerCase() === jobTypeFilter.toLowerCase() ||
+                       job.type.toLowerCase().includes(jobTypeFilter.toLowerCase());
     
     return matchesSearch && matchesLocation && matchesType;
   });
@@ -203,6 +135,45 @@ const FindJobs = () => {
     setSelectedJob(null);
   };
 
+  const handleApply = async (jobId, e) => {
+    e.stopPropagation();
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('Please login to apply for jobs');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.post(`/api/applications`, {
+        jobId: jobId,
+        coverLetter: '', // Could be enhanced to include a cover letter modal
+        proposedRate: null
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        alert('Application submitted successfully!');
+        // Optionally refresh jobs to update application status
+        fetchJobs();
+      } else {
+        throw new Error(response.data.message || 'Failed to submit application');
+      }
+    } catch (error) {
+      console.error('Error applying for job:', error);
+      if (error.response?.status === 401) {
+        alert('Please login to apply for jobs');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        alert(error.response.data.message || 'You have already applied for this job');
+      } else {
+        alert(error.response?.data?.message || 'Failed to submit application. Please try again.');
+      }
+    }
+  };
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -217,6 +188,37 @@ const FindJobs = () => {
           onBack={handleBackToList}
           isDarkMode={isDarkMode} 
         />
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Loading jobs...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Error Loading Jobs</h2>
+          <p className={`mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{error}</p>
+          <button
+            onClick={fetchJobs}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -370,7 +372,7 @@ const FindJobs = () => {
                       </button>
                       <button 
                         className="px-4 sm:px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => handleApply(job.id, e)}
                       >
                         Apply Now
                       </button>

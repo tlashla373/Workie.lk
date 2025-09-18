@@ -14,7 +14,25 @@ const NavigationTabs = ({
 }) => {
   const [friendCount, setFriendCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [userType, setUserType] = useState(null);
   const navigate = useNavigate();
+
+  // Get current user type
+  useEffect(() => {
+    const getUserType = () => {
+      try {
+        const userData = localStorage.getItem('auth_user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUserType(user.userType);
+        }
+      } catch (error) {
+        console.error('Error getting user type:', error);
+      }
+    };
+
+    getUserType();
+  }, []);
 
   // Fetch friend count from API
   useEffect(() => {
@@ -41,6 +59,9 @@ const NavigationTabs = ({
     { id: 'about', label: 'About' },
     { id: 'friends', label: 'Friends', count: friendCount },
     { id: 'photos', label: 'Photos' },
+    // Show Posted Jobs tab for clients, Available Jobs tab for workers (only on own profile)
+    ...(isOwnProfile && userType === 'client' ? [{ id: 'posted-jobs', label: 'Posted Jobs' }] : []),
+    ...(isOwnProfile && userType === 'worker' ? [{ id: 'available-jobs', label: 'Available Jobs' }] : []),
   ];
 
   return (

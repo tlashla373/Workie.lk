@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import ProfileHeader from '../../components/UserProfile/ProfileHeader';
 import NavigationTabs from '../../components/UserProfile/NavigationTab';
@@ -7,12 +7,15 @@ import ProfileAbout from '../../components/UserProfile/AboutTab';
 import ProfilePhotos from '../../components/UserProfile/PhotosTab';
 import ProfileTimeline from '../../components/UserProfile/TimelineTab';
 import ProfileFriends from '../../components/UserProfile/FriendsTab';
+import PostedJobs from '../../components/UserProfile/PostedJobs';
+import AvailableJobs from '../FindJobs/FindJobs';
 import profileService from '../../services/profileService';
 
 const Profile = () => {
   const { isDarkMode } = useDarkMode();
   const { userId } = useParams(); // Get userId from URL params
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('about');
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -67,6 +70,14 @@ const Profile = () => {
 
     getCurrentUser();
   }, [userId]);
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['about', 'timeline', 'friends', 'photos', 'posted-jobs', 'available-jobs'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Fetch user profile data on component mount
   useEffect(() => {
@@ -516,8 +527,7 @@ const Profile = () => {
             isOwnProfile={isOwnProfile}
             isEditModalOpen={isEditModalOpen}
             setIsEditModalOpen={setIsEditModalOpen}
-          />
-        );
+          />        );      
       case 'photos':
         return (
           <ProfilePhotos 
@@ -532,6 +542,22 @@ const Profile = () => {
         return <ProfileTimeline isDarkMode={isDarkMode} isOwnProfile={isOwnProfile} />;
       case 'friends':
         return <ProfileFriends isDarkMode={isDarkMode} onConnect={handleFriendConnect} isOwnProfile={isOwnProfile} />;
+      case 'posted-jobs':
+        return (
+          <PostedJobs 
+            isDarkMode={isDarkMode} 
+            isOwnProfile={isOwnProfile}
+            userId={userId || currentUserId}
+          />
+        );
+      case 'available-jobs':
+        return (
+          <AvailableJobs 
+            isDarkMode={isDarkMode} 
+            isOwnProfile={isOwnProfile}
+            userId={userId || currentUserId}
+          />
+        );
       default:
         return (
           <ProfileAbout 
