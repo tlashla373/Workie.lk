@@ -42,6 +42,22 @@ export function useAuth() {
 		setUser(null);
 	}, []);
 
+	const refreshUser = useCallback(async () => {
+		try {
+			if (authService.isAuthenticated()) {
+				setLoading(true);
+				const res = await authService.getCurrentUser();
+				setUser(res?.data?.user || null);
+				return res?.data?.user || null;
+			}
+		} catch (e) {
+			console.error('Error refreshing user:', e);
+			setError(e.message);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
 	// Optional: attempt to fetch current user on mount if token exists
 	useEffect(() => {
 		let cancelled = false;
@@ -59,7 +75,7 @@ export function useAuth() {
 		return () => { cancelled = true; };
 	}, []);
 
-	return { user, authLoading: loading, authError: error, login, register, logout, authenticated: !!user };
+	return { user, authLoading: loading, authError: error, login, register, logout, refreshUser, authenticated: !!user };
 }
 
 export default useAuth;

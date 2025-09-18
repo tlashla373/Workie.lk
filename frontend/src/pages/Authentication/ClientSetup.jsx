@@ -9,19 +9,20 @@ import {
   ArrowRight,
   Upload,
   Loader2
-} from 'lucide-react';
+  
+}from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import mediaService from '../../services/mediaService';
 import { useAuth } from '../../hooks/useAuth';
 
 const ClientSetup = () => {
   const { isDarkMode } = useDarkMode();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [clientData, setClientData] = useState({
     profilePhoto: null,
-    profilePhotoUrl: null,
-    phone: '',
+    profilePhotoUrl: user?.profilePicture || null,
+    phone: user?.phoneNumber || '',
     phoneVerified: false
   });
   const [uploading, setUploading] = useState(false);
@@ -151,6 +152,13 @@ const ClientSetup = () => {
                     />
                   ) : (
                     <Camera className={`w-8 h-8 sm:w-12 sm:h-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  )}
+                  
+                  {/* Upload Success Indicator */}
+                  {clientData.profilePhotoUrl && !uploading && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-3 h-3 text-white" />
+                    </div>
                   )}
                 </div>
 
