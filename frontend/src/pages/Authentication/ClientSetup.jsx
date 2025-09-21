@@ -9,7 +9,8 @@ import {
   ArrowRight,
   Upload,
   Loader2
-} from 'lucide-react';
+  
+}from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import mediaService from '../../services/mediaService';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,37 +26,43 @@ const ClientSetup = () => {
     phoneVerified: false
   });
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
+  const [uploadError, setUploadError] = useState('');
 
   const handleFileUpload = async (file) => {
     if (!file) return;
-
+    
     setUploading(true);
-    setUploadError(null);
-
+    setUploadError('');
+    
     try {
-      console.log('📤 Uploading profile picture to Cloudinary...');
-      const response = await mediaService.uploadProfilePicture(file);
-      
-      if (response.success) {
-        const profilePictureUrl = response.data?.cloudinary?.url || response.data?.user?.profilePicture;
-        
-        setClientData((prev) => ({
-          ...prev,
-          profilePhoto: file,
-          profilePhotoUrl: profilePictureUrl
-        }));
+      console.log('Starting profile picture upload...', {
+        fileName: file.name,
+        fileSize: (file.size / 1024 / 1024).toFixed(2) + 'MB',
+        fileType: file.type
+      });
 
-        // Refresh user data to get updated profile picture
-        await refreshUser();
+      // Upload to server and save to MongoDB
+      const result = await mediaService.uploadProfilePicture(file);
+      
+      console.log('Profile picture upload result:', result);
+      
+      if (result.success !== false) {
+        setClientData((prev) => ({ 
+          ...prev, 
+          profilePhoto: file,
+          profilePhotoUrl: result.cloudinary?.url || result.user?.profilePicture
+        }));
         
-        console.log('✅ Profile picture uploaded successfully:', profilePictureUrl);
+        console.log('Profile picture uploaded successfully:', result.cloudinary?.url);
       } else {
-        throw new Error(response.message || 'Upload failed');
+        throw new Error(result.message || 'Upload failed');
       }
     } catch (error) {
-      console.error('❌ Error uploading profile picture:', error);
+      console.error('Profile picture upload error:', error);
       setUploadError(error.message || 'Failed to upload profile picture');
+      
+      // Still set the file for preview purposes
+      setClientData((prev) => ({ ...prev, profilePhoto: file }));
     } finally {
       setUploading(false);
     }
@@ -65,12 +72,27 @@ const ClientSetup = () => {
     setClientData((prev) => ({ ...prev, phoneVerified: true }));
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     try {
       console.log('Client setup completed, navigating to client profile...');
+      
+      // If there's a profile photo that hasn't been uploaded yet, try to upload it
+      if (clientData.profilePhoto && !clientData.profilePhotoUrl && !uploading) {
+        console.log('Uploading profile photo before completing setup...');
+        await handleFileUpload(clientData.profilePhoto);
+      }
+      
+      // Wait a moment for any ongoing uploads to complete
+      if (uploading) {
+        console.log('Waiting for upload to complete...');
+        return; // Don't navigate while uploading
+      }
+      
       navigate('/clientprofile');
     } catch (error) {
-      console.error('Error navigating to client profile:', error);
+      console.error('Error completing client setup:', error);
+      // Still navigate even if upload fails
+      navigate('/clientprofile');
     }
   };
 
@@ -105,24 +127,27 @@ const ClientSetup = () => {
                 <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'} flex items-center justify-center overflow-hidden relative`}>
                   {uploading ? (
                     <div className="flex flex-col items-center justify-center">
-                      <Loader2 className={`w-6 h-6 sm:w-8 sm:h-8 animate-spin ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} />
-                      <span className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-blue-500 mb-1" />
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Uploading...
                       </span>
                     </div>
-                  ) : clientData.profilePhotoUrl ? (
+                  ) : clientData.profilePhotoUrl || (user?.profilePicture && user.profilePicture !== '') ? (
                     <img
-                      src={clientData.profilePhotoUrl}
+                      src={clientData.profilePhotoUrl || user.profilePicture}
                       alt="Profile"
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/128x128?text=No+Image';
+                        // Fallback to local preview if server image fails
+                        if (clientData.profilePhoto) {
+                          e.target.src = URL.createObjectURL(clientData.profilePhoto);
+                        }
                       }}
                     />
                   ) : clientData.profilePhoto ? (
                     <img
                       src={URL.createObjectURL(clientData.profilePhoto)}
-                      alt="Profile"
+                      alt="Profile Preview"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -147,7 +172,9 @@ const ClientSetup = () => {
                 />
                 <label
                   htmlFor="profilePhoto"
-                  className={`absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-blue-600 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                  } rounded-full flex items-center justify-center text-white transition-colors`}
                 >
                   {uploading ? (
                     <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
@@ -157,23 +184,22 @@ const ClientSetup = () => {
                 </label>
               </div>
 
-              {/* Upload Status Messages */}
-              {uploadError && (
-                <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-2 px-4 sm:px-0">
-                  ❌ {uploadError}
+              <div className="mt-2 px-4 sm:px-0">
+                {uploadError ? (
+                  <p className="text-xs sm:text-sm text-red-500 mb-2 flex items-center justify-center">
+                    <span>❌ {uploadError}</span>
+                  </p>
+                ) : clientData.profilePhotoUrl || (user?.profilePicture && user.profilePicture !== '') ? (
+                  <p className="text-xs sm:text-sm text-green-500 mb-2 flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    <span>Profile picture uploaded successfully</span>
+                  </p>
+                ) : null}
+                
+                <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Add a clear photo to help workers recognize you
                 </p>
-              )}
-              
-              {clientData.profilePhotoUrl && !uploading && (
-                <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-2 px-4 sm:px-0 flex items-center justify-center space-x-1">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Profile picture uploaded successfully!</span>
-                </p>
-              )}
-              
-              <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-2 px-4 sm:px-0`}>
-                Add a clear photo to help workers recognize you
-              </p>
+              </div>
             </div>
 
             {/* Contact Verification */}
