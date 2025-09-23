@@ -228,17 +228,17 @@ const FindJobs = () => {
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-3">
       
       {/* Search and Filters */}
-      <div className={`rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4 ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
+      <div className={`rounded-xl p-2 sm:p-2 space-y-3 sm:space-y-4 ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50'}`}>
         <div className="flex flex-col gap-3 sm:gap-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <Search className="absolute  left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search jobs, companies, or skills..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
+              className={`w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 rounded-xl border border-gray-50 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
             />
           </div>
 
@@ -252,7 +252,7 @@ const FindJobs = () => {
                 placeholder="Location"
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                className={`w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 rounded-xl text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
+                className={`w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 rounded-xl border border-gray-50 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'}`}
               />
             </div>
 
@@ -260,7 +260,7 @@ const FindJobs = () => {
             <select
               value={jobTypeFilter}
               onChange={(e) => setJobTypeFilter(e.target.value)}
-              className={`flex-1 sm:flex-none sm:w-48 px-3 py-2 sm:py-3 rounded-xl text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+              className={`flex-1 sm:flex-none sm:w-48 px-3 py-2 sm:py-3 rounded-xl border border-gray-50 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               <option value="" className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>All Job Types</option>
             {jobTypes.map(type => (
