@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import ProfileHeader from '../../components/UserProfile/ProfileHeader';
 import NavigationTabs from '../../components/UserProfile/NavigationTab';
@@ -7,12 +7,15 @@ import ProfileAbout from '../../components/UserProfile/AboutTab';
 import ProfilePhotos from '../../components/UserProfile/PhotosTab';
 import ProfileTimeline from '../../components/UserProfile/TimelineTab';
 import ProfileFriends from '../../components/UserProfile/FriendsTab';
+import PostedJobs from '../../components/UserProfile/PostedJobs';
+import AvailableJobs from '../FindJobs/FindJobs';
 import profileService from '../../services/profileService';
 
 const Profile = () => {
   const { isDarkMode } = useDarkMode();
   const { userId } = useParams(); // Get userId from URL params
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('about');
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,7 +28,6 @@ const Profile = () => {
   const [profileData, setProfileData] = useState({
     name: "",
     profession: "",
-    title: "",
     location: "",
     phone: "",
     website: "",
@@ -68,6 +70,14 @@ const Profile = () => {
 
     getCurrentUser();
   }, [userId]);
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['about', 'timeline', 'friends', 'photos', 'posted-jobs', 'available-jobs'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Fetch user profile data on component mount
   useEffect(() => {
@@ -180,7 +190,7 @@ const Profile = () => {
             
             // Images
             coverImage: user.coverPhoto || "https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png",
-            profileImage: user.profilePicture || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4g_2Qj3LsNR-iqUAFm6ut2EQVcaou4u2YXw&s",
+            profileImage: user.profilePicture || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
             
             // Stats
             followers: 0, // Not implemented yet
@@ -191,7 +201,6 @@ const Profile = () => {
             
             // Profile details
             bio: profile?.bio || "",
-            title: profile?.title || "",
             skills: profile?.skills?.map(skill => skill.name || skill) || [],
             experience: profile?.experience?.map(exp => ({
               title: exp.title,
@@ -366,7 +375,6 @@ const Profile = () => {
               
               // Profile details
               bio: profile?.bio || "",
-              title: profile?.title || "",
               skills: profile?.skills?.map(skill => skill.name || skill) || [],
               experience: profile?.experience?.map(exp => ({
                 title: exp.title,
@@ -519,8 +527,7 @@ const Profile = () => {
             isOwnProfile={isOwnProfile}
             isEditModalOpen={isEditModalOpen}
             setIsEditModalOpen={setIsEditModalOpen}
-          />
-        );
+          />        );      
       case 'photos':
         return (
           <ProfilePhotos 
@@ -535,6 +542,22 @@ const Profile = () => {
         return <ProfileTimeline isDarkMode={isDarkMode} isOwnProfile={isOwnProfile} />;
       case 'friends':
         return <ProfileFriends isDarkMode={isDarkMode} onConnect={handleFriendConnect} isOwnProfile={isOwnProfile} />;
+      case 'posted-jobs':
+        return (
+          <PostedJobs 
+            isDarkMode={isDarkMode} 
+            isOwnProfile={isOwnProfile}
+            userId={userId || currentUserId}
+          />
+        );
+      case 'available-jobs':
+        return (
+          <AvailableJobs 
+            isDarkMode={isDarkMode} 
+            isOwnProfile={isOwnProfile}
+            userId={userId || currentUserId}
+          />
+        );
       default:
         return (
           <ProfileAbout 
@@ -569,7 +592,7 @@ const Profile = () => {
           onEditProfile={handleEditProfile}
         />
         
-        <div className="p-4 sm:p-4">
+        <div className="p-4 sm:p-6">
           {renderTabContent()}
         </div>
       </div>

@@ -35,6 +35,7 @@ import AdminNotifications from './pages/Admin/AdminNotifications';
 import AdminSettings from './pages/Admin/AdminSettings';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import AdminRegistration from './components/AdminRegistration';
+import JobDetailsContainer from './pages/JobDetails/JobDetailsContainer';
 
 
 const App = () => {
@@ -104,6 +105,10 @@ const App = () => {
         {
           path: 'notifications',
           element: <NotificationsPage />,
+        },
+        {
+          path: 'jobs/:id',
+          element: <JobDetailsContainer />,
         },
       ],
     },
