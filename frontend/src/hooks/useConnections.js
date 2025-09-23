@@ -46,6 +46,11 @@ export const useConnections = () => {
         const transformedConnections = connectionsResponse.data.connections.map(connection => ({
           id: connection._id,
           name: `${connection.firstName} ${connection.lastName}`,
+          // Prioritize custom worker title over generic profession
+          title: connection.title || // Custom title from worker verification
+                (connection.userType === 'worker' 
+                  ? 'Skilled Worker' // Default for workers without custom title
+                  : 'Client'), // Default for clients
           profession: connection.userType === 'worker' ? 'Skilled Worker' : 'Client',
           avatar: connection.profilePicture || `https://ui-avatars.com/api/?name=${connection.firstName}+${connection.lastName}&background=random`,
           role: connection.userType === 'worker' ? 'Worker' : 'Client',

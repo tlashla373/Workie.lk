@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import SideNavbar from '../../components/SideNavbar';
-import UpperNavbar from '../../components/UpperNavbar';
+import SideNavbar from '../../components/NavBar/SideNavbar';
+import UpperNavbar from '../../components/NavBar/UpperNavbar';
 import JobSuggestion from '../JobSuggestions/JobSuggestions';
 import AdminAccess from '../../components/AdminAccess';
 import { useDarkMode } from '../../contexts/DarkModeContext';

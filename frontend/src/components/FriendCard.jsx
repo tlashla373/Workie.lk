@@ -54,8 +54,9 @@ const FriendCard = ({ friend, onEmailClick, onCallClick, onConnectClick, onViewP
           {friend.name}
         </h3>
 
+        {/* Display title with fallback */}
         <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 sm:mb-3`}>
-          {friend.profession}
+          {friend.title || friend.profession || 'Professional'}
         </p>
 
         <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'}`}>

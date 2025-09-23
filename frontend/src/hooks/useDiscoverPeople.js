@@ -44,8 +44,9 @@ const useDiscoverPeople = () => {
                   profilePicture: '',
                   isVerified: false
                 },
-                skills: [{ name: 'General Work' }],
-                bio: 'Demo worker profile'
+                title: 'Expert Carpenter for Custom Furniture & Woodwork', // Custom worker title
+                skills: [{ name: 'Carpentry' }, { name: 'Woodworking' }],
+                bio: 'Demo worker profile with custom title'
               },
               {
                 userInfo: {
@@ -56,6 +57,7 @@ const useDiscoverPeople = () => {
                   profilePicture: '',
                   isVerified: false
                 },
+                title: null, // Client doesn't have custom title
                 skills: [],
                 bio: 'Demo client profile'
               }
@@ -69,6 +71,11 @@ const useDiscoverPeople = () => {
         const transformedPeople = data.data.profiles.map(profile => ({
           id: profile.userInfo._id,
           name: `${profile.userInfo.firstName} ${profile.userInfo.lastName}`,
+          // Prioritize custom worker title over generic profession
+          title: profile.title || // Custom title from worker verification
+                (profile.userInfo.userType === 'worker' 
+                  ? 'Skilled Worker' // Default for workers without custom title
+                  : 'Client'), // Default for clients
           profession: profile.userInfo.userType === 'worker' 
             ? (profile.skills && profile.skills.length > 0 
                 ? profile.skills.map(skill => skill.name).join(', ')

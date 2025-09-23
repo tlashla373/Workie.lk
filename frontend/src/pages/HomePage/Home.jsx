@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, ChevronRight, Send, ChevronUp, ChevronDown  } from "lucide-react";
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../hooks/useAuth';
 import postService from '../../services/postService';
@@ -11,12 +11,7 @@ import Mason from '../../assets/mason.svg'
 import Cleaner from '../../assets/cleaner.svg'
 import Mechanic from '../../assets/Mechanic.svg'
 
-
-
 export default function MainFeed() {
-  // Default avatar fallback
-  const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face';
-  
   const [selectedPost, setSelectedPost] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [newComment, setNewComment] = useState('');
@@ -28,6 +23,7 @@ export default function MainFeed() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [likedPosts, setLikedPosts] = useState(new Set()); // Track liked posts
+  const [showCategories, setShowCategories] = useState(true); // Control category visibility
   const { isDarkMode } = useDarkMode();
   const { user } = useAuth();
 
@@ -36,13 +32,13 @@ export default function MainFeed() {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        console.log('📖 Fetching feed posts from database...');
+        console.log('Fetching feed posts from database...');
         
         const response = await postService.getFeedPosts(1, 20); // Get first 20 posts
         
         if (response.success && response.data) {
           const fetchedPosts = response.data.posts || response.data || [];
-          console.log('✅ Posts fetched successfully:', fetchedPosts.length);
+          console.log('Posts fetched successfully:', fetchedPosts.length);
           
           // Transform database posts to match UI format
           const transformedPosts = fetchedPosts.map(post => ({
@@ -73,17 +69,17 @@ export default function MainFeed() {
               }
             });
             setLikedPosts(userLikedPostIds);
-            console.log('👍 User liked posts loaded:', userLikedPostIds.size);
+            console.log('User liked posts loaded:', userLikedPostIds.size);
           }
           
           setPosts(transformedPosts);
           setHasMore(response.data.hasMore || false);
         } else {
-          console.warn('⚠️ No posts data received');
+          console.warn('No posts data received');
           setPosts([]);
         }
       } catch (error) {
-        console.error('❌ Error fetching posts:', error);
+        console.error('Error fetching posts:', error);
         setError('Failed to load posts. Please try again.');
       } finally {
         setLoading(false);
@@ -615,15 +611,41 @@ export default function MainFeed() {
 
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-black'}`}>
-  {/* Category Section */}
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-2 mb-2 shadow-sm border`}>
-        {/*<h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>Categories</h2>*/}
-        <div className="flex overflow-x-auto space-x-3 md:space-x-4 pb-2 no-scrollbar">
-          {categories.map((category, index) => (
-            <div key={index} className="flex-shrink-0">
-              <CategoryCard category={category} index={index} />
-            </div>
-          ))}
+      {/* Category Section */}
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-2 mb-2 shadow-sm border transition-all duration-300`}>
+        {/* Category Header with Toggle */}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+            Categories
+          </h2>
+          <button
+            onClick={() => setShowCategories(!showCategories)}
+            className={`p-2 rounded-lg transition-colors duration-200 ${
+              isDarkMode 
+                ? 'hover:bg-gray-700 text-gray-300' 
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
+            aria-label={showCategories ? 'Hide categories' : 'Show categories'}
+          >
+            {showCategories ? (
+              <ChevronUp className="w-5 h-5" />
+            ) : (
+              <ChevronDown className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+        
+        {/* Category Cards with Animation */}
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          showCategories ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+          <div className="flex overflow-x-auto space-x-3 md:space-x-4 pb-2 no-scrollbar">
+            {categories.map((category, index) => (
+              <div key={index} className="flex-shrink-0">
+                <CategoryCard category={category} index={index} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -1,21 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  MapPin, 
-  User, 
-  Building, 
-  Upload, 
-  Camera, 
-  CheckCircle, 
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Shield,
-  Mail,
-  Phone,
-  FileText,
-  Check,
-  CreditCard
-} from 'lucide-react';
+import { MapPin, User, Building, Upload, Camera, CheckCircle, AlertCircle, ArrowLeft, ArrowRight, Shield, Mail, Phone, FileText, Check, CreditCard } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import apiService from '../../services/apiService';
 import mediaService from '../../services/mediaService';
@@ -39,6 +23,7 @@ const WorkerVerification = () => {
     categories: [],
     skills: '',
     experience: '',
+    title: '',
     bio: '',
     dateOfBirth: '',
     age: '',
@@ -105,6 +90,7 @@ const WorkerVerification = () => {
         categories: JSON.stringify(workerData.categories),
         skills: workerData.skills,
         experience: workerData.experience,
+        title: workerData.title,
         bio: workerData.bio,
         dateOfBirth: workerData.dateOfBirth,
         age: workerData.age,
@@ -233,17 +219,23 @@ const WorkerVerification = () => {
   const handleCategoryToggle = (category) => {
     setWorkerData(prev => {
       const currentCategories = prev.categories;
+      
+      // If category is already selected, remove it
       if (currentCategories.includes(category)) {
         return {
           ...prev,
           categories: currentCategories.filter(c => c !== category)
         };
-      } else if (currentCategories.length < 2) {
+      } 
+      // If less than 2 categories selected, add the new category
+      else if (currentCategories.length < 2) {
         return {
           ...prev,
           categories: [...currentCategories, category]
         };
       }
+      
+      // If already 2 categories selected, don't add more
       return prev;
     });
   };
@@ -255,7 +247,12 @@ const WorkerVerification = () => {
         
         // Validate data before submission
         if (workerData.categories.length === 0) {
-          alert('Please select at least one work category.');
+          alert('Please select at least one work category (you can select up to 2 categories).');
+          return;
+        }
+        
+        if (!workerData.title.trim()) {
+          alert('Please provide a work title.');
           return;
         }
         
@@ -295,7 +292,7 @@ const WorkerVerification = () => {
       case 1:
         return workerData.categories.length >= 1 && workerData.categories.length <= 2; // Must choose 1-2 categories
       case 2:
-        return workerData.bio.trim() !== '';
+        return workerData.title.trim() !== '' && workerData.bio.trim() !== '';
       case 3:
         return workerData.dateOfBirth.trim() !== '' && 
                workerData.country.trim() !== '' && 
@@ -332,9 +329,9 @@ const WorkerVerification = () => {
   };
 
   const canProceedToNext = () => {
-    // Step 1 can be skipped if categories are selected but skills/experience are empty
+    // Step 1 requires 1-2 categories to be selected
     if (currentStep === 1) {
-      return workerData.categories.length === 2;
+      return workerData.categories.length >= 1 && workerData.categories.length <= 2;
     }
     return isStepValid(currentStep);
   };
@@ -448,7 +445,7 @@ const WorkerVerification = () => {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Selected: {workerData.categories.length}/2 categories
+                  Selected: {workerData.categories.length}/2 categories {workerData.categories.length >= 1 ? '(You can proceed with this selection)' : '(Select at least 1 category)'}
                 </p>
               </div>
 
@@ -490,7 +487,33 @@ const WorkerVerification = () => {
       case 2:
         return (
           <div className="space-y-4 sm:space-y-6">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">Write Your Bio</h2>
+            <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4">Write Your Title</h2>
+            <div className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                   Add your work title*
+                </label>
+                <textarea
+                  placeholder="Ex: Skilled Carpenter for Custom Furniture & Wood work"
+                  value={workerData.title}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 50) {
+                      setWorkerData({ ...workerData, title: value });
+                    }
+                  }}
+                  rows={1}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
+                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                  }`}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {workerData.title.length}/50 characters
+                </p>
+              </div>
+            </div>
+
+            <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4">Write Your Bio</h2>
             <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -499,7 +522,12 @@ const WorkerVerification = () => {
                 <textarea
                   placeholder="Write a brief bio about yourself. Tell potential clients about your work style, reliability, and what makes you a great worker."
                   value={workerData.bio}
-                  onChange={(e) => setWorkerData({ ...workerData, bio: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 500) {
+                      setWorkerData({ ...workerData, bio: value });
+                    }
+                  }}
                   rows={5}
                   className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
                     isDarkMode ? 'border-gray-600' : 'border-gray-300'

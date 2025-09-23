@@ -79,13 +79,13 @@ const ProfileAbout = ({
 
   const { user, profile } = aboutData;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3">
       {/* Left Column */}
-      <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+      <div className="lg:col-span-1 space-y-3 sm:space-y-3">
         {/* Basic Info */}
-        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 border transition-colors duration-300`}>
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-4 border transition-colors duration-300`}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</h3>
+            <h3 className={`text-lg font-semibold google-sans-h ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</h3>
             {isOwnProfile && (
               <button
                 onClick={() => setModalOpen(true)}
@@ -96,22 +96,22 @@ const ProfileAbout = ({
               </button>
             )}
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Briefcase className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} google-sans-p`}>
                 {profile?.preferences?.jobTypes?.[0] || user?.userType || 'Not specified'}
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <MapPin className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} google-sans-p`}>
                 {profile?.location || user?.location || profileData?.location || 'Not specified'}
               </span>
             </div>
             <div className="flex items-center space-x-3">
               <Phone className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} google-sans-p`}>
                 {profile?.phone || user?.phone || profileData?.phone || 'Not specified'}
               </span>
             </div>
@@ -132,8 +132,8 @@ const ProfileAbout = ({
         </div>
 
         {/* Stats */}
-        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-4 sm:p-6 border transition-colors duration-300`}>
-          <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-3 sm:mb-4`}>Statistics</h3>
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-3 sm:p-3 border transition-colors duration-300`}>
+          <h3 className={`text-base sm:text-lg font-semibold google-sans-h ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-3 sm:mb-4`}>Statistics</h3>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -155,19 +155,19 @@ const ProfileAbout = ({
       </div>
 
       {/* Right Column */}
-      <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+      <div className="lg:col-span-2 space-y-3 sm:space-y-3">
         {/* Bio */}
-        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 border transition-colors duration-300`}>
-          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Bio</h3>
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-3 border transition-colors duration-300`}>
+          <h3 className={`text-lg google-sans-h font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Bio</h3>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed google-sans-p`}>
             {profile?.bio || profileData?.bio || 'No bio available'}
           </p>
         </div>
 
         {/* Skills */}
         {(profile?.skills || profileData?.skills) && (profile?.skills?.length > 0 || profileData?.skills?.length > 0) && (
-          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 border transition-colors duration-300`}>
-            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Skills</h3>
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-3 border transition-colors duration-300`}>
+            <h3 className={`text-lg google-sans-h font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Skills</h3>
             <div className="flex flex-wrap gap-2">
               {(profile?.skills || profileData?.skills || []).map((skill, index) => (
                 <span
@@ -183,8 +183,8 @@ const ProfileAbout = ({
 
         {/* Experience */}
         {(profile?.experience || profileData?.experience) && (profile?.experience?.length > 0 || profileData?.experience?.length > 0) && (
-          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 border transition-colors duration-300`}>
-            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Experience</h3>
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-3 border transition-colors duration-300`}>
+            <h3 className={`text-lg google-sans-h font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>Experience</h3>
             <div className="space-y-4">
               {(profile?.experience || profileData?.experience || []).map((exp, index) => (
                 <div key={index} className="flex space-x-4">

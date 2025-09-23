@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Search,
+  Search as SearchIcon,
   MessageCircle,
   Bell,
   User,
@@ -15,14 +15,15 @@ import {
   X,
   ArrowLeft
 } from 'lucide-react';
-import profileImage from '../assets/profile.jpeg';
-import Logo from '../assets/Logo.png';
+import profileImage from '../../assets/profile.jpeg';
+import Logo from '../../assets/Logo.png';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useDarkMode } from '../contexts/DarkModeContext';
+import { useDarkMode } from '../../contexts/DarkModeContext';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import profileService from '../services/profileService';
-import notificationService from '../services/notificationService';
+import { useAuth } from '../../hooks/useAuth';
+import profileService from '../../services/profileService';
+import notificationService from '../../services/notificationService';
+import Search from './Search';
 
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -122,56 +123,30 @@ const UpperNavbar = ({ isCollapsed = false }) => {
       }
     };
 
-    const fetchNotifications = async () => {
-      try {
-        const response = await notificationService.getNotifications();
-        if (response.success) {
-          // Map backend notification data to frontend format
-          const mappedNotifications = response.data.notifications.map(notification => ({
-            id: notification._id,
-            type: notification.type,
-            user: notification.sender ? `${notification.sender.firstName} ${notification.sender.lastName}` : 'System',
-            action: notification.title,
-            content: notification.message,
-            time: new Date(notification.createdAt).toLocaleString(),
-            unread: !notification.isRead,
-            avatar: notification.sender?.profilePicture || profileImage,
-            icon: getNotificationTypeIcon(notification.type)
-          }));
-          setNotifications(mappedNotifications);
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        // Fallback to mock data if API fails
-        const mockNotifications = [
-          {
-            id: 1,
-            type: 'like',
-            user: 'John Smith',
-            action: 'liked your post',
-            content: 'Great work on the project!',
-            time: '2 hours ago',
-            unread: true,
-            avatar: profileImage,
-            icon: Heart
-          },
-          {
-            id: 2,
-            type: 'comment',
-            user: 'Sarah Johnson',
-            action: 'commented on your post',
-            content: 'Looking forward to collaborating...',
-            time: '4 hours ago',
-            unread: true,
-            avatar: profileImage,
-            icon: MessageSquare
-          }
-        ];
-        setNotifications(mockNotifications);
+  const fetchNotifications = async () => {
+    try {
+      const response = await notificationService.getNotifications();
+      if (response.success) {
+        // Map backend notification data to frontend format
+        const mappedNotifications = response.data.notifications.map(notification => ({
+          id: notification._id,
+          type: notification.type,
+          user: notification.sender ? `${notification.sender.firstName} ${notification.sender.lastName}` : 'System',
+          action: notification.title,
+          content: notification.message,
+          time: new Date(notification.createdAt).toLocaleString(),
+          unread: !notification.isRead,
+          avatar: notification.sender?.profilePicture || profileImage,
+          icon: getNotificationTypeIcon(notification.type)
+        }));
+        setNotifications(mappedNotifications);
       }
-    };
-
-    fetchUserData();
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      // Keep empty notifications array on error
+      setNotifications([]);
+    }
+  };    fetchUserData();
     fetchNotifications();
   }, [refreshTrigger]);
 
@@ -291,14 +266,10 @@ const UpperNavbar = ({ isCollapsed = false }) => {
 
           {/* Search Bar */}
           <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
-              <input
-                type="text"
-                placeholder="Search for people, posts, or topics..."
-                className={`w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-[#F0F3FF] border-gray-400/50 text-white placeholder-gray-400'}`}
-              />
-            </div>
+            <Search 
+              placeholder="Search for people, posts, or topics..."
+              className="w-full"
+            />
           </div>
 
           {/* Right Actions - Only show when authenticated */}
@@ -470,13 +441,10 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="flex-1 relative">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              <input
-                type="text"
+            <div className="flex-1">
+              <Search 
                 placeholder="Search..."
-                autoFocus
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'}`}
+                className="w-full"
               />
             </div>
           </div>
@@ -499,7 +467,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                 onClick={toggleMobileSearch}
                 className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
               >
-                <Search className="w-5 h-5" />
+                <SearchIcon className="w-5 h-5" />
               </button>
 
               {/* Messages and Notifications - Only show when authenticated */}
@@ -529,8 +497,18 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                   <div className="relative">
                     <img
                       className="w-8 h-8 rounded-full object-cover ring-2 ring-gray-300"
-                      src={profileImage}
-                      alt="Profile"
+                      src={displayProfileImage}
+                        alt="Profile"
+                        onError={(e) => {
+                          // Try multiple fallback sources
+                          if (e.target.src !== profileImage) {
+                          if (userData.profileImage && e.target.src === userData.profileImage) {
+                            e.target.src = user?.profileImage || user?.profilePicture || profileImage;
+                          } else {
+                            e.target.src = profileImage; // Final fallback
+                          }
+                        }
+                      }}
                     />
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>
@@ -622,10 +600,13 @@ const UpperNavbar = ({ isCollapsed = false }) => {
       )}
 
       {/* Overlay for dropdowns */}
-      {isProfileDropdownOpen && !isNotificationDropdownOpen && (
+      {(isProfileDropdownOpen || isNotificationDropdownOpen) && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-          onClick={() => setIsProfileDropdownOpen(false)}
+          onClick={() => {
+            setIsProfileDropdownOpen(false);
+            setIsNotificationDropdownOpen(false);
+          }}
         />
       )}
     </>

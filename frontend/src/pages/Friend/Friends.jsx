@@ -51,7 +51,7 @@ const Friends = () => {
   const filteredFriends = currentData.filter(friend => {
     const matchesSearch =
       friend.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      friend.profession.toLowerCase().includes(searchTerm.toLowerCase());
+      (friend.title && friend.title.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = filterBy === 'all' || friend.category === filterBy;
     
     // Exclude the current logged-in user from both connections and discover pages

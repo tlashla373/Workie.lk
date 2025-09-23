@@ -72,7 +72,7 @@ const ProfileHeader = ({
   };
 
   return (
-    <div className="relative h-48 sm:h-64 lg:h-80 overflow-hidden">
+    <div className="relative h-48 sm:h-44 lg:h-70 overflow-hidden">
       <img
         src={coverPhotoUrl}
         alt="Cover"
@@ -125,12 +125,12 @@ const ProfileHeader = ({
       />
 
       {/* Profile Info Overlay */}
-      <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 flex flex-col sm:flex-row items-start sm:items-end space-y-3 sm:space-y-0 sm:space-x-4">
+      <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 flex flex-col sm:flex-row items-start sm:items-end space-y-3 sm:space-y-0 sm:space-x-4 ">
         <div className="relative">
           <img
             src={profileData.profileImage}
             alt={profileData.name}
-            className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full border-2 sm:border-4 border-white object-cover"
+            className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full border-2 sm:border-3 border-white object-cover"
           />
           {/* Profile Photo Edit Button - Only show for profile owner */}
           {isOwnProfile && (
@@ -147,7 +147,7 @@ const ProfileHeader = ({
         </div>
         <div className="text-white mb-0 sm:mb-4">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{profileData.name}</h1>
-          <p className="text-sm sm:text-base lg:text-lg opacity-90">{profileData.profession}</p>
+          <p className="text-sm sm:text-base lg:text-lg opacity-90">{profileData.title}</p>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 sm:mt-2 text-xs sm:text-sm opacity-80">
             <span>{profileData.followers} followers</span>
             <span>{profileData.following} following</span>
