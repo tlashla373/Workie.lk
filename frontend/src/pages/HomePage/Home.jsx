@@ -3,6 +3,7 @@ import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, C
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../hooks/useAuth';
 import postService from '../../services/postService';
+import PostDropdown from './Dropdown';
 import Welder from '../../assets/welder.svg'
 import Plumber from '../../assets/plumber.svg'
 import Carpenter from '../../assets/carpenter.svg'
@@ -19,6 +20,7 @@ export default function MainFeed() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false); // New state for loading more posts
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -29,24 +31,24 @@ export default function MainFeed() {
 
   // Fetch posts from database
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchInitialPosts = async () => {
       try {
         setLoading(true);
-        console.log('Fetching feed posts from database...');
+        console.log('Fetching initial feed posts from database...');
         
-        const response = await postService.getFeedPosts(1, 20); // Get first 20 posts
+        const response = await postService.getFeedPosts(1, 5); // Start with only 5 posts
         
         if (response.success && response.data) {
           const fetchedPosts = response.data.posts || response.data || [];
-          console.log('Posts fetched successfully:', fetchedPosts.length);
+          console.log('Initial posts fetched successfully:', fetchedPosts.length);
           
           // Transform database posts to match UI format
           const transformedPosts = fetchedPosts.map(post => ({
             id: post._id,
-            author: `${post.userInfo?.firstName || 'Unknown'} ${post.userInfo?.lastName || 'User'}`,
-            profession: post.userInfo?.profession || 'Worker',
+            author: `${post.userId?.firstName || post.userInfo?.firstName || 'Unknown'} ${post.userId?.lastName || post.userInfo?.lastName || 'User'}`,
+            profession: post.userId?.profession || post.userInfo?.profession || 'Worker',
             location: post.location || 'Sri Lanka',
-            avatar: post.userInfo?.profilePicture || 'https://via.placeholder.com/40x40?text=User',
+            avatar: post.userId?.profilePicture || post.userInfo?.profilePicture || 'https://via.placeholder.com/40x40?text=User',
             media: post.media || [], // Keep full media objects with type info
             images: post.media?.filter(media => media.fileType === 'image').map(media => media.url) || [],
             videos: post.media?.filter(media => media.fileType === 'video').map(media => media.url) || [],
@@ -73,21 +75,112 @@ export default function MainFeed() {
           }
           
           setPosts(transformedPosts);
-          setHasMore(response.data.hasMore || false);
+          setPage(2); // Set next page
+          setHasMore(response.data.hasMore !== false && transformedPosts.length === 5); // Has more if we got full batch
         } else {
           console.warn('No posts data received');
           setPosts([]);
+          setHasMore(false);
         }
       } catch (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error fetching initial posts:', error);
         setError('Failed to load posts. Please try again.');
+        setHasMore(false);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPosts();
+    fetchInitialPosts();
   }, []);
+
+  // Function to load more posts
+  const loadMorePosts = async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      console.log('Loading more posts, page:', page);
+      
+      const response = await postService.getFeedPosts(page, 5); // Load 5 more posts
+      
+      if (response.success && response.data) {
+        const fetchedPosts = response.data.posts || response.data || [];
+        console.log('More posts fetched successfully:', fetchedPosts.length);
+        
+        if (fetchedPosts.length === 0) {
+          setHasMore(false);
+          return;
+        }
+        
+        // Transform database posts to match UI format
+        const transformedPosts = fetchedPosts.map(post => ({
+          id: post._id,
+          author: `${post.userId?.firstName || post.userInfo?.firstName || 'Unknown'} ${post.userId?.lastName || post.userInfo?.lastName || 'User'}`,
+          profession: post.userId?.profession || post.userInfo?.profession || 'Worker',
+          location: post.location || 'Sri Lanka',
+          avatar: post.userId?.profilePicture || post.userInfo?.profilePicture || 'https://via.placeholder.com/40x40?text=User',
+          media: post.media || [], // Keep full media objects with type info
+          images: post.media?.filter(media => media.fileType === 'image').map(media => media.url) || [],
+          videos: post.media?.filter(media => media.fileType === 'video').map(media => media.url) || [],
+          imageAlt: post.content ? `${post.content.substring(0, 50)}...` : 'Post image',
+          description: post.content || 'No description available',
+          likes: post.engagement?.likesCount || post.likes?.length || 0,
+          comments: post.engagement?.commentsCount || post.comments?.length || 0,
+          timeAgo: getTimeAgo(post.createdAt),
+          originalPost: post // Keep original data for comments API
+        }));
+        
+        // Update liked posts for new posts
+        if (user?._id) {
+          const newLikedPostIds = new Set(likedPosts);
+          fetchedPosts.forEach(post => {
+            const userLike = post.likes?.find(like => like.userId === user._id);
+            if (userLike) {
+              newLikedPostIds.add(post._id);
+            }
+          });
+          setLikedPosts(newLikedPostIds);
+        }
+        
+        // Append new posts to existing ones
+        setPosts(prevPosts => [...prevPosts, ...transformedPosts]);
+        setPage(prevPage => prevPage + 1);
+        
+        // Check if there are more posts
+        setHasMore(response.data.hasMore !== false && transformedPosts.length === 5);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+      // Don't show error for loading more posts, just stop loading
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Scroll detection for infinite scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollContainer = document.querySelector('.posts-container');
+      if (!scrollContainer) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      
+      // Load more posts when user scrolls near the bottom (within 300px)
+      if (scrollHeight - scrollTop <= clientHeight + 300) {
+        loadMorePosts();
+      }
+    };
+
+    const scrollContainer = document.querySelector('.posts-container');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, [page, hasMore, loadingMore]);
 
   // Helper function to format time ago
   const getTimeAgo = (dateString) => {
@@ -107,6 +200,148 @@ export default function MainFeed() {
     } else {
       return postDate.toLocaleDateString();
     }
+  };
+
+  // State for managing expanded posts
+  const [expandedPosts, setExpandedPosts] = useState(new Set());
+  const [savedPosts, setSavedPosts] = useState(new Set()); // Track saved posts
+  const [hiddenPosts, setHiddenPosts] = useState(new Set()); // Track hidden posts
+
+  // Function to toggle post expansion
+  const togglePostExpansion = (postId) => {
+    setExpandedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle save post
+  const handleSavePost = async (post) => {
+    try {
+      const newSavedPosts = new Set(savedPosts);
+      
+      if (savedPosts.has(post.id)) {
+        // Unsave post
+        newSavedPosts.delete(post.id);
+        console.log('Post unsaved:', post.id);
+        // Here you would typically make an API call to unsave the post
+        // await postService.unsavePost(post.id);
+      } else {
+        // Save post
+        newSavedPosts.add(post.id);
+        console.log('Post saved:', post.id);
+        // Here you would typically make an API call to save the post
+        // await postService.savePost(post.id);
+      }
+      
+      setSavedPosts(newSavedPosts);
+    } catch (error) {
+      console.error('Error saving/unsaving post:', error);
+    }
+  };
+
+  // Handle hide post
+  const handleHidePost = async (post) => {
+    try {
+      const newHiddenPosts = new Set(hiddenPosts);
+      newHiddenPosts.add(post.id);
+      setHiddenPosts(newHiddenPosts);
+      console.log('Post hidden:', post.id);
+      
+      // Here you would typically make an API call to hide the post
+      // await postService.hidePost(post.id);
+      
+      // Optionally show a toast notification
+      // showToast('Post hidden successfully');
+    } catch (error) {
+      console.error('Error hiding post:', error);
+      // Revert if API call fails
+      const revertedHiddenPosts = new Set(hiddenPosts);
+      revertedHiddenPosts.delete(post.id);
+      setHiddenPosts(revertedHiddenPosts);
+    }
+  };
+
+  // Handle report post
+  const handleReportPost = async (post) => {
+    try {
+      console.log('Reporting post:', post.id);
+      // Here you would typically show a report modal or make an API call
+      // await postService.reportPost(post.id, reason);
+      alert('Thank you for reporting this post. We will review it shortly.');
+    } catch (error) {
+      console.error('Error reporting post:', error);
+      alert('Failed to report post. Please try again.');
+    }
+  };
+
+  // Handle share post
+  const handleSharePost = async (post) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Post by ${post.author}`,
+          text: post.description,
+          url: `${window.location.origin}/post/${post.id}`,
+        });
+        console.log('Post shared successfully');
+      } else {
+        // Fallback: copy to clipboard
+        const postUrl = `${window.location.origin}/post/${post.id}`;
+        await navigator.clipboard.writeText(postUrl);
+        alert('Post link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
+  // Helper function to format description text with rich styling
+  const formatDescription = (text, postId, isExpanded = false) => {
+    if (!text) return text;
+    
+    let formattedText = text;
+    
+    // Convert URLs to clickable links
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    formattedText = formattedText.replace(urlRegex, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} underline font-medium">${url}</a>`;
+    });
+    
+    // Convert hashtags to styled elements
+    const hashtagRegex = /#(\w+)/g;
+    formattedText = formattedText.replace(hashtagRegex, (hashtag, tag) => {
+      return `<span class="${isDarkMode ? 'text-blue-400' : 'text-blue-600'} font-semibold cursor-pointer hover:underline">${hashtag}</span>`;
+    });
+    
+    // Convert @mentions to styled elements
+    const mentionRegex = /@(\w+)/g;
+    formattedText = formattedText.replace(mentionRegex, (mention, username) => {
+      return `<span class="${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold cursor-pointer hover:underline">${mention}</span>`;
+    });
+    
+    // Convert line breaks to <br> tags
+    formattedText = formattedText.replace(/\n/g, '<br>');
+    
+    // Make text bold between **text**
+    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>');
+    
+    // Make text italic between *text*
+    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+    
+    // Handle text truncation for long content
+    const lines = formattedText.split('<br>');
+    if (lines.length > 5 && !isExpanded) {
+      const truncatedLines = lines.slice(0, 3);
+      return truncatedLines.join('<br>');
+    }
+    
+    return formattedText;
   };
 
   const categories = [
@@ -517,13 +752,44 @@ export default function MainFeed() {
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>{post.profession} • {post.location} • {post.timeAgo}</p>
             </div>
           </div>
-          <button className={`p-1 md:p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}>
-            <MoreHorizontal className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-          </button>
+          <PostDropdown
+            post={post}
+            onSavePost={handleSavePost}
+            onHidePost={handleHidePost}
+            onReportPost={handleReportPost}
+            onSharePost={handleSharePost}
+          />
         </div>
         
         {/* Post Description */}
-        <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-xs md:text-sm mb-3`}>{post.description}</p>
+        <div className="mb-3">
+          <div 
+            className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-xs md:text-sm leading-relaxed`}
+            dangerouslySetInnerHTML={{ 
+              __html: formatDescription(
+                post.description, 
+                post.id, 
+                expandedPosts.has(post.id)
+              ) 
+            }}
+          />
+          {/* See more/See less button */}
+          {post.description && post.description.split('\n').length > 4 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePostExpansion(post.id);
+              }}
+              className={`mt-2 text-xs md:text-sm font-medium transition-colors duration-200 ${
+                isDarkMode 
+                  ? 'text-blue-400 hover:text-blue-300' 
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
+            >
+              {expandedPosts.has(post.id) ? 'See less' : 'See more...'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Post Media */}
@@ -650,7 +916,7 @@ export default function MainFeed() {
       </div>
 
       {/* Posts Feed */}
-      <div className="flex-1 overflow-y-auto space-y-3 md:space-y-4 pb-20 lg:pb-6 px-2 md:px-0 no-scrollbar">
+      <div className="posts-container flex-1 overflow-y-auto space-y-3 md:space-y-4 pb-20 lg:pb-6 px-2 md:px-0 no-scrollbar">
         {loading ? (
           // Loading state
           <div className="flex items-center justify-center py-12">
@@ -688,10 +954,38 @@ export default function MainFeed() {
             </div>
           </div>
         ) : (
-          // Posts list
-          posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))
+          <>
+            {/* Posts list */}
+            {posts
+              .filter(post => !hiddenPosts.has(post.id)) // Filter out hidden posts
+              .map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))
+            }
+            
+            {/* Loading more indicator */}
+            {loadingMore && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className={`w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2`}></div>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Loading more posts...</p>
+                </div>
+              </div>
+            )}
+            
+            {/* No more posts indicator */}
+            {!hasMore && posts.length > 0 && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className={`w-10 h-10 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-full flex items-center justify-center mx-auto mb-2`}>
+                    <span className="text-2xl">✨</span>
+                  </div>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-medium`}>You're all caught up!</p>
+                  <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-500'} text-xs mt-1`}>No more posts to show</p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -799,7 +1093,31 @@ export default function MainFeed() {
             <div className={`w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} max-h-[40vh] lg:max-h-none`}>
               {/* Post Description */}
               <div className={`p-3 md:p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm md:text-base`}>{selectedPost.description}</p>
+                <div>
+                  <div 
+                    className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm md:text-base leading-relaxed`}
+                    dangerouslySetInnerHTML={{ 
+                      __html: formatDescription(
+                        selectedPost.description, 
+                        selectedPost.id, 
+                        expandedPosts.has(selectedPost.id)
+                      ) 
+                    }}
+                  />
+                  {/* See more/See less button in modal */}
+                  {selectedPost.description && selectedPost.description.split('\n').length > 5 && (
+                    <button
+                      onClick={() => togglePostExpansion(selectedPost.id)}
+                      className={`mt-2 text-sm md:text-base font-medium transition-colors duration-200 ${
+                        isDarkMode 
+                          ? 'text-blue-400 hover:text-blue-300' 
+                          : 'text-blue-600 hover:text-blue-700'
+                      }`}
+                    >
+                      {expandedPosts.has(selectedPost.id) ? 'See less' : 'See more...'}
+                    </button>
+                  )}
+                </div>
                 
                 {/* Post Stats */}
                 <div className={`flex items-center justify-between mt-3 md:mt-4 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
