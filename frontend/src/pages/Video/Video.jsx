@@ -25,6 +25,9 @@ const Video = () => {
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   
+  // State for managing expanded video descriptions
+  const [expandedPosts, setExpandedPosts] = useState(new Set());
+  
   const videoRefs = useRef([]);
   const containerRef = useRef(null);
   const observerRef = useRef(null);
@@ -395,6 +398,62 @@ const Video = () => {
       });
     }
   }, [videos]);
+
+  // Helper function to format description text with rich styling
+  const formatDescription = (text, postId, isExpanded = false) => {
+    if (!text) return '';
+    
+    let formattedText = text;
+    
+    // Convert URLs to clickable links
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    formattedText = formattedText.replace(urlRegex, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} underline font-medium">${url}</a>`;
+    });
+    
+    // Convert hashtags to styled elements
+    const hashtagRegex = /#(\w+)/g;
+    formattedText = formattedText.replace(hashtagRegex, (hashtag, tag) => {
+      return `<span class="${isDarkMode ? 'text-blue-400' : 'text-blue-600'} font-semibold cursor-pointer hover:underline">${hashtag}</span>`;
+    });
+    
+    // Convert @mentions to styled elements
+    const mentionRegex = /@(\w+)/g;
+    formattedText = formattedText.replace(mentionRegex, (mention, username) => {
+      return `<span class="${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold cursor-pointer hover:underline">${mention}</span>`;
+    });
+    
+    // Convert line breaks to <br> tags
+    formattedText = formattedText.replace(/\n/g, '<br>');
+    
+    // Make text bold between **text**
+    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>');
+    
+    // Make text italic between *text*
+    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+    
+    // Handle text truncation for long content
+    const lines = formattedText.split('<br>');
+    if (lines.length > 5 && !isExpanded) {
+      const truncatedLines = lines.slice(0, 3);
+      return truncatedLines.join('<br>');
+    }
+    
+    return formattedText;
+  };
+
+  // Function to toggle post expansion
+  const togglePostExpansion = (postId) => {
+    setExpandedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
     
 
   return (
@@ -597,9 +656,34 @@ const Video = () => {
                     <h2 className={`text-base sm:text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2 line-clamp-2`}>
                       {video.title}
                     </h2>
-                    <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed line-clamp-3 lg:line-clamp-none`}>
-                      {video.description}
-                    </p>
+                    <div>
+                      <div 
+                        className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}
+                        dangerouslySetInnerHTML={{ 
+                          __html: formatDescription(
+                            video.description, 
+                            videoId, 
+                            expandedPosts.has(videoId)
+                          ) 
+                        }}
+                      />
+                      {/* See more/See less button */}
+                      {video.description && video.description.split('\n').length > 4 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePostExpansion(videoId);
+                          }}
+                          className={`mt-2 text-xs md:text-sm font-medium transition-colors duration-200 ${
+                            isDarkMode 
+                              ? 'text-blue-400 hover:text-blue-300' 
+                              : 'text-blue-600 hover:text-blue-700'
+                          }`}
+                        >
+                          {expandedPosts.has(videoId) ? 'See less' : 'See more...'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Category */}
