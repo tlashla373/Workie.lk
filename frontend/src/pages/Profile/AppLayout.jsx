@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import SideNavbar from '../../components/NavBar/SideNavbar';
 import UpperNavbar from '../../components/NavBar/UpperNavbar';
 import JobSuggestion from '../JobSuggestions/JobSuggestions';
-import AdminAccess from '../../components/AdminAccess';
+import AdminAccess from '../../components/AdminPanel/AdminAccess';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 
 const AppLayout = () => {

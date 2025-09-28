@@ -27,6 +27,7 @@ import Search from './Search';
 import Notification from './Notification';
 
 const UpperNavbar = ({ isCollapsed = false }) => {
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [userData, setUserData] = useState({
@@ -68,6 +69,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
     }
   };
 
+  const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
   const toggleNotificationDropdown = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
    const toggleMobileSearch = () => setIsMobileSearchOpen(!isMobileSearchOpen);
 
@@ -134,7 +136,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
           action: notification.title,
           content: notification.message,
           time: new Date(notification.createdAt).toLocaleString(),
-          unread: !notification.read && !notification.isRead, // Handle both field names
+          unread: !notification.isRead,
           avatar: notification.sender?.profilePicture || profileImage,
           icon: getNotificationTypeIcon(notification.type)
         }));
@@ -302,7 +304,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                     userData.isActive ? 'bg-green-500' : 'bg-gray-400'
                   }`}></div>
                 </div>
-                {!isCollapsed && (
+                {(!isCollapsed || isProfileDropdownOpen) && (
                   <div className="flex-1 text-left">
                     {loading ? (
                       <div className="space-y-1">
@@ -330,8 +332,25 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             
             {/* New Real-time Notification Component */}
             <Notification />
+            
+            {/* Profile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={toggleProfileDropdown}
+                className={`flex items-center space-x-2 p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 text-gray-100 hover:bg-gray-700 hover:text-white' : 'bg-gray-700/30 text-gray-100 hover:bg-gray-700/50 hover:text-white'} ${isProfileDropdownOpen ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-700/50') : ''}`}
+              >
+                {userData.profileImage ? (
+                  <img
+                    src={userData.profileImage}
+                    alt="Profile"
+                    className="w-7 h-7 rounded-full object-cover border-2 border-gray-300"
+                  />
+                ) : (
+                  <User className="w-5 h-5" />
+                )}
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </header>
 
@@ -505,10 +524,11 @@ const UpperNavbar = ({ isCollapsed = false }) => {
       )}
 
       {/* Overlay for dropdowns */}
-      {isNotificationDropdownOpen && (
+      {(isProfileDropdownOpen || isNotificationDropdownOpen) && (
         <div
           className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
           onClick={() => {
+            setIsProfileDropdownOpen(false);
             setIsNotificationDropdownOpen(false);
           }}
         />

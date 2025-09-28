@@ -33,7 +33,7 @@ const AdminSettings = () => {
       provider: 'gmail',
       smtpHost: 'smtp.gmail.com',
       smtpPort: 587,
-      username: process.env.GMAIL_USER || '',
+      username: import.meta.env.VITE_GMAIL_USER || '',
       enableSSL: true
     },
     payments: {

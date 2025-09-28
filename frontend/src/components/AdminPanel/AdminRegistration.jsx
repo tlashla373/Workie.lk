@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import authService from '../services/authService';
+import authService from '../../services/authService';
 
 const AdminRegistration = () => {
   const [formData, setFormData] = useState({

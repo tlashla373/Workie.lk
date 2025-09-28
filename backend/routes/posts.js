@@ -504,6 +504,22 @@ router.post('/:postId/comments', auth, async (req, res) => {
 
     console.log('✅ Comment added successfully to post:', postId);
 
+    // Send notification to post owner (if not commenting on own post)
+    if (post.userId.toString() !== userId.toString()) {
+      try {
+        const NotificationService = require('../services/notificationService');
+        await NotificationService.notifyComment(
+          post._id,
+          post.userId,
+          userId,
+          comment.trim(),
+          post.content?.substring(0, 50) || 'a post'
+        );
+      } catch (notificationError) {
+        console.warn('Failed to send comment notification:', notificationError);
+      }
+    }
+
     res.json({
       success: true,
       message: 'Comment added successfully',

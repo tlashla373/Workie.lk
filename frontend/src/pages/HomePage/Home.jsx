@@ -357,10 +357,10 @@ export default function MainFeed() {
   const CategoryCard = ({ category, index }) => (
     <div
       key={index}
-      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} items-center p-2 md:p-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group w-16 md:w-24 lg:w-28`}
+      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} lg:ml-10 items-center p-1 md:p-1 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group w-14 md:w-12 lg:w-18`}
     >
-      <div className={`w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-1 md:mb-2 group-hover:scale-110 transition-transform duration-300`}>
-        <img src={category.icon} alt={category.name} className="w-8 h-8 md:w-12 md:h-12 lg:w-15 lg:h-15" />
+      <div className={`w-10 h-8 md:w-8 md:h-8 lg:w-14 lg:h-14 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-1 md:mb-1 group-hover:scale-110 transition-transform duration-300`}>
+        <img src={category.icon} alt={category.name} className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10" />
       </div>
       <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300 text-xs md:text-sm text-center leading-tight`}>{category.name}</span>
     </div>
@@ -878,10 +878,10 @@ export default function MainFeed() {
   return (
     <div className={`flex flex-col h-screen ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-black'}`}>
       {/* Category Section */}
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-2 mb-2 shadow-sm border transition-all duration-300`}>
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-1 mb-1 shadow-sm border transition-all duration-300`}>
         {/* Category Header with Toggle */}
-        <div className="flex items-center justify-between mb-2">
-          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+        <div className="flex items-center justify-between ml-4">
+          <h2 className={`text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             Categories
           </h2>
           <button
@@ -894,9 +894,9 @@ export default function MainFeed() {
             aria-label={showCategories ? 'Hide categories' : 'Show categories'}
           >
             {showCategories ? (
-              <ChevronUp className="w-5 h-5" />
+              <ChevronUp className="w-4 h-4" />
             ) : (
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-4 h-4" />
             )}
           </button>
         </div>
