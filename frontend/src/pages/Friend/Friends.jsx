@@ -136,7 +136,7 @@ const Friends = () => {
     { value: 'welder', label: 'Welders' },
     { value: 'mason', label: 'Masons' },
     { value: 'electrician', label: 'Electricians' },
-    { value: 'general', label: 'General Workers' },
+    { value: 'worker', label: 'Workers' },
     { value: 'client', label: 'Clients' }
   ];
 

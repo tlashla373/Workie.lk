@@ -613,7 +613,7 @@ const Video = () => {
 
               {/* Video Info Sidebar */}
               <div className={`w-full lg:w-96 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} border-t lg:border-t-0 lg:border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col transition-colors duration-300 max-h-full lg:max-h-screen overflow-hidden`}>
-                <div className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto">
+                <div className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto no-scrollbar">
                   {/* Creator Info */}
                   <div className="flex items-center space-x-3  mb-4">
                     <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center overflow-hidden`}>

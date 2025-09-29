@@ -446,7 +446,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             </div>
 
             {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto no-scrollbar">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
