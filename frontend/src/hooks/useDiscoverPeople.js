@@ -21,94 +21,123 @@ const useDiscoverPeople = () => {
         return;
       }
 
-      const queryParams = new URLSearchParams({
-        page: filters.page || 1,
-        limit: filters.limit || 20,
-        userType: 'both', // Include both workers and clients
-        ...filters
-      });
+      console.log('Fetching people with filters:', filters);
 
-      const data = await apiService.get(`/profiles/search?${queryParams}`).catch(err => {
-        console.warn('Profiles search API not available:', err.message);
-        // Return mock data structure for fallback
-        return {
-          success: true,
-          data: {
-            profiles: [
-              {
-                userInfo: {
-                  _id: 'demo-1',
-                  firstName: 'Demo',
-                  lastName: 'Worker',
-                  userType: 'worker',
-                  profilePicture: '',
-                  isVerified: false
-                },
-                title: 'Expert Carpenter for Custom Furniture & Woodwork', // Custom worker title
-                skills: [{ name: 'Carpentry' }, { name: 'Woodworking' }],
-                bio: 'Demo worker profile with custom title'
-              },
-              {
-                userInfo: {
-                  _id: 'demo-2',
-                  firstName: 'Demo',
-                  lastName: 'Client',
-                  userType: 'client',
-                  profilePicture: '',
-                  isVerified: false
-                },
-                title: null, // Client doesn't have custom title
-                skills: [],
-                bio: 'Demo client profile'
-              }
-            ]
-          }
-        };
-      });
+      // Try multiple approaches to get users
+      let allPeople = [];
 
-      if (data.success && data.data.profiles) {
-        // Transform profile data to match frontend expectations
-        const transformedPeople = data.data.profiles.map(profile => ({
-          id: profile.userInfo._id,
-          name: `${profile.userInfo.firstName} ${profile.userInfo.lastName}`,
-          // Prioritize custom worker title over generic profession
-          title: profile.title || // Custom title from worker verification
-                (profile.userInfo.userType === 'worker' 
-                  ? 'Skilled Worker' // Default for workers without custom title
-                  : 'Client'), // Default for clients
-          profession: profile.userInfo.userType === 'worker' 
-            ? (profile.skills && profile.skills.length > 0 
-                ? profile.skills.map(skill => skill.name).join(', ')
-                : 'Skilled Worker')
-            : 'Client',
-          avatar: profile.userInfo.profilePicture || 
-            `https://ui-avatars.com/api/?name=${profile.userInfo.firstName}+${profile.userInfo.lastName}&background=random`,
-          role: profile.userInfo.userType === 'worker' ? 'Worker' : 'Client',
-          email: `${profile.userInfo.firstName.toLowerCase()}.${profile.userInfo.lastName.toLowerCase()}@example.com`,
-          phone: '+1 (555) 000-0000',
-          category: profile.userInfo.userType === 'worker' 
-            ? (profile.skills && profile.skills.length > 0 
-                ? profile.skills[0].name.toLowerCase()
-                : 'general')
-            : 'client',
-          userType: profile.userInfo.userType,
-          location: profile.userInfo.city || 'Sri Lanka',
-          rating: profile.rating || 0,
-          totalReviews: profile.totalReviews || 0,
-          availability: profile.availability?.status || 'available',
-          skills: profile.skills || [],
-          bio: profile.bio || '',
-          verified: profile.userInfo.isVerified || false
-        }));
+      // Approach 1: Try to get profiles with full data
+      try {
+        const queryParams = new URLSearchParams({
+          page: filters.page || 1,
+          limit: filters.limit || 30,
+          userType: 'both',
+          ...filters
+        });
 
-        setPeople(transformedPeople);
-      } else {
-        throw new Error(data.message || 'Failed to fetch people');
+        console.log('Trying profiles search with params:', queryParams.toString());
+        
+        const profilesData = await apiService.get(`/profiles/search?${queryParams}`);
+        console.log('Profiles API response:', profilesData);
+
+        if (profilesData.success && profilesData.data.profiles) {
+          const profileUsers = profilesData.data.profiles.map(profile => ({
+            id: profile.userInfo._id,
+            name: `${profile.userInfo.firstName} ${profile.userInfo.lastName}`,
+            title: profile.title || (profile.userInfo.userType === 'worker' ? 'Skilled Worker' : 'Client'),
+            profession: profile.userInfo.userType === 'worker' 
+              ? (profile.skills && profile.skills.length > 0 
+                  ? profile.skills.map(skill => skill.name).join(', ')
+                  : 'Skilled Worker')
+              : 'Client',
+            avatar: profile.userInfo.profilePicture || 
+              `https://ui-avatars.com/api/?name=${profile.userInfo.firstName}+${profile.userInfo.lastName}&background=random`,
+            role: profile.userInfo.userType === 'worker' ? 'Worker' : 'Client',
+            email: `${profile.userInfo.firstName.toLowerCase()}.${profile.userInfo.lastName.toLowerCase()}@example.com`,
+            phone: '+1 (555) 000-0000',
+            category: profile.userInfo.userType === 'worker' 
+              ? (profile.skills && profile.skills.length > 0 
+                  ? profile.skills[0].name.toLowerCase()
+                  : 'general')
+              : 'client',
+            userType: profile.userInfo.userType,
+            location: profile.userInfo.city || 'Sri Lanka',
+            rating: profile.rating || 0,
+            totalReviews: profile.totalReviews || 0,
+            availability: profile.availability?.status || 'available',
+            skills: profile.skills || [],
+            bio: profile.bio || '',
+            verified: profile.userInfo.isVerified || false,
+            hasProfile: true
+          }));
+          
+          allPeople = [...allPeople, ...profileUsers];
+          console.log('Added profile users:', profileUsers.length);
+        }
+      } catch (profileError) {
+        console.warn('Profiles search failed:', profileError);
       }
+
+      // Approach 2: Get users directly (especially new users without profiles)
+      try {
+        console.log('Trying direct user search...');
+        
+        // Create a simple endpoint call that should work
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users?page=1&limit=50&isActive=true`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const usersData = await response.json();
+          console.log('Direct users API response:', usersData);
+
+          if (usersData.success && usersData.data) {
+            const directUsers = usersData.data
+              .filter(user => user.userType && user.isActive) // Only active users with userType
+              .filter(user => !allPeople.some(p => p.id === user._id)) // Don't duplicate
+              .map(user => ({
+                id: user._id,
+                name: `${user.firstName} ${user.lastName}`,
+                title: user.userType === 'worker' ? 'New Worker' : 'Client',
+                profession: user.userType === 'worker' ? 'Skilled Worker' : 'Client',
+                avatar: user.profilePicture || 
+                  `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random`,
+                role: user.userType === 'worker' ? 'Worker' : 'Client',
+                email: user.email || `${user.firstName.toLowerCase()}.${user.lastName.toLowerCase()}@example.com`,
+                phone: user.phone || '+1 (555) 000-0000',
+                category: user.userType === 'worker' ? 'general' : 'client',
+                userType: user.userType,
+                location: user.address?.city || 'Sri Lanka',
+                rating: 0,
+                totalReviews: 0,
+                availability: 'available',
+                skills: [],
+                bio: 'Setting up profile...',
+                verified: user.isVerified || false,
+                hasProfile: false
+              }));
+            
+            allPeople = [...allPeople, ...directUsers];
+            console.log('Added direct users:', directUsers.length);
+          }
+        }
+      } catch (userError) {
+        console.warn('Direct users search failed:', userError);
+      }
+
+      console.log('Total people found:', allPeople.length);
+      setPeople(allPeople);
+
+      if (allPeople.length === 0) {
+        setError('No users found. Try refreshing or check your connection.');
+      }
+
     } catch (err) {
       console.error('Error fetching people:', err);
       setError(err.message || 'Failed to load people');
-      // Set empty array on error
       setPeople([]);
     } finally {
       setLoading(false);

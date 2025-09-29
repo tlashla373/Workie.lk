@@ -454,15 +454,105 @@ const WorkerVerification = () => {
                 <label className="block text-sm font-medium mb-1">
                   Skills (Optional - you can skip this)
                 </label>
-                <textarea
-                  placeholder="List your relevant skills (e.g., 5 years plumbing experience, certified electrician, etc.)"
-                  value={workerData.skills}
-                  onChange={(e) => setWorkerData({ ...workerData, skills: e.target.value })}
-                  rows={3}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors resize-none ${
-                    isDarkMode ? 'border-gray-600' : 'border-gray-300'
-                  }`}
-                />
+                <div className="space-y-3">
+                  {/* Skills Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Add a skill (e.g., 5 years plumbing experience)"
+                      value={workerData.currentSkill || ''}
+                      onChange={(e) => setWorkerData({ ...workerData, currentSkill: e.target.value })}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const skill = workerData.currentSkill?.trim();
+                          if (skill && skill.length > 0) {
+                            const skillsArray = workerData.skills ? workerData.skills.split(',').map(s => s.trim()).filter(s => s) : [];
+                            if (!skillsArray.includes(skill)) {
+                              const newSkills = [...skillsArray, skill].join(', ');
+                              setWorkerData({ 
+                                ...workerData, 
+                                skills: newSkills,
+                                currentSkill: ''
+                              });
+                            } else {
+                              setWorkerData({ ...workerData, currentSkill: '' });
+                            }
+                          }
+                        }
+                      }}
+                      className={`flex-1 border rounded-lg px-3 py-2 text-sm sm:text-base bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                        isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const skill = workerData.currentSkill?.trim();
+                        if (skill && skill.length > 0) {
+                          const skillsArray = workerData.skills ? workerData.skills.split(',').map(s => s.trim()).filter(s => s) : [];
+                          if (!skillsArray.includes(skill)) {
+                            const newSkills = [...skillsArray, skill].join(', ');
+                            setWorkerData({ 
+                              ...workerData, 
+                              skills: newSkills,
+                              currentSkill: ''
+                            });
+                          } else {
+                            setWorkerData({ ...workerData, currentSkill: '' });
+                          }
+                        }
+                      }}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        workerData.currentSkill?.trim()
+                          ? 'bg-blue-500 text-white hover:bg-blue-600'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                      disabled={!workerData.currentSkill?.trim()}
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {/* Skills Display */}
+                  {workerData.skills && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500">Added skills:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {workerData.skills.split(',').map(s => s.trim()).filter(s => s).map((skill, index) => (
+                          <span
+                            key={index}
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              isDarkMode 
+                                ? 'bg-blue-800 text-blue-200' 
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {skill}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const skillsArray = workerData.skills.split(',').map(s => s.trim()).filter(s => s);
+                                const filteredSkills = skillsArray.filter(s => s !== skill);
+                                setWorkerData({ 
+                                  ...workerData, 
+                                  skills: filteredSkills.join(', ')
+                                });
+                              }}
+                              className="ml-1 hover:text-red-500"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500">
+                    Press Enter or click "Add" to add each skill. You can remove skills by clicking the × button.
+                  </p>
+                </div>
               </div>
 
               {/* Experience (Optional) */}

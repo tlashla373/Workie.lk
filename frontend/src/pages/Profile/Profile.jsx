@@ -190,7 +190,7 @@ const Profile = () => {
             
             // Images
             coverImage: user.coverPhoto || "https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png",
-            profileImage: user.profilePicture || "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop",
+            profileImage: user.profilePicture || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png",
             
             // Stats
             followers: 0, // Not implemented yet
@@ -201,6 +201,7 @@ const Profile = () => {
             
             // Profile details
             bio: profile?.bio || "",
+            title: profile?.title || "", // Add missing title field
             skills: profile?.skills?.map(skill => skill.name || skill) || [],
             experience: profile?.experience?.map(exp => ({
               title: exp.title,
@@ -375,6 +376,7 @@ const Profile = () => {
               
               // Profile details
               bio: profile?.bio || "",
+              title: profile?.title || "",
               skills: profile?.skills?.map(skill => skill.name || skill) || [],
               experience: profile?.experience?.map(exp => ({
                 title: exp.title,
