@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, MapPin, Phone, Globe, Star, Mail, Edit } from 'lucide-react';
 import profileService from '../../services/profileService';
+import { getWorkerApplications, calculateWorkerStats, getWorkerStatsById } from '../../services/workHistoryService';
 import EditProfileModal from './EditProfileModal';
 
 const ProfileAbout = ({ 
@@ -13,6 +14,11 @@ const ProfileAbout = ({
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [workerStats, setWorkerStats] = useState({
+    averageRating: 0,
+    completedJobs: 0,
+    totalRatings: 0
+  });
 
   // Use external edit modal state if provided, otherwise use internal state
   const modalOpen = isEditModalOpen !== undefined ? isEditModalOpen : false;
@@ -39,6 +45,15 @@ const ProfileAbout = ({
             });
           }
         }
+
+        // Fetch worker statistics if this is a worker profile
+        if (profileData?.user?.userType === 'worker' || 
+            (aboutData?.user?.userType === 'worker')) {
+          console.log('User is a worker, fetching stats...');
+          await fetchWorkerStats();
+        } else {
+          console.log('User is not a worker, skipping stats fetch');
+        }
       } catch (error) {
         console.error('Error fetching about data:', error);
         setError('Failed to load profile information');
@@ -47,8 +62,70 @@ const ProfileAbout = ({
       }
     };
 
+    const fetchWorkerStats = async () => {
+      try {
+        if (isOwnProfile) {
+          // For own profile, fetch actual work history
+          const applications = await getWorkerApplications();
+          console.log('Worker applications for stats:', applications);
+
+          const stats = calculateWorkerStats(applications);
+          console.log('Calculated worker stats:', stats);
+
+          setWorkerStats(stats);
+        } else {
+          // For other users' profiles, fetch their worker stats by ID
+          console.log('Fetching stats for other user profile');
+          const userData = aboutData?.user || profileData?.user;
+          const workerId = userData?._id || userData?.id;
+          
+          if (workerId) {
+            console.log('Fetching worker stats for user ID:', workerId);
+            const stats = await getWorkerStatsById(workerId);
+            console.log('Fetched worker stats:', stats);
+            setWorkerStats(stats);
+          } else {
+            console.warn('No user ID found for fetching worker stats');
+            // Fallback to profile data if available
+            const profile = aboutData?.profile || profileData?.profile;
+            const profileRating = profile?.rating || profileData?.rating || 0;
+            const profileCompletedJobs = profile?.completedJobs || profileData?.completedJobs || 0;
+            const profileTotalRatings = profile?.totalReviews || profile?.totalRatings || 0;
+            
+            setWorkerStats({
+              averageRating: profileRating ? parseFloat(profileRating) : 0,
+              completedJobs: profileCompletedJobs ? parseInt(profileCompletedJobs) : 0,
+              totalRatings: profileTotalRatings ? parseInt(profileTotalRatings) : 0
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching worker stats:', error);
+        // Don't fail the entire component if stats fail
+      }
+    };
+
     fetchAboutData();
   }, [profileData]);
+
+  // Separate useEffect to handle worker stats when data is available
+  useEffect(() => {
+    const handleWorkerStats = async () => {
+      const userData = aboutData?.user || profileData?.user;
+      if (userData?.userType === 'worker' && (aboutData || profileData)) {
+        console.log('Worker data available, fetching stats...', {
+          userType: userData.userType,
+          isOwnProfile,
+          userId: userData._id || userData.id,
+          hasAboutData: !!aboutData,
+          hasProfileData: !!profileData
+        });
+        await fetchWorkerStats();
+      }
+    };
+
+    handleWorkerStats();
+  }, [aboutData, profileData, isOwnProfile]);
 
   if (loading) {
     return (
@@ -137,16 +214,27 @@ const ProfileAbout = ({
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                {profile?.rating || profileData?.rating || '0.0'}
+                {workerStats.averageRating > 0 
+                  ? workerStats.averageRating.toFixed(1) 
+                  : (profile?.rating || profileData?.rating || '0.0')
+                }
               </div>
               <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} flex items-center justify-center space-x-1`}>
                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
                 <span>Rating</span>
               </div>
+              {workerStats.totalRatings > 0 && (
+                <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                  {workerStats.totalRatings} review{workerStats.totalRatings !== 1 ? 's' : ''}
+                </div>
+              )}
             </div>
             <div className="text-center">
               <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                {profile?.completedJobs || profileData?.completedJobs || '0'}
+                {workerStats.completedJobs > 0 
+                  ? workerStats.completedJobs 
+                  : (profile?.completedJobs || profileData?.completedJobs || '0')
+                }
               </div>
               <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Jobs Done</div>
             </div>

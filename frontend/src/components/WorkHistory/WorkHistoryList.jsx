@@ -5,13 +5,17 @@ import { Briefcase } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import WorkHistoryItem from './WorkHistoryItem';
 
-const WorkHistoryList = ({ filteredHistory, viewRole }) => {
+const WorkHistoryList = ({ filteredHistory, userType = 'worker' }) => {
   const { isDarkMode } = useDarkMode();
   const navigate = useNavigate();
 
-  const handleJobClick = (jobId) => {
-    navigate(`/job-progress/${jobId}`, { 
-      state: { viewRole } 
+  const handleJobClick = (application) => {
+    navigate(`/job-progress/${application.id}`, { 
+      state: { 
+        userType,
+        application: application,
+        applicationData: application
+      } 
     });
   };
 
@@ -19,8 +23,15 @@ const WorkHistoryList = ({ filteredHistory, viewRole }) => {
     return (
       <div className={`text-center py-8 md:py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
         <Briefcase className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 opacity-50" />
-        <p className="text-base md:text-lg font-medium mb-1 md:mb-2">No work history found</p>
-        <p className="text-sm md:text-base">Try adjusting your search or filter criteria</p>
+        <p className="text-base md:text-lg font-medium mb-1 md:mb-2">
+          {userType === 'client' ? 'No applications received yet' : 'No applications found'}
+        </p>
+        <p className="text-sm md:text-base">
+          {userType === 'client' 
+            ? 'Applications received on your job posts will appear here' 
+            : 'Your job applications will appear here when you apply for jobs'
+          }
+        </p>
       </div>
     );
   }
@@ -31,8 +42,8 @@ const WorkHistoryList = ({ filteredHistory, viewRole }) => {
         <WorkHistoryItem
           key={job.id}
           job={job}
-          viewRole={viewRole}
-          onClick={() => handleJobClick(job.id)}
+          userType={userType}
+          onClick={() => handleJobClick(job)}
         />
       ))}
     </div>

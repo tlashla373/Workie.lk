@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiService from '../services/apiService';
+import { getWorkerStatsById } from '../services/workHistoryService';
 
 const useDiscoverPeople = () => {
   const [people, setPeople] = useState([]);
@@ -41,7 +42,7 @@ const useDiscoverPeople = () => {
         console.log('Profiles API response:', profilesData);
 
         if (profilesData.success && profilesData.data.profiles) {
-          const profileUsers = profilesData.data.profiles.map(profile => ({
+          const baseProfileUsers = profilesData.data.profiles.map(profile => ({
             id: profile.userInfo._id,
             name: `${profile.userInfo.firstName} ${profile.userInfo.lastName}`,
             title: profile.title || (profile.userInfo.userType === 'worker' ? 'Skilled Worker' : 'Client'),
@@ -62,17 +63,37 @@ const useDiscoverPeople = () => {
               : 'client',
             userType: profile.userInfo.userType,
             location: profile.userInfo.city || 'Sri Lanka',
-            rating: profile.rating || 0,
-            totalReviews: profile.totalReviews || 0,
+            rating: 0, // Initialize with default
+            totalReviews: 0, // Initialize with default
             availability: profile.availability?.status || 'available',
             skills: profile.skills || [],
             bio: profile.bio || '',
             verified: profile.userInfo.isVerified || false,
             hasProfile: true
           }));
+
+          // Fetch real ratings for worker profiles
+          const profileUsersWithRatings = await Promise.all(
+            baseProfileUsers.map(async (user) => {
+              if (user.userType === 'worker') {
+                try {
+                  const workerStats = await getWorkerStatsById(user.id);
+                  return {
+                    ...user,
+                    rating: workerStats.averageRating,
+                    totalReviews: workerStats.totalRatings
+                  };
+                } catch (error) {
+                  console.warn(`Failed to fetch ratings for worker ${user.id}:`, error);
+                  return user; // Return with default rating values
+                }
+              }
+              return user; // Non-workers don't need rating data
+            })
+          );
           
-          allPeople = [...allPeople, ...profileUsers];
-          console.log('Added profile users:', profileUsers.length);
+          allPeople = [...allPeople, ...profileUsersWithRatings];
+          console.log('Added profile users with ratings:', profileUsersWithRatings.length);
         }
       } catch (profileError) {
         console.warn('Profiles search failed:', profileError);

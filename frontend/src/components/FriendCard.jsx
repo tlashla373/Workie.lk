@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, UserPlus, UserCheck, User } from 'lucide-react';
+import { Mail, Phone, UserPlus, UserCheck, User, Star } from 'lucide-react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
 const FriendCard = ({ friend, onEmailClick, onCallClick, onConnectClick, onViewProfileClick, isConnected, showConnectButton = false }) => {
@@ -55,9 +55,24 @@ const FriendCard = ({ friend, onEmailClick, onCallClick, onConnectClick, onViewP
         </h3>
 
         {/* Display title with fallback */}
-        <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 sm:mb-3`}>
+        <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
           {friend.title || friend.profession || 'Professional'}
         </p>
+
+        {/* Rating Display for Workers */}
+        {friend.userType === 'worker' && (
+          <div className="flex items-center justify-center space-x-1 mb-2">
+            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              {friend.rating && friend.rating > 0 ? friend.rating.toFixed(1) : '0.0'}
+            </span>
+            {friend.totalReviews > 0 && (
+              <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                ({friend.totalReviews} review{friend.totalReviews !== 1 ? 's' : ''})
+              </span>
+            )}
+          </div>
+        )}
 
         <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'}`}>
           {friend.role}

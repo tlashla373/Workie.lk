@@ -41,9 +41,16 @@ export const API_ENDPOINTS = {
   APPLICATIONS: {
     BASE: `${API_BASE_URL}/applications`,
     BY_ID: (id) => `${API_BASE_URL}/applications/${id}`,
+    BY_WORKER: (workerId) => `${API_BASE_URL}/applications/worker/${workerId}`,
     ACCEPT: (id) => `${API_BASE_URL}/applications/${id}/accept`,
     REJECT: (id) => `${API_BASE_URL}/applications/${id}/reject`,
     WITHDRAW: (id) => `${API_BASE_URL}/applications/${id}/withdraw`,
+    START_WORK: (id) => `${API_BASE_URL}/applications/${id}/start-work`,
+    COMPLETE_WORK: (id) => `${API_BASE_URL}/applications/${id}/complete-work`,
+    RELEASE_PAYMENT: (id) => `${API_BASE_URL}/applications/${id}/release-payment`,
+    CONFIRM_PAYMENT: (id) => `${API_BASE_URL}/applications/${id}/confirm-payment`,
+    SUBMIT_REVIEW: (id) => `${API_BASE_URL}/applications/${id}/submit-review`,
+    CLOSE_JOB: (id) => `${API_BASE_URL}/applications/${id}/close-job`,
     STATS: `${API_BASE_URL}/applications/stats/overview`,
   },
   

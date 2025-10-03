@@ -205,6 +205,114 @@ class NotificationService {
       throw error;
     }
   }
+
+  // Create a job application notification (notify job owner)
+  static async notifyJobApplication(jobId, recipientId, senderId, jobTitle, workerName) {
+    try {
+      // Don't notify if somehow the same user applies to their own job
+      if (recipientId.toString() === senderId.toString()) {
+        return null;
+      }
+
+      // Get sender details
+      const sender = await User.findById(senderId).select('firstName lastName profilePicture');
+      
+      const notification = new Notification({
+        recipient: recipientId,
+        sender: senderId,
+        type: 'job_application',
+        title: 'New Job Application',
+        message: `${sender.firstName} ${sender.lastName} has applied for your job: ${jobTitle}`,
+        relatedJob: jobId,
+        data: {
+          jobId: jobId,
+          jobTitle: jobTitle,
+          workerName: workerName
+        },
+        priority: 'high',
+        actionUrl: `/jobs/${jobId}/applications`
+      });
+
+      await notification.save();
+
+      // Populate sender details for real-time emission
+      await notification.populate('sender', 'firstName lastName profilePicture');
+
+      // Emit real-time notification if socket service is available
+      try {
+        const { getSocketIO } = require('./socketService');
+        const io = getSocketIO();
+        if (io) {
+          io.to(`user_${recipientId}`).emit('notification', {
+            type: 'job_application',
+            notification: notification,
+            message: notification.message
+          });
+        }
+      } catch (socketError) {
+        console.log('Socket service not available for real-time notification');
+      }
+
+      return notification;
+    } catch (error) {
+      console.error('Error creating job application notification:', error);
+      throw error;
+    }
+  }
+
+  // Create an application acceptance notification (notify worker)
+  static async notifyApplicationAccepted(applicationId, recipientId, senderId, jobTitle, clientName) {
+    try {
+      // Don't notify if somehow the same user accepts their own application
+      if (recipientId.toString() === senderId.toString()) {
+        return null;
+      }
+
+      // Get sender details
+      const sender = await User.findById(senderId).select('firstName lastName profilePicture');
+      
+      const notification = new Notification({
+        recipient: recipientId,
+        sender: senderId,
+        type: 'application_accepted',
+        title: 'Application Accepted!',
+        message: `Great news! ${sender.firstName} ${sender.lastName} has accepted your application for: ${jobTitle}`,
+        relatedApplication: applicationId,
+        data: {
+          applicationId: applicationId,
+          jobTitle: jobTitle,
+          clientName: clientName
+        },
+        priority: 'high',
+        actionUrl: `/applications/${applicationId}`
+      });
+
+      await notification.save();
+
+      // Populate sender details for real-time emission
+      await notification.populate('sender', 'firstName lastName profilePicture');
+
+      // Emit real-time notification if socket service is available
+      try {
+        const { getSocketIO } = require('./socketService');
+        const io = getSocketIO();
+        if (io) {
+          io.to(`user_${recipientId}`).emit('notification', {
+            type: 'application_accepted',
+            notification: notification,
+            message: notification.message
+          });
+        }
+      } catch (socketError) {
+        console.log('Socket service not available for real-time notification');
+      }
+
+      return notification;
+    } catch (error) {
+      console.error('Error creating application acceptance notification:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = NotificationService;

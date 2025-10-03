@@ -1,19 +1,51 @@
 // pages/JobProgressPage.jsx
-import React from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, DollarSign } from 'lucide-react';
 import JobProgress from './JobProgress';
-import { getJobById } from '../../components/WorkHistory/WorkHistoryData';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useAuth } from '../../hooks/useAuth';
+import AuthChecker from '../../components/ProtectionPage/AuthChecker';
 
 const JobProgressPage = () => {
   const { jobId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDarkMode } = useDarkMode();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   
-  const viewRole = location.state?.viewRole || 'worker';
-  const job = getJobById(parseInt(jobId));
+  // Get application data from navigation state
+  const { userType: passedUserType, application, applicationData } = location.state || {};
+  
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('auth_token');
+  
+  // If not authenticated, show auth checker
+  if (!isAuthenticated) {
+    return <AuthChecker />;
+  }
+
+  useEffect(() => {
+    // Set loading to false once user data is available
+    if (user) {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Show loading state while user data is being fetched
+  if (loading || !user) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  const userType = passedUserType || user?.userType || 'worker'; // Use passed userType or fallback to user.userType
+  
+  // Use application data if available, otherwise handle missing data
+  const job = application || applicationData;
   
   const handleGoBack = () => {
     navigate('/workhistory');
@@ -24,10 +56,10 @@ const JobProgressPage = () => {
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
         <div className={`text-center p-8 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
           <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
-            Job Not Found
+            Application Not Found
           </h2>
           <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
-            The requested job could not be found.
+            The requested application data could not be found. Please try navigating from the Work History page.
           </p>
           <button
             onClick={handleGoBack}
@@ -40,19 +72,19 @@ const JobProgressPage = () => {
     );
   }
 
-  const getClientJobData = (job) => {
-    if (viewRole === 'client') {
+  const getEmployerJobData = (job) => {
+    if (userType === 'client') {
       return {
         ...job,
-        title: `Hired ${job.title}`,
-        company: `Worker: ${job.company}`,
-        description: `You hired a ${job.title.toLowerCase()} for: ${job.description}`,
+        title: job.title || 'Application Received',
+        company: job.company || 'Worker Application',
+        description: job.description || `Worker application for: ${job.title}`,
       };
     }
     return job;
   };
 
-  const displayJob = getClientJobData(job);
+  const displayJob = getEmployerJobData(job);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
@@ -98,20 +130,22 @@ const JobProgressPage = () => {
                 </p>
 
                 {/* Skills */}
-                <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                  {job.skills.map((skill, index) => (
-                    <span
-                      key={index}
-                      className={`px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium ${
-                        isDarkMode 
-                          ? 'bg-blue-900/30 text-blue-300' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+                {job.skills && job.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
+                    {job.skills.map((skill, index) => (
+                      <span
+                        key={index}
+                        className={`px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium ${
+                          isDarkMode 
+                            ? 'bg-blue-900/30 text-blue-300' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Job Details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -128,7 +162,7 @@ const JobProgressPage = () => {
                       <p className={`${
                         isDarkMode ? 'text-gray-300' : 'text-gray-700'
                       } font-medium text-sm sm:text-base`}>
-                        {job.duration}
+                        {job.duration || job.estimatedDuration || 'Not specified'}
                       </p>
                     </div>
                   </div>
@@ -146,7 +180,7 @@ const JobProgressPage = () => {
                       <p className={`${
                         isDarkMode ? 'text-gray-300' : 'text-gray-700'
                       } font-medium text-sm sm:text-base`}>
-                        {job.location}
+                        {job.location || 'Location not specified'}
                       </p>
                     </div>
                   </div>
@@ -159,12 +193,12 @@ const JobProgressPage = () => {
                       <p className={`text-xs ${
                         isDarkMode ? 'text-gray-400' : 'text-gray-500'
                       } uppercase tracking-wide`}>
-                        {viewRole === 'client' ? 'Payment' : 'Rate'}
+                        {userType === 'client' ? 'Proposed Rate' : 'Rate'}
                       </p>
                       <p className={`${
                         isDarkMode ? 'text-gray-300' : 'text-gray-700'
                       } font-medium text-sm sm:text-base`}>
-                        {job.salary}
+                        {job.salary || 'Rate not specified'}
                       </p>
                     </div>
                   </div>
@@ -185,9 +219,11 @@ const JobProgressPage = () => {
 
         {/* Job Progress Component */}
         <JobProgress
-          role={viewRole}
-          initialStage={job.stage}
+          role={userType}
+          initialStage={job.stage || 1}
           jobData={job}
+          applicationData={job}
+          applicationStatus={job.status}
         />
       </div>
     </div>

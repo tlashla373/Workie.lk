@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   User, 
@@ -15,9 +15,32 @@ import {
   Send
 } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import AuthChecker from '../../components/ProtectionPage/AuthChecker';
+import axios from 'axios';
 
-const JobApplicationPage = ({ job, onBack }) => {
+const JobApplicationPage = ({ onBack }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isDarkMode } = useDarkMode();
+  const { user } = useAuth();
+  
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('auth_token');
+  
+  // If not authenticated, show auth checker
+  if (!isAuthenticated) {
+    return <AuthChecker />;
+  }
+  
+  // Get job data from location state
+  const job = location.state?.job;
+  const jobId = location.state?.jobId;
+
+  console.log('JobApplicationPage - job data:', job);
+  console.log('JobApplicationPage - jobId:', jobId);
+  console.log('JobApplicationPage - location.state:', location.state);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -26,15 +49,59 @@ const JobApplicationPage = ({ job, onBack }) => {
     experience: '',
     expectedRate: '',
     startDate: '',
-    paymentMethod: 'online',
-    resumeFile: null,
-    portfolioFile: null
+    paymentMethod: 'online'
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isDarkMode } = useDarkMode();
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  // Auto-fill form with user data when component mounts
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        email: user.email || '',
+        phone: user.phone || user.phoneNumber || '',
+        // Keep other fields empty for user to fill
+      }));
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Show loading state while user data is being fetched
+  if (loading || !user) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  const currentJob = job;
+
+  // Handle case when job data is missing
+  if (!currentJob && !jobId) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+        <div className={`text-center p-8 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+            Job Information Missing
+          </h2>
+          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+            Unable to load job details for this application.
+          </p>
+          <button
+            onClick={() => navigate('/findjobs')}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Back to Jobs
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -42,10 +109,6 @@ const JobApplicationPage = ({ job, onBack }) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
     }
-  };
-
-  const handleFileUpload = (field, file) => {
-    setFormData(prev => ({ ...prev, [field]: file }));
   };
 
   const validateForm = () => {
@@ -72,30 +135,89 @@ const JobApplicationPage = ({ job, onBack }) => {
     
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Get authentication token
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        alert('Please login to submit your application');
+        navigate('/login');
+        return;
+      }
+
+      // Determine job ID and validate
+      const submissionJobId = currentJob?.id || jobId;
+      
+      console.log('Job ID being submitted:', submissionJobId);
+      console.log('Job ID type:', typeof submissionJobId);
+      console.log('Current job object:', currentJob);
+      
+      if (!submissionJobId) {
+        alert('Job ID is missing. Please go back and select a job to apply for.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare application data (matching backend Application model fields)
+      const applicationData = {
+        job: submissionJobId,
+        coverLetter: formData.coverLetter,
+        proposedPrice: {
+          amount: parseFloat(formData.expectedRate) || 0,
+          currency: 'LKR'
+        },
+        estimatedDuration: '1-2 weeks', // Default for now
+        availability: formData.startDate || 'Immediate',
+        portfolio: [] // Empty for now, can be added later
+      };
+      
+      console.log('Submitting application with data:', applicationData);
+
+      // Submit application to backend API
+      const response = await axios.post('/api/applications', applicationData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Application response:', response.data);
+
+      if (response.data && response.data.success) {
+        alert(`Application submitted successfully for ${currentJob?.title || 'the position'} at ${currentJob?.company || 'the company'}!`);
+        // Navigate back to job details or jobs list
+        navigate(-1);
+      } else {
+        throw new Error(response.data?.message || 'Failed to submit application');
+      }
+      
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      console.error('Error response:', error.response?.data);
+      
+      if (error.response?.status === 401) {
+        alert('Your session has expired. Please login again.');
+        localStorage.removeItem('auth_token');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        alert(error.response.data?.message || 'Invalid application data. Please check your information and try again.');
+      } else if (error.response?.status === 404) {
+        alert('Job not found. This job may no longer be available.');
+      } else if (error.response?.status === 409) {
+        alert('You have already applied for this job.');
+      } else {
+        alert(error.response?.data?.message || 'Failed to submit application. Please try again.');
+      }
+    } finally {
       setIsSubmitting(false);
-      alert('Application submitted successfully!');
-    }, 2000);
+    }
   };
-
-  // Mock job data if not provided
-  const mockJob = {
-    title: 'Senior Full Stack Developer',
-    company: 'TechCorp Inc.',
-    salary: '$80,000 - $120,000',
-    type: 'Full-time',
-    location: 'Remote'
-  };
-
-  const currentJob = job || mockJob;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <button
-          onClick={() => navigate('/findjobs')}
+          onClick={() => navigate(-1)}
           className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
             isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
           }`}
@@ -108,29 +230,71 @@ const JobApplicationPage = ({ job, onBack }) => {
       {/* Job Info Summary */}
       <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
         <h1 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Apply for {currentJob.title}
+          Apply for {currentJob?.title || 'Job Position'}
         </h1>
         <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          at {currentJob.company}
+          at {currentJob?.company || 'Company'}
         </p>
-        <div className="flex flex-wrap gap-4 mt-4 text-sm">
-          <div className="flex items-center space-x-1">
-            <DollarSign className="w-4 h-4 text-green-500" />
-            <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>{currentJob.salary}</span>
+        {currentJob && (
+          <div className="flex flex-wrap gap-4 mt-4 text-sm">
+            {currentJob.salary && (
+              <div className="flex items-center space-x-1">
+                <DollarSign className="w-4 h-4 text-green-500" />
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>{currentJob.salary}</span>
+              </div>
+            )}
+            {currentJob.type && (
+              <div className="flex items-center space-x-1">
+                <Calendar className="w-4 h-4 text-blue-500" />
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>{currentJob.type}</span>
+              </div>
+            )}
           </div>
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4 text-blue-500" />
-            <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>{currentJob.type}</span>
+        )}
+        {!currentJob && (
+          <div className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'bg-yellow-900/30 text-yellow-400' : 'bg-yellow-100 text-yellow-800'}`}>
+            <p className="text-sm">⚠️ Job details not available. You can still submit your application.</p>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="space-y-6">
         {/* Personal Information */}
         <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
-          <h2 className={`text-xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Personal Information
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Personal Information
+            </h2>
+            {user && (
+              <div className="flex items-center space-x-2">
+                <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  isDarkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                }`}>
+                  ✓ Auto-filled from your profile
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({
+                    ...prev,
+                    fullName: user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+                    email: user.email || '',
+                    phone: user.phone || user.phoneNumber || '',
+                  }))}
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    isDarkMode 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  Reset to Profile Data
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Your profile information has been automatically filled below. You can edit any field as needed.
+          </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -312,77 +476,6 @@ const JobApplicationPage = ({ job, onBack }) => {
             </div>
           </div>
         </div>
-
-        {/* File Uploads */}
-        <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
-          <h2 className={`text-xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Documents
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Resume / CV
-              </label>
-              <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
-                isDarkMode 
-                  ? 'border-gray-600 hover:border-gray-500 bg-gray-600/20' 
-                  : 'border-gray-300 hover:border-gray-400 bg-gray-50'
-              }`}>
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  Click to upload or drag and drop
-                </p>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  PDF, DOC, DOCX (Max 5MB)
-                </p>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => handleFileUpload('resumeFile', e.target.files[0])}
-                />
-              </div>
-              {formData.resumeFile && (
-                <p className={`text-sm mt-2 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                  ✓ {formData.resumeFile.name}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Portfolio (Optional)
-              </label>
-              <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
-                isDarkMode 
-                  ? 'border-gray-600 hover:border-gray-500 bg-gray-600/20' 
-                  : 'border-gray-300 hover:border-gray-400 bg-gray-50'
-              }`}>
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  Click to upload or drag and drop
-                </p>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  PDF, ZIP (Max 10MB)
-                </p>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.zip"
-                  onChange={(e) => handleFileUpload('portfolioFile', e.target.files[0])}
-                />
-              </div>
-              {formData.portfolioFile && (
-                <p className={`text-sm mt-2 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                  ✓ {formData.portfolioFile.name}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-
 
         {/* Submit Button */}
         <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>

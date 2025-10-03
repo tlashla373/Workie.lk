@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import connectionService from '../services/connectionService';
+import { getWorkerStatsById } from '../services/workHistoryService';
 
 export const useConnections = () => {
   const [connections, setConnections] = useState([]);
@@ -43,7 +44,7 @@ export const useConnections = () => {
 
       if (connectionsResponse.success && connectionsResponse.data.connections) {
         // Transform backend data to match frontend expectations
-        const transformedConnections = connectionsResponse.data.connections.map(connection => ({
+        const baseTransformedConnections = connectionsResponse.data.connections.map(connection => ({
           id: connection._id,
           name: `${connection.firstName} ${connection.lastName}`,
           // Prioritize custom worker title over generic profession
@@ -59,10 +60,33 @@ export const useConnections = () => {
           category: connection.userType === 'worker' ? 'general' : 'client',
           userType: connection.userType,
           connectionDate: connection.connectionDate,
-          status: connection.status
+          status: connection.status,
+          // Initialize with default rating data
+          rating: 0,
+          totalReviews: 0
         }));
 
-        setConnections(transformedConnections);
+        // Fetch real ratings for worker connections
+        const connectionsWithRatings = await Promise.all(
+          baseTransformedConnections.map(async (connection) => {
+            if (connection.userType === 'worker') {
+              try {
+                const workerStats = await getWorkerStatsById(connection.id);
+                return {
+                  ...connection,
+                  rating: workerStats.averageRating,
+                  totalReviews: workerStats.totalRatings
+                };
+              } catch (error) {
+                console.warn(`Failed to fetch ratings for worker ${connection.id}:`, error);
+                return connection; // Return with default rating values
+              }
+            }
+            return connection; // Non-workers don't need rating data
+          })
+        );
+
+        setConnections(connectionsWithRatings);
       } else {
         // Set empty connections if API fails
         setConnections([]);

@@ -85,7 +85,7 @@ const JobDetailsPage = ({ job, onBack, isDarkMode }) => {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-              onClick={() => navigate('/job-application-page', { state: { jobId: job.id } })} 
+              onClick={() => navigate('/job-application-page', { state: { job: job, jobId: job.id } })} 
               className="flex-1 py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium">
                 Apply Now
               </button>
