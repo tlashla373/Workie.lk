@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, MapPin, DollarSign, Clock, Building, Heart, ExternalLink, Filter, X, User, Calendar, Phone, Mail, Star, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useNavigate } from 'react-router-dom';
+import apiService from '../../services/apiService';
 import Mason from '../../assets/mason.svg'
 import Welder from '../../assets/welder.svg'
 import Plumber from '../../assets/plumber.svg'
@@ -17,181 +19,187 @@ const FindJobs = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [currentView, setCurrentView] = useState('list'); // 'list' or 'details'
   const [currentPage, setCurrentPage] = useState(1);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
   const { isDarkMode } = useDarkMode();
+  const navigate = useNavigate();
 
   // Pagination settings
-  const jobsPerPage = 5;
+  const jobsPerPage = 15;
 
-  // Enhanced job data with client information
-  const jobs = [
-    {
-      id: 1,
-      title: 'Skilled Masons',
-      company: 'Individual',
-      location: 'Colombo, Sri Lanka',
-      type: 'Full Time',
-      salary: 'Rs 60,000 - Rs 80,000',
-      posted: '2 days ago',
-      publishedOn: '2025-01-06',
-      description: 'We are looking for skilled Mason specialists to join our construction project...',
-      fullDescription: 'We are seeking experienced and skilled masons to work on a large-scale residential construction project in Colombo. The ideal candidate will have extensive experience in brickwork, stone masonry, and tile installation. This is a full-time position offering competitive compensation and the opportunity to work on high-quality construction projects. The successful candidate will be responsible for laying bricks, stones, and other masonry materials according to architectural plans and specifications. Attention to detail and quality craftsmanship are essential.',
-      tags: ['Mason', 'Bricks', 'Tile work'],
-      logo: Mason ,
-      clientName: 'Rajesh Perera',
-      clientType: 'Individual Client',
-      memberSince: 'Jan 2023',
-      jobsPosted: '5',
-      clientRating: '4.8',
-      requirements: [
-        'Minimum 5 years of experience in masonry work',
-        'Expertise in brick laying and stone work',
-        'Knowledge of tile installation techniques',
-        'Ability to read construction blueprints',
-        'Own transportation preferred'
-      ],
-      contactInfo: {
-        phone: '+94 77 123 4567',
-        email: 'rajesh.perera@email.com'
-      },
-      deadline: 'January 20, 2025'
-    },
-    {
-      id: 2,
-      title: 'Painter',
-      company: 'Individual',
-      location: 'Kandy, Sri Lanka',
-      type: 'Part Time',
-      salary: 'Rs 40,000 - Rs 55,000',
-      posted: '1 week ago',
-      publishedOn: '2025-01-01',
-      description: 'We are looking for skilled Painters to join our renovation project...',
-      fullDescription: 'Looking for experienced painters to handle interior and exterior painting work for residential properties in Kandy. Must be familiar with various paint brands and application techniques. The work involves preparation of surfaces, selection of appropriate materials, and application of paint to achieve a high-quality finish.',
-      tags: ['Painter', 'Nipollac', 'Haris'],
-      logo: Painter,
-      clientName: 'Kumari Silva',
-      clientType: 'Homeowner',
-      memberSince: 'Mar 2023',
-      jobsPosted: '3',
-      clientRating: '4.5',
-      requirements: [
-        'Experience with interior and exterior painting',
-        'Knowledge of different paint types and brands',
-        'Attention to detail and quality finish',
-        'Own painting equipment preferred'
-      ],
-      contactInfo: {
-        phone: '+94 81 234 5678'
-      },
-      deadline: 'January 15, 2025'
-    },
-    {
-      id: 3,
-      title: 'Skilled Carpenter',
-      company: 'Individual',
-      location: 'Nugegoda, Sri Lanka',
-      type: 'Contract',
-      salary: 'Rs 70,000 - Rs 90,000',
-      posted: '3 days ago',
-      publishedOn: '2025-01-05',
-      description: 'Looking for a versatile Carpenter to work on exciting furniture projects...',
-      fullDescription: 'We need an experienced carpenter for custom furniture making, door and window installation, and general woodworking projects. This is a contract position with potential for long-term collaboration. The ideal candidate should have excellent craftsmanship skills and experience working with various types of wood.',
-      tags: ['Furniture','Door','Window'],
-      logo: Carpenter,
-      clientName: 'Nimal Fernando',
-      clientType: 'Business Owner',
-      memberSince: 'Jun 2022',
-      jobsPosted: '12',
-      clientRating: '4.9',
-      requirements: [
-        'Expertise in furniture making and woodworking',
-        'Experience with door and window installation',
-        'Proficiency with carpentry tools',
-        'Ability to work with various wood types',
-        'Custom design experience preferred'
-      ],
-      contactInfo: {
-        phone: '+94 11 345 6789',
-        email: 'nimal.furniture@email.com'
-      }
-    },
-    {
-      id: 4,
-      title: 'Plumber',
-      company: 'Individual',
-      location: 'Galle, Sri Lanka',
-      type: 'Full Time',
-      salary: 'Rs 35,000 - Rs 50,000',
-      posted: '5 days ago',
-      publishedOn: '2025-01-03',
-      description: 'We are looking for skilled Plumbers to join our renovation project...',
-      fullDescription: 'Seeking qualified plumbers for residential plumbing work including bathroom and kitchen installations, pipe repairs, and general plumbing maintenance. The successful candidate will work on various residential projects requiring expertise in modern plumbing systems.',
-      tags: ['Bathroom', 'Kitchen', 'Garden'],
-      logo: Plumber,
-      clientName: 'Chaminda Jayawardena',
-      clientType: 'Property Developer',
-      memberSince: 'Sep 2022',
-      jobsPosted: '8',
-      clientRating: '4.6',
-      requirements: [
-        'Licensed plumber with 3+ years experience',
-        'Experience with bathroom and kitchen plumbing',
-        'Knowledge of modern plumbing systems',
-        'Problem-solving skills for repairs'
-      ],
-      contactInfo: {
-        phone: '+94 91 456 7890'
-      },
-      deadline: 'January 25, 2025'
-    },
-    {
-      id: 5,
-      title: 'Skilled Welders',
-      company: 'Individual',
-      location: 'Colombo, Sri Lanka',
-      type: 'Full Time',
-      salary: 'Rs 80,000 - Rs 100,000',
-      posted: '1 day ago',
-      publishedOn: '2025-01-07',
-      description: 'We are looking for skilled Welders to join our metalwork project...',
-      fullDescription: 'Professional welders needed for metal fabrication work including aluminum welding, TIG welding, and gas welding for various construction and manufacturing projects. This position offers excellent compensation for skilled professionals.',
-      tags: ['Aluminium', 'TIG Welding', 'Gas Welding'],
-      logo: Welder,
-      clientName: 'Pradeep Industries',
-      clientType: 'Manufacturing Company',
-      memberSince: 'Dec 2021',
-      jobsPosted: '15',
-      clientRating: '4.7',
-      requirements: [
-        'Certified welder with 5+ years experience',
-        'Expertise in TIG and gas welding',
-        'Experience with aluminum welding',
-        'Ability to read welding blueprints',
-        'Safety certification required'
-      ],
-      contactInfo: {
-        phone: '+94 11 567 8901',
-        email: 'jobs@pradeepindustries.lk'
-      }
+  // Category to logo mapping
+  const categoryLogos = {
+    'carpentry': Carpenter,
+    'plumbing': Plumber,
+    'painting': Painter,
+    'electrical': Welder,
+    'masonry': Mason,
+    'cleaning': Mason, // fallback
+    'gardening': Mason, // fallback
+    'delivery': Mason, // fallback
+    'tutoring': Mason, // fallback
+    'pet-care': Mason, // fallback
+    'elderly-care': Mason, // fallback
+    'cooking': Mason, // fallback
+    'photography': Mason, // fallback
+    'event-planning': Mason, // fallback
+    'repair-services': Mason, // fallback
+    'moving': Mason, // fallback
+    'other': Mason // fallback
+  };
+
+  // Debounced fetch jobs function to prevent excessive API calls
+  const debouncedFetchJobs = useCallback(() => {
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
     }
-  ];
-
-  const jobTypes = ['Full Time', 'Part Time', 'Contract'];
-
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesLocation = !locationFilter || job.location.toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesType = !jobTypeFilter || job.type === jobTypeFilter;
     
-    return matchesSearch && matchesLocation && matchesType;
-  });
+    const timer = setTimeout(() => {
+      fetchJobs();
+    }, 300); // 300ms delay for search
+    
+    setSearchDebounceTimer(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, locationFilter, jobTypeFilter, searchDebounceTimer]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
-  const startIndex = (currentPage - 1) * jobsPerPage;
-  const endIndex = startIndex + jobsPerPage;
-  const currentJobs = filteredJobs.slice(startIndex, endIndex);
+  // Fetch jobs from API
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const queryParams = new URLSearchParams({
+        page: currentPage,
+        limit: jobsPerPage,
+        status: 'open'
+      });
+      
+
+      
+      if (searchTerm) queryParams.append('search', searchTerm);
+      if (locationFilter) queryParams.append('city', locationFilter);
+      if (jobTypeFilter && jobTypeFilter !== 'All') {
+        // Map frontend job types to backend categories
+        const categoryMap = {
+          'Full Time': '',
+          'Part Time': '',
+          'Contract': '',
+          'cleaning': 'cleaning',
+          'gardening': 'gardening',
+          'plumbing': 'plumbing',
+          'electrical': 'electrical',
+          'carpentry': 'carpentry',
+          'painting': 'painting'
+        };
+        if (categoryMap[jobTypeFilter]) {
+          queryParams.append('category', categoryMap[jobTypeFilter]);
+        }
+      }
+      
+      const response = await apiService.get(`jobs?${queryParams}`, { includeAuth: false });
+      
+      if (response.success) {
+        const transformedJobs = response.data.jobs.map(job => ({
+          id: job._id,
+          title: job.title,
+          company: job.client?.firstName && job.client?.lastName 
+            ? `${job.client.firstName} ${job.client.lastName}` 
+            : 'Unknown Client',
+          location: `${job.location?.city || ''}, ${job.location?.state || 'Sri Lanka'}`.replace(/^,\s*/, ''),
+          type: job.category ? job.category.charAt(0).toUpperCase() + job.category.slice(1) : 'Not specified',
+          salary: job.budget?.amount 
+            ? `Rs ${job.budget.amount.toLocaleString()} (${job.budget.type || 'fixed'})` 
+            : 'Negotiable',
+          posted: new Date(job.createdAt).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          }),
+          publishedOn: job.createdAt,
+          description: job.description.length > 100 
+            ? job.description.substring(0, 100) + '...' 
+            : job.description,
+          fullDescription: job.description,
+          tags: job.skills || [job.category || 'General'],
+          logo: categoryLogos[job.category] || Mason,
+          clientName: job.client?.firstName && job.client?.lastName 
+            ? `${job.client.firstName} ${job.client.lastName}` 
+            : 'Unknown Client',
+          clientType: 'Individual Client', // Default since backend doesn't have this field
+          memberSince: job.client?.createdAt 
+            ? new Date(job.client.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+            : 'Unknown',
+          jobsPosted: '1', // Would need separate API call to get this
+          clientRating: '4.5', // Would need to calculate from reviews
+          requirements: job.requirements || [],
+          contactInfo: {
+            phone: job.client?.phone || '',
+            email: job.client?.email || ''
+          },
+          deadline: job.duration?.endDate 
+            ? new Date(job.duration.endDate).toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric' 
+              })
+            : null,
+          urgency: job.urgency,
+          budget: job.budget,
+          originalJob: job // Keep original job data for details view
+        }));
+        
+        setJobs(transformedJobs);
+        setTotalJobs(response.data.pagination?.total || transformedJobs.length);
+      } else {
+        setError('Failed to fetch jobs');
+      }
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+      setError(err.message || 'Failed to fetch jobs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch jobs on component mount and when pagination changes (immediate)
+  useEffect(() => {
+    fetchJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
+  // Debounced fetch when search/filter terms change (prevents excessive API calls)
+  useEffect(() => {
+    if (currentPage === 1) {
+      debouncedFetchJobs();
+    }
+    return () => {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, locationFilter, jobTypeFilter]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, locationFilter, jobTypeFilter]);
+
+  // Remove the hardcoded jobs array - it's now replaced with API data
+  const jobTypes = ['All', 'cleaning', 'gardening', 'plumbing', 'electrical', 'carpentry', 'painting', 'delivery', 'tutoring', 'pet-care', 'elderly-care', 'cooking', 'photography', 'event-planning', 'repair-services', 'moving', 'other'];
+
+  // Since filtering is now done on the backend, we use jobs directly
+  const filteredJobs = jobs;
+  const currentJobs = jobs;
+
+  // Pagination calculations based on API response
+  const totalPages = Math.ceil(totalJobs / jobsPerPage);
 
   const handleJobClick = (job) => {
     setSelectedJob(job);
@@ -199,14 +207,41 @@ const FindJobs = () => {
   };
 
   const handleBackToList = () => {
-    setCurrentView('list');
     setSelectedJob(null);
+    setCurrentView('list');
   };
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, locationFilter, jobTypeFilter]);
+  const handleApplyJob = (jobId) => {
+    navigate(`/job-application-page/${jobId}`);
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className={`text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Loading jobs...
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[400px] space-y-4">
+        <div className={`text-lg ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+          Error: {error}
+        </div>
+        <button
+          onClick={fetchJobs}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   // Show job details page if a job is selected
   if (currentView === 'details' && selectedJob) {
@@ -370,7 +405,10 @@ const FindJobs = () => {
                       </button>
                       <button 
                         className="px-4 sm:px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApplyJob(job.id);
+                        }}
                       >
                         Apply Now
                       </button>
@@ -383,55 +421,115 @@ const FindJobs = () => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 sm:mt-8 gap-3 sm:gap-0">
-        <div className={`text-sm order-2 sm:order-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Showing {((currentPage - 1) * jobsPerPage) + 1} to {Math.min(currentPage * jobsPerPage, filteredJobs.length)} of {filteredJobs.length} jobs
-        </div>
-        <div className="flex items-center space-x-1 sm:space-x-2 order-1 sm:order-2">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className={`px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
-              currentPage === 1
-                ? `${isDarkMode ? 'bg-gray-700/50 text-gray-500' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`
-                : `${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`
-            }`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          
-          {/* Page Numbers */}
-          <div className="flex items-center space-x-1 px-2">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-              <button
-                key={pageNum}
-                onClick={() => setCurrentPage(pageNum)}
-                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg text-sm transition-all duration-200 ${
-                  currentPage === pageNum
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                    : `${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
+      {/* Enhanced Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center mt-6 sm:mt-8 space-y-4">
+          {/* Job count info */}
+          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Showing {((currentPage - 1) * jobsPerPage) + 1} to {Math.min(currentPage * jobsPerPage, totalJobs)} of {totalJobs} jobs
           </div>
           
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className={`px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
-              currentPage === totalPages
-                ? `${isDarkMode ? 'bg-gray-700/50 text-gray-500' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`
-                : `${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`
-            }`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {/* Pagination controls */}
+          <div className="flex items-center space-x-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                currentPage === 1
+                  ? `${isDarkMode ? 'bg-gray-700/50 text-gray-500' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`
+                  : `${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`
+              }`}
+            >
+              Previous
+            </button>
+            
+            {/* Page Numbers with smart pagination */}
+            <div className="flex items-center space-x-1">
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 5;
+                
+                if (totalPages <= maxVisiblePages) {
+                  // Show all pages if total pages is small
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  // Smart pagination logic
+                  if (currentPage <= 3) {
+                    // Show first 4 pages + ... + last page
+                    pages.push(1, 2, 3, 4);
+                    if (totalPages > 4) {
+                      pages.push('...');
+                      pages.push(totalPages);
+                    }
+                  } else if (currentPage >= totalPages - 2) {
+                    // Show first page + ... + last 4 pages
+                    pages.push(1);
+                    if (totalPages > 4) {
+                      pages.push('...');
+                    }
+                    for (let i = totalPages - 3; i <= totalPages; i++) {
+                      if (i > 1) pages.push(i);
+                    }
+                  } else {
+                    // Show first + ... + current-1, current, current+1 + ... + last
+                    pages.push(1);
+                    pages.push('...');
+                    pages.push(currentPage - 1, currentPage, currentPage + 1);
+                    pages.push('...');
+                    pages.push(totalPages);
+                  }
+                }
+                
+                return pages.map((pageNum, index) => {
+                  if (pageNum === '...') {
+                    return (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className={`px-3 py-2 text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        currentPage === pageNum
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                          : `${isDarkMode ? 'text-gray-400 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-gray-100'} border ${isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-200 hover:border-gray-300'}`
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                });
+              })()
+              }
+            </div>
+            
+            {/* Next Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                currentPage === totalPages
+                  ? `${isDarkMode ? 'bg-gray-700/50 text-gray-500' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`
+                  : `${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-700 hover:bg-gray-50'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`
+              }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
+      {/* No jobs message */}
       {filteredJobs.length === 0 && (
         <div className="text-center py-12">
           <div className={`text-6xl mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>🔍</div>

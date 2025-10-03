@@ -1,7 +1,7 @@
 // Centralized API service with token handling and helper methods
 import { API_ENDPOINTS } from '../config/api.js';
 
-const API_BASE_URL = API_ENDPOINTS.AUTH.LOGIN.replace(/\/auth\/login$/, ''); // derive base
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ApiService {
 	constructor() {
@@ -78,8 +78,6 @@ class ApiService {
 	_resolveUrl(path) {
 		// If already absolute (http) return as-is
 		if (/^https?:/i.test(path)) return path;
-		// If starts with /api assume same origin override
-		if (path.startsWith('/api')) return path;
 		// Ensure no duplicate slashes
 		return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
 	}
