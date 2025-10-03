@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, MapPin, DollarSign, Clock, Building, Heart, ExternalLink, Filter, X, User, Calendar, Phone, Mail, Star, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useNavigate } from 'react-router-dom';
+import { useDarkMode } from '../../contexts/DarkModeContext';
 import apiService from '../../services/apiService';
 import Mason from '../../assets/mason.svg'
 import Welder from '../../assets/welder.svg'
@@ -9,7 +9,6 @@ import Plumber from '../../assets/plumber.svg'
 import Carpenter from '../../assets/carpenter.svg'
 import Painter from '../../assets/painter.svg'
 import JobDetailsPage from './JobDetailsPage';
-
 
 // Main FindJobs Component
 const FindJobs = () => {
@@ -76,8 +75,6 @@ const FindJobs = () => {
         limit: jobsPerPage,
         status: 'open'
       });
-      
-
       
       if (searchTerm) queryParams.append('search', searchTerm);
       if (locationFilter) queryParams.append('city', locationFilter);
@@ -191,7 +188,6 @@ const FindJobs = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, locationFilter, jobTypeFilter]);
 
-  // Remove the hardcoded jobs array - it's now replaced with API data
   const jobTypes = ['All', 'cleaning', 'gardening', 'plumbing', 'electrical', 'carpentry', 'painting', 'delivery', 'tutoring', 'pet-care', 'elderly-care', 'cooking', 'photography', 'event-planning', 'repair-services', 'moving', 'other'];
 
   // Since filtering is now done on the backend, we use jobs directly
@@ -212,7 +208,7 @@ const FindJobs = () => {
   };
 
   const handleApplyJob = (jobId) => {
-    navigate(`/job-application-page/${jobId}`);
+    navigate(`/job-application/${jobId}`);
   };
 
   // Loading state
@@ -300,9 +296,9 @@ const FindJobs = () => {
               className={`flex-1 sm:flex-none sm:w-48 px-3 py-2 sm:py-3 rounded-xl text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               <option value="" className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>All Job Types</option>
-            {jobTypes.map(type => (
-              <option key={type} value={type} className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>{type}</option>
-            ))}
+              {jobTypes.map(type => (
+                <option key={type} value={type} className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>{type}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -325,12 +321,12 @@ const FindJobs = () => {
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0">
                   <div>
-                  {typeof job.logo === 'string' && job.logo.endsWith('.svg') ? (
-                    <img src={job.logo} alt={job.title} className="w-full h-full bg-[#F0F3FF] p-1 object-contain rounded-md" />
-                  ) : (
-                    <span className="text-2xl sm:text-3xl">{job.logo}</span>
-                  )}
-                </div>
+                    {typeof job.logo === 'string' && job.logo.endsWith('.svg') ? (
+                      <img src={job.logo} alt={job.title} className="w-full h-full bg-[#F0F3FF] p-1 object-contain rounded-md" />
+                    ) : (
+                      <span className="text-2xl sm:text-3xl">{job.logo}</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-2">
@@ -509,8 +505,7 @@ const FindJobs = () => {
                     </button>
                   );
                 });
-              })()
-              }
+              })()}
             </div>
             
             {/* Next Button */}

@@ -3,44 +3,101 @@ import { useNavigate } from 'react-router-dom';
 import {
   User,
   Camera,
-  Mail,
   Phone,
   CheckCircle,
   ArrowLeft,
   ArrowRight,
-  Upload
-} from 'lucide-react';
+  Upload,
+  Loader2
+  
+}from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import mediaService from '../../services/mediaService';
+import { useAuth } from '../../hooks/useAuth';
 
 const ClientSetup = () => {
   const { isDarkMode } = useDarkMode();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [clientData, setClientData] = useState({
     profilePhoto: null,
-    email: '',
-    phone: '',
-    emailVerified: false,
+    profilePhotoUrl: user?.profilePicture || null,
+    phone: user?.phoneNumber || '',
     phoneVerified: false
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
-  const handleFileUpload = (file) => {
-    setClientData((prev) => ({ ...prev, profilePhoto: file }));
-  };
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    
+    setUploading(true);
+    setUploadError('');
+    
+    try {
+      console.log('Starting profile picture upload...', {
+        fileName: file.name,
+        fileSize: (file.size / 1024 / 1024).toFixed(2) + 'MB',
+        fileType: file.type
+      });
 
-  const handleVerifyEmail = () => {
-    setClientData((prev) => ({ ...prev, emailVerified: true }));
+      // Upload to server and save to MongoDB
+      const result = await mediaService.uploadProfilePicture(file);
+      
+      console.log('Profile picture upload result:', result);
+      
+      if (result.success !== false) {
+        setClientData((prev) => ({ 
+          ...prev, 
+          profilePhoto: file,
+          profilePhotoUrl: result.cloudinary?.url || result.user?.profilePicture
+        }));
+        
+        console.log('Profile picture uploaded successfully:', result.cloudinary?.url);
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Profile picture upload error:', error);
+      setUploadError(error.message || 'Failed to upload profile picture');
+      
+      // Still set the file for preview purposes
+      setClientData((prev) => ({ ...prev, profilePhoto: file }));
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleVerifyPhone = () => {
     setClientData((prev) => ({ ...prev, phoneVerified: true }));
   };
 
-  const handleComplete = () => {
-    navigate('/clientprofile');
+  const handleComplete = async () => {
+    try {
+      console.log('Client setup completed, navigating to client profile...');
+      
+      // If there's a profile photo that hasn't been uploaded yet, try to upload it
+      if (clientData.profilePhoto && !clientData.profilePhotoUrl && !uploading) {
+        console.log('Uploading profile photo before completing setup...');
+        await handleFileUpload(clientData.profilePhoto);
+      }
+      
+      // Wait a moment for any ongoing uploads to complete
+      if (uploading) {
+        console.log('Waiting for upload to complete...');
+        return; // Don't navigate while uploading
+      }
+      
+      navigate('/clientprofile');
+    } catch (error) {
+      console.error('Error completing client setup:', error);
+      // Still navigate even if upload fails
+      navigate('/clientprofile');
+    }
   };
 
   const handleBack = () => {
-    navigate('/role-selection');
+    navigate('/roleselection');
   };
 
   return (
@@ -67,15 +124,41 @@ const ClientSetup = () => {
               </label>
 
               <div className="relative inline-block">
-                <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'} flex items-center justify-center overflow-hidden`}>
-                  {clientData.profilePhoto ? (
+                <div className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 ${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-100'} flex items-center justify-center overflow-hidden relative`}>
+                  {uploading ? (
+                    <div className="flex flex-col items-center justify-center">
+                      <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-blue-500 mb-1" />
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Uploading...
+                      </span>
+                    </div>
+                  ) : clientData.profilePhotoUrl || (user?.profilePicture && user.profilePicture !== '') ? (
+                    <img
+                      src={clientData.profilePhotoUrl || user.profilePicture}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to local preview if server image fails
+                        if (clientData.profilePhoto) {
+                          e.target.src = URL.createObjectURL(clientData.profilePhoto);
+                        }
+                      }}
+                    />
+                  ) : clientData.profilePhoto ? (
                     <img
                       src={URL.createObjectURL(clientData.profilePhoto)}
-                      alt="Profile"
+                      alt="Profile Preview"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <Camera className={`w-8 h-8 sm:w-12 sm:h-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  )}
+                  
+                  {/* Upload Success Indicator */}
+                  {clientData.profilePhotoUrl && !uploading && (
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-3 h-3 text-white" />
+                    </div>
                   )}
                 </div>
 
@@ -85,64 +168,45 @@ const ClientSetup = () => {
                   onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                   className="hidden"
                   id="profilePhoto"
+                  disabled={uploading}
                 />
                 <label
                   htmlFor="profilePhoto"
-                  className="absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-blue-600 transition-colors"
+                  className={`absolute bottom-0 right-0 w-8 h-8 sm:w-10 sm:h-10 ${
+                    uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                  } rounded-full flex items-center justify-center text-white transition-colors`}
                 >
-                  <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {uploading ? (
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
                 </label>
               </div>
 
-              <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-2 px-4 sm:px-0`}>
-                Add a clear photo to help workers recognize you
-              </p>
+              <div className="mt-2 px-4 sm:px-0">
+                {uploadError ? (
+                  <p className="text-xs sm:text-sm text-red-500 mb-2 flex items-center justify-center">
+                    <span>❌ {uploadError}</span>
+                  </p>
+                ) : clientData.profilePhotoUrl || (user?.profilePicture && user.profilePicture !== '') ? (
+                  <p className="text-xs sm:text-sm text-green-500 mb-2 flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    <span>Profile picture uploaded successfully</span>
+                  </p>
+                ) : null}
+                
+                <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Add a clear photo to help workers recognize you
+                </p>
+              </div>
             </div>
 
             {/* Contact Verification */}
             <div className="space-y-4 sm:space-y-6">
               <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Contact Verification (Optional)
+                Phone Verification (Optional)
               </h3>
-
-              {/* Email Verification */}
-              <div>
-                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Email Address
-                </label>
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={clientData.email}
-                    onChange={(e) => setClientData((prev) => ({ ...prev, email: e.target.value }))}
-                    className={`flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border text-sm sm:text-base ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  />
-                  <button
-                    onClick={handleVerifyEmail}
-                    disabled={!clientData.email || clientData.emailVerified}
-                    className="px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
-                  >
-                    {clientData.emailVerified ? (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Verified</span>
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-4 h-4" />
-                        <span>Verify</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                {clientData.emailVerified && (
-                  <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-2 flex items-center space-x-1">
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Email verified successfully</span>
-                  </p>
-                )}
-              </div>
 
               {/* Phone Verification */}
               <div>
@@ -187,7 +251,7 @@ const ClientSetup = () => {
             {/* Benefits */}
             <div className={`p-4 sm:p-6 rounded-lg ${isDarkMode ? 'bg-blue-900/20 border-blue-500/30' : 'bg-blue-50 border-blue-200'} border`}>
               <h4 className={`font-semibold text-sm sm:text-base ${isDarkMode ? 'text-blue-300' : 'text-blue-800'} mb-3`}>
-                Why verify your contact details?
+                Why verify your phone number?
               </h4>
               <ul className={`space-y-2 text-xs sm:text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
                 <li className="flex items-start space-x-2">
@@ -196,11 +260,11 @@ const ClientSetup = () => {
                 </li>
                 <li className="flex items-start space-x-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Receive important notifications about your projects</span>
+                  <span>Receive SMS notifications about your projects</span>
                 </li>
                 <li className="flex items-start space-x-2">
                   <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Improved account security and recovery options</span>
+                  <span>Enhanced account security with 2FA</span>
                 </li>
               </ul>
             </div>

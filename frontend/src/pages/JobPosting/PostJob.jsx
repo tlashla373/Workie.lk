@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { MapPin, DollarSign, Clock, Building, Save, Send, User, Star, Phone, Mail, Plus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import Mason from '../../assets/mason.svg'
 import Welder from '../../assets/welder.svg'
 import Plumber from '../../assets/plumber.svg'
 import Carpenter from '../../assets/carpenter.svg'
 import Painter from '../../assets/painter.svg'
+import axios from 'axios';
 
 const PostJob = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    company: 'Individual',
     location: '',
-    type: 'Full Time',
-    salary: '',
-    description: '',
+    // replace salary with explicit payment fields
+    salary: '', // kept for backward-compat, not shown in UI now
     fullDescription: '',
     requirements: [''],
     benefits: '',
@@ -26,7 +27,14 @@ const PostJob = () => {
     clientType: 'Individual Client',
     // Contact information
     contactPhone: '',
-    contactEmail: ''
+    contactEmail: '',
+    // New fields per design
+    startDate: '',
+    endDate: '',
+    paymentType: 'fixed', // fixed | hourly | negotiable
+    amount: '', // numeric string for UI
+    whatsappNumber: '', // optional
+    materialsProvidedByClient: false,
   });
   const { isDarkMode } = useDarkMode();
 
@@ -71,51 +79,47 @@ const PostJob = () => {
 
     // Required field validations
     if (!formData.title.trim()) newErrors.title = 'Job title is required';
-    if (!formData.company.trim()) newErrors.company = 'Company name is required';
     if (!formData.location.trim()) newErrors.location = 'Location is required';
     if (!formData.category) newErrors.category = 'Category is required';
-    if (!formData.description.trim()) newErrors.description = 'Short description is required';
     if (!formData.fullDescription.trim()) newErrors.fullDescription = 'Full description is required';
+
+    // Payment details (required in the design)
+    if (!formData.paymentType) newErrors.paymentType = 'Payment type is required';
+    if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
+      newErrors.amount = 'Please enter a valid amount (e.g. 3500)';
+    }
+
+    // Dates: start/end optional; closing date required
+    if (!formData.deadline) newErrors.deadline = 'Application closing date is required';
+    if (formData.startDate && formData.endDate) {
+      const s = new Date(formData.startDate);
+      const e = new Date(formData.endDate);
+      if (e < s) newErrors.endDate = 'End date cannot be earlier than start date';
+    }
+
+    // Contact info
     if (!formData.clientName.trim()) newErrors.clientName = 'Your name is required';
     if (!formData.contactPhone.trim()) newErrors.contactPhone = 'Phone number is required';
 
     // Validate phone number format (Sri Lankan format)
-    const phoneRegex = /^(\+94|0)[0-9]{9}$/;
+    const phoneRegex = /^(\+94||0)[0-9]{9}$/;
     if (formData.contactPhone.trim() && !phoneRegex.test(formData.contactPhone.replace(/\s/g, ''))) {
-      newErrors.contactPhone = 'Please enter a valid Sri Lankan phone number';
+      newErrors.contactPhone = 'Enter a valid Sri Lankan phone (e.g., +94771234567 or 0771234567)';
+    }
+    if (formData.whatsappNumber.trim() && !phoneRegex.test(formData.whatsappNumber.replace(/\s/g, ''))) {
+      newErrors.whatsappNumber = 'Enter a valid Sri Lankan WhatsApp number';
     }
 
     // Validate email if provided
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.contactEmail.trim() && !emailRegex.test(formData.contactEmail)) {
-      newErrors.contactEmail = 'Please enter a valid email address';
-    }
-
-    // Validate salary format if provided
-    if (formData.salary.trim()) {
-      const salaryRegex = /^Rs\s*\d{1,3}(,\d{3})*(\s*-\s*Rs\s*\d{1,3}(,\d{3})*)?$/i;
-      if (!salaryRegex.test(formData.salary)) {
-        newErrors.salary = 'Please use format: Rs 50,000 - Rs 70,000';
-      }
+      newErrors.contactEmail = 'Enter a valid email address';
     }
 
     // Validate tags and requirements
     const validTags = formData.tags.filter(tag => tag.trim() !== '');
     const validRequirements = formData.requirements.filter(req => req.trim() !== '');
-    
-    if (validTags.length === 0) newErrors.tags = 'At least one skill/tag is required';
     if (validRequirements.length === 0) newErrors.requirements = 'At least one requirement is required';
-
-    // Validate deadline if provided (should be future date)
-    if (formData.deadline) {
-      const selectedDate = new Date(formData.deadline);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (selectedDate < today) {
-        newErrors.deadline = 'Deadline must be a future date';
-      }
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -143,24 +147,6 @@ const PostJob = () => {
     return category ? category.logo : null;
   };
 
-  // Simulate API call
-  const submitJobToAPI = async (jobData) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simulate random API success/failure for demo
-        if (Math.random() > 0.1) { // 90% success rate
-          resolve({
-            success: true,
-            jobId: jobData.id,
-            message: 'Job posted successfully!'
-          });
-        } else {
-          reject(new Error('Server error. Please try again.'));
-        }
-      }, 2000); // Simulate 2 second API call
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitStatus(null);
@@ -175,102 +161,81 @@ const PostJob = () => {
     setIsSubmitting(true);
 
     try {
-      // Clean and prepare data
-      const cleanedFormData = {
-        ...formData,
-        requirements: formData.requirements.filter(req => req.trim() !== ''),
-        tags: formData.tags.filter(tag => tag.trim() !== ''),
-        salary: formatSalary(formData.salary)
+      // Map frontend categories to backend enum values
+      const categoryMap = {
+        'Mason': 'other',
+        'Carpenter': 'carpentry',
+        'Welder': 'repair-services',
+        'Painter': 'painting',
+        'Plumber': 'plumbing'
       };
 
-      // Create complete job object matching JobDetailsPage structure
-      const jobData = {
-        id: generateJobId(),
-        title: cleanedFormData.title,
-        company: cleanedFormData.company,
-        location: cleanedFormData.location,
-        type: cleanedFormData.type,
-        salary: cleanedFormData.salary,
-        posted: 'Just now',
-        publishedOn: new Date().toISOString().split('T')[0],
-        description: cleanedFormData.description,
-        fullDescription: cleanedFormData.fullDescription,
-        tags: cleanedFormData.tags,
-        logo: getCategoryLogo(cleanedFormData.category),
-        clientName: cleanedFormData.clientName,
-        clientType: cleanedFormData.clientType,
-        memberSince: 'Jan 2024', // Default for new members
-        jobsPosted: '1', // First job
-        clientRating: '5.0', // Default rating for new clients
-        requirements: cleanedFormData.requirements,
-        contactInfo: {
-          phone: cleanedFormData.contactPhone,
-          email: cleanedFormData.contactEmail || undefined
+      // Prepare backend payload
+      const jobPayload = {
+        title: formData.title,
+        description: formData.fullDescription,
+        category: categoryMap[formData.category] || 'other',
+        budget: {
+          amount: Number(formData.amount),
+          currency: 'LKR',
+          type: formData.paymentType
         },
-        deadline: cleanedFormData.deadline ? new Date(cleanedFormData.deadline).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }) : undefined,
-        benefits: cleanedFormData.benefits || undefined,
-        category: cleanedFormData.category,
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        views: 0,
-        applications: 0
+        location: {
+          address: formData.location,
+          city: formData.location.split(',')[0]?.trim() || formData.location, // Extract city from location
+        },
+        requirements: formData.requirements.filter(req => req.trim() !== ''),
+        skills: formData.tags.filter(tag => tag.trim() !== ''),
+        duration: {
+          startDate: formData.startDate || undefined,
+          endDate: formData.endDate || undefined,
+          isFlexible: false
+        },
+        urgency: 'medium',
+        benefits: formData.benefits,
+        maxApplicants: 50,
+        isRemote: false,
+        experienceLevel: 'any',
+        // Custom fields for contact
+        contact: {
+          clientName: formData.clientName,
+          clientType: formData.clientType,
+          phone: formData.contactPhone,
+          whatsapp: formData.whatsappNumber,
+          email: formData.contactEmail
+        },
+        materialsProvidedByClient: formData.materialsProvidedByClient,
+        deadline: formData.deadline
       };
 
-      console.log('Submitting job data:', jobData);
-
-      // Submit to API
-      const response = await submitJobToAPI(jobData);
+      // Auth: get token from localStorage using the correct key
+      const token = localStorage.getItem('auth_token');
       
-      if (response.success) {
-        setSubmitStatus('success');
-        
-        // Store in localStorage for demo purposes (in real app, this would be handled by backend)
-        const existingJobs = JSON.parse(localStorage.getItem('postedJobs') || '[]');
-        existingJobs.push(jobData);
-        localStorage.setItem('postedJobs', JSON.stringify(existingJobs));
-
-        // Reset form after successful submission
-        setTimeout(() => {
-          setFormData({
-            title: '',
-            company: 'Individual',
-            location: '',
-            type: 'Full Time',
-            salary: '',
-            description: '',
-            fullDescription: '',
-            requirements: [''],
-            benefits: '',
-            deadline: '',
-            category: '',
-            tags: [''],
-            clientName: '',
-            clientType: 'Individual Client',
-            contactPhone: '',
-            contactEmail: ''
-          });
-          setSubmitStatus(null);
-        }, 3000);
+      if (!token) {
+        setSubmitStatus('error');
+        setErrors({ submit: 'Please log in to post a job. You need to be authenticated as a client.' });
+        return;
       }
 
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      // POST to backend
+      const response = await axios.post('/api/jobs', jobPayload, config);
+      if (response.data && response.data.success) {
+        setSubmitStatus('success');
+        // Keep the success message visible longer to allow user interaction
+        // Don't auto-clear the form - let user decide to reset or navigate
+      } else {
+        setSubmitStatus('error');
+        setErrors({ submit: response.data.message || 'Failed to post job. Please try again.' });
+      }
     } catch (error) {
-      console.error('Error submitting job:', error);
       setSubmitStatus('error');
-      setErrors({ submit: error.message || 'Failed to post job. Please try again.' });
+      setErrors({ submit: error.response?.data?.message || error.message || 'Failed to post job. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const jobTypes = [
-    { value: 'Full Time', label: 'Full Time' },
-    { value: 'Part Time', label: 'Part Time' },
-    { value: 'Contract', label: 'Contract' }
-  ];
 
   const categories = [
     { value: '', label: 'Select Category', logo: null },
@@ -279,14 +244,6 @@ const PostJob = () => {
     { value: 'Welder', label: 'Welder', logo: Welder },
     { value: 'Painter', label: 'Painter', logo: Painter },
     { value: 'Plumber', label: 'Plumber', logo: Plumber }
-  ];
-
-  const clientTypes = [
-    { value: 'Individual Client', label: 'Individual Client' },
-    { value: 'Homeowner', label: 'Homeowner' },
-    { value: 'Business Owner', label: 'Business Owner' },
-    { value: 'Property Developer', label: 'Property Developer' },
-    { value: 'Manufacturing Company', label: 'Manufacturing Company' }
   ];
 
   const inputClasses = `w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all duration-200 text-sm sm:text-base ${
@@ -313,6 +270,25 @@ const PostJob = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+        {/* Error summary at top if there are any errors */}
+        {submitStatus === 'error' && Object.keys(errors).length > 0 && (
+          <div className={`p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 ${isDarkMode ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs">!</span>
+              </div>
+              <p className={`font-medium text-xs sm:text-sm ${isDarkMode ? 'text-red-300' : 'text-red-800'}`}>
+                Please fix the following errors:
+              </p>
+            </div>
+            <ul className="list-disc pl-5 text-xs sm:text-sm text-red-600">
+              {Object.entries(errors).map(([field, msg]) => (
+                <li key={field}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Basic Job Information */}
         <div className={sectionClasses}>
           <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -320,19 +296,6 @@ const PostJob = () => {
           </h2>
           
           {/* Form Status Messages */}
-          {submitStatus === 'success' && (
-            <div className={`p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 ${isDarkMode ? 'bg-green-500/20 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xs">✓</span>
-                </div>
-                <p className={`font-medium text-xs sm:text-sm ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>
-                  Job posted successfully! Candidates can now view and apply to your job.
-                </p>
-              </div>
-            </div>
-          )}
-
           {submitStatus === 'error' && (
             <div className={`p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 ${isDarkMode ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
               <div className="flex items-center space-x-2">
@@ -364,24 +327,6 @@ const PostJob = () => {
               {errors.title && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.title}</p>}
             </div>
 
-            {/* Company */}
-            <div>
-              <label className={labelClasses}>
-                <Building className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Company *
-              </label>
-              <input
-                type="text"
-                name="company"
-                value={formData.company}
-                onChange={handleInputChange}
-                placeholder="Company name"
-                className={`${inputClasses} ${errors.company ? 'border-red-500 focus:ring-red-500' : ''}`}
-                required
-              />
-              {errors.company && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.company}</p>}
-            </div>
-
             {/* Location */}
             <div>
               <label className={labelClasses}>
@@ -398,43 +343,6 @@ const PostJob = () => {
                 required
               />
               {errors.location && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.location}</p>}
-            </div>
-
-            {/* Job Type */}
-            <div>
-              <label className={labelClasses}>
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Job Type *
-              </label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleInputChange}
-                className={`${inputClasses} appearance-none`}
-              >
-                {jobTypes.map(type => (
-                  <option key={type.value} value={type.value} className={optionClasses}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Salary */}
-            <div>
-              <label className={labelClasses}>
-                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Salary Range
-              </label>
-              <input
-                type="text"
-                name="salary"
-                value={formData.salary}
-                onChange={handleInputChange}
-                placeholder="e.g. Rs 60,000 - Rs 80,000"
-                className={`${inputClasses} ${errors.salary ? 'border-red-500 focus:ring-red-500' : ''}`}
-              />
-              {errors.salary && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.salary}</p>}
             </div>
 
             {/* Category */}
@@ -458,20 +366,6 @@ const PostJob = () => {
               {errors.category && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.category}</p>}
             </div>
 
-            {/* Application Deadline */}
-            <div>
-              <label className={labelClasses}>
-                Application Deadline
-              </label>
-              <input
-                type="date"
-                name="deadline"
-                value={formData.deadline}
-                onChange={handleInputChange}
-                className={`${inputClasses} appearance-none ${errors.deadline ? 'border-red-500 focus:ring-red-500' : ''}`}
-              />
-              {errors.deadline && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.deadline}</p>}
-            </div>
           </div>
         </div>
 
@@ -481,23 +375,6 @@ const PostJob = () => {
             Job Description
           </h2>
           
-          {/* Short Description */}
-          <div className="mb-4 sm:mb-6">
-            <label className={labelClasses}>
-              Short Description *
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              placeholder="Brief description that will appear in job listings..."
-              className={`${inputClasses} resize-none ${errors.description ? 'border-red-500 focus:ring-red-500' : ''}`}
-              required
-            />
-            {errors.description && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.description}</p>}
-          </div>
-
           {/* Full Description */}
           <div>
             <label className={labelClasses}>
@@ -513,57 +390,6 @@ const PostJob = () => {
               required
             />
             {errors.fullDescription && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.fullDescription}</p>}
-          </div>
-        </div>
-
-        {/* Skills/Tags */}
-        <div className={sectionClasses}>
-          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Skills & Tags
-          </h2>
-          
-          <div>
-            <label className={labelClasses}>
-              Required Skills/Tags *
-            </label>
-            {formData.tags.map((tag, index) => (
-              <div key={index} className="flex items-center space-x-2 mb-3">
-                <input
-                  type="text"
-                  value={tag}
-                  onChange={(e) => handleArrayChange(index, e.target.value, 'tags')}
-                  placeholder={`Skill ${index + 1} (e.g. Mason, Bricks, Tile work)`}
-                  className={`flex-1 ${inputClasses} ${errors.tags && index === 0 ? 'border-red-500 focus:ring-red-500' : ''}`}
-                  required={index === 0}
-                />
-                {formData.tags.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem(index, 'tags')}
-                    className={`p-2 rounded-lg transition-colors duration-200 flex-shrink-0 ${
-                      isDarkMode
-                        ? 'text-red-400 hover:bg-red-500/20'
-                        : 'text-red-500 hover:bg-red-100'
-                    }`}
-                  >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => addArrayItem('tags')}
-              className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 text-sm ${
-                isDarkMode
-                  ? 'text-blue-400 hover:bg-blue-500/20'
-                  : 'text-blue-600 hover:bg-blue-100'
-              }`}
-            >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Add Skill/Tag</span>
-            </button>
-            {errors.tags && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.tags}</p>}
           </div>
         </div>
 
@@ -639,19 +465,83 @@ const PostJob = () => {
           </div>
         </div>
 
-        {/* Client Information */}
+        {/* Schedule (Start/End Dates) */}
         <div className={sectionClasses}>
           <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Client Information
+            Schedule
           </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Client Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className={labelClasses}>
-                <User className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Your Name *
-              </label>
+              <label className={labelClasses}>Start Date</label>
+              <input
+                type="date"
+                name="startDate"
+                value={formData.startDate}
+                onChange={handleInputChange}
+                className={`${inputClasses} appearance-none`}
+              />
+            </div>
+            <div>
+              <label className={labelClasses}>End Date</label>
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleInputChange}
+                className={`${inputClasses} appearance-none ${errors.endDate ? 'border-red-500 focus:ring-red-500' : ''}`}
+              />
+              {errors.endDate && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.endDate}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Details */}
+        <div className={sectionClasses}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Payment Details *
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className={labelClasses}>Payment Type *</label>
+              <select
+                name="paymentType"
+                value={formData.paymentType}
+                onChange={handleInputChange}
+                className={`${inputClasses} appearance-none ${errors.paymentType ? 'border-red-500 focus:ring-red-500' : ''}`}
+                required
+              >
+                <option value="fixed" className={optionClasses}>Fixed</option>
+                <option value="hourly" className={optionClasses}>Hourly</option>
+                <option value="negotiable" className={optionClasses}>Negotiable</option>
+              </select>
+              {errors.paymentType && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.paymentType}</p>}
+            </div>
+            <div>
+              <label className={labelClasses}>Amount (Rs) *</label>
+              <input
+                type="number"
+                name="amount"
+                value={formData.amount}
+                onChange={handleInputChange}
+                placeholder="3500"
+                className={`${inputClasses} ${errors.amount ? 'border-red-500 focus:ring-red-500' : ''}`}
+                min="0"
+                step="1"
+                required
+              />
+              {errors.amount && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.amount}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div className={sectionClasses}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Contact Information *
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div>
+              <label className={labelClasses}>Your Name *</label>
               <input
                 type="text"
                 name="clientName"
@@ -663,41 +553,8 @@ const PostJob = () => {
               />
               {errors.clientName && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.clientName}</p>}
             </div>
-
-            {/* Client Type */}
             <div>
-              <label className={labelClasses}>
-                Client Type *
-              </label>
-              <select
-                name="clientType"
-                value={formData.clientType}
-                onChange={handleInputChange}
-                className={`${inputClasses} appearance-none`}
-              >
-                {clientTypes.map(type => (
-                  <option key={type.value} value={type.value} className={optionClasses}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className={sectionClasses}>
-          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Contact Information
-          </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Phone */}
-            <div>
-              <label className={labelClasses}>
-                <Phone className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Phone Number *
-              </label>
+              <label className={labelClasses}>Phone Number *</label>
               <input
                 type="tel"
                 name="contactPhone"
@@ -709,13 +566,20 @@ const PostJob = () => {
               />
               {errors.contactPhone && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.contactPhone}</p>}
             </div>
-
-            {/* Email */}
             <div>
-              <label className={labelClasses}>
-                <Mail className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1" />
-                Email Address
-              </label>
+              <label className={labelClasses}>WhatsApp Number (Optional)</label>
+              <input
+                type="tel"
+                name="whatsappNumber"
+                value={formData.whatsappNumber}
+                onChange={handleInputChange}
+                placeholder="+94 77 123 4567"
+                className={`${inputClasses} ${errors.whatsappNumber ? 'border-red-500 focus:ring-red-500' : ''}`}
+              />
+              {errors.whatsappNumber && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.whatsappNumber}</p>}
+            </div>
+            <div>
+              <label className={labelClasses}>Email (Optional)</label>
               <input
                 type="email"
                 name="contactEmail"
@@ -726,6 +590,49 @@ const PostJob = () => {
               />
               {errors.contactEmail && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.contactEmail}</p>}
             </div>
+          </div>
+        </div>
+
+        {/* Materials Provided? */}
+        <div className={sectionClasses}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Materials Provided?
+          </h2>
+          <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-dashed">
+            <div>
+              <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm sm:text-base font-medium`}>Materials Provided by Client</p>
+              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs sm:text-sm`}>
+                {formData.materialsProvidedByClient ? 'Yes, material provided' : 'No, material provided'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, materialsProvidedByClient: !prev.materialsProvidedByClient }))
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${formData.materialsProvidedByClient ? 'bg-blue-600' : (isDarkMode ? 'bg-gray-600' : 'bg-gray-300')}`}
+              aria-pressed={formData.materialsProvidedByClient}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${formData.materialsProvidedByClient ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Application Closing Date */}
+        <div className={sectionClasses}>
+          <h2 className={`text-lg sm:text-xl font-semibold mb-4 sm:mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Application Closing Date *
+          </h2>
+          <div>
+            <label className={labelClasses}>Application Closing Date *</label>
+            <input
+              type="date"
+              name="deadline"
+              value={formData.deadline}
+              onChange={handleInputChange}
+              className={`${inputClasses} appearance-none ${errors.deadline ? 'border-red-500 focus:ring-red-500' : ''}`}
+              required
+            />
+            {errors.deadline && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.deadline}</p>}
           </div>
         </div>
 
@@ -765,6 +672,70 @@ const PostJob = () => {
           </button>
         </div>
       </form>
+
+      {/* Success Message at Bottom */}
+      {submitStatus === 'success' && (
+        <div className={`mt-6 p-4 sm:p-6 rounded-xl ${isDarkMode ? 'bg-green-500/20 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
+          <div className="flex items-start space-x-3">
+            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-sm font-bold">✓</span>
+            </div>
+            <div className="flex-1">
+              <h3 className={`font-semibold text-sm sm:text-base mb-2 ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>
+                Job Posted Successfully!
+              </h3>
+              <p className={`text-xs sm:text-sm mb-4 ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
+                Your job has been published and candidates can now view and apply to it. You can manage your posted jobs from your profile.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <button
+                  onClick={() => navigate('/clientprofile?tab=posted-jobs')}
+                  className={`px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors ${
+                    isDarkMode 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  View Posted Jobs
+                </button>
+                <button
+                  onClick={() => {
+                    setSubmitStatus(null);
+                    setFormData({
+                      title: '',
+                      location: '',
+                      salary: '',
+                      fullDescription: '',
+                      requirements: [''],
+                      benefits: '',
+                      deadline: '',
+                      category: '',
+                      tags: [''],
+                      clientName: '',
+                      clientType: 'Individual Client',
+                      contactPhone: '',
+                      contactEmail: '',
+                      startDate: '',
+                      endDate: '',
+                      paymentType: 'fixed',
+                      amount: '',
+                      whatsappNumber: '',
+                      materialsProvidedByClient: false,
+                    });
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors border ${
+                    isDarkMode 
+                      ? 'border-green-500 text-green-300 hover:bg-green-500/10' 
+                      : 'border-green-600 text-green-600 hover:bg-green-50'
+                  }`}
+                >
+                  Post Another Job
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/auth/login`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     ME: `${API_BASE_URL}/auth/me`,
+    UPDATE_ROLE: `${API_BASE_URL}/auth/update-role`,
     FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
     VERIFY_RESET_PIN: `${API_BASE_URL}/auth/verify-reset-pin`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
@@ -75,6 +76,27 @@ export const API_ENDPOINTS = {
     MARK_READ: (id) => `${API_BASE_URL}/notifications/${id}/read`,
     MARK_ALL_READ: `${API_BASE_URL}/notifications/mark-all-read`,
     CLEAR_ALL: `${API_BASE_URL}/notifications/clear-all`,
+  },
+
+  // Connections
+  CONNECTIONS: {
+    MY_CONNECTIONS: `${API_BASE_URL}/connections/my-connections`,
+    STATS: `${API_BASE_URL}/connections/stats`,
+    SEND_REQUEST: `${API_BASE_URL}/connections/send-request`,
+    RESPOND: (id) => `${API_BASE_URL}/connections/respond/${id}`,
+    REMOVE: (id) => `${API_BASE_URL}/connections/${id}`,
+  },
+
+  // Admin
+  ADMIN: {
+    DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
+    USERS: `${API_BASE_URL}/admin/users`,
+    JOBS: `${API_BASE_URL}/admin/jobs`,
+    APPLICATIONS: `${API_BASE_URL}/admin/applications`,
+    REVIEWS: `${API_BASE_URL}/admin/reviews`,
+    REPORTS: `${API_BASE_URL}/admin/reports`,
+    NOTIFICATIONS: `${API_BASE_URL}/admin/notifications`,
+    SETTINGS: `${API_BASE_URL}/admin/settings`,
   }
 };
 

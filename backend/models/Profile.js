@@ -11,6 +11,10 @@ const profileSchema = new mongoose.Schema({
     type: String,
     maxlength: [500, 'Bio cannot exceed 500 characters']
   },
+  title: {
+    type: String,
+    maxlength: [50, 'Title cannot exceed 50 characters']
+  },
   skills: [{
     name: {
       type: String,
@@ -73,7 +77,19 @@ const profileSchema = new mongoose.Schema({
       required: true
     },
     description: String,
-    images: [String],
+    media: [{
+      url: String,
+      publicId: String,
+      type: {
+        type: String,
+        enum: ['image', 'video'],
+        required: true
+      },
+      thumbnail: String, // For video thumbnails
+      format: String,
+      size: Number
+    }],
+    images: [String], // Keep for backward compatibility
     url: String,
     completedDate: Date,
     category: String
@@ -159,6 +175,38 @@ const profileSchema = new mongoose.Schema({
     instagram: String,
     website: String
   },
+  // Worker Verification Fields
+  workerCategories: [{
+    type: String
+  }],
+  dateOfBirth: {
+    type: Date
+  },
+  age: {
+    type: Number,
+    min: 18,
+    max: 100
+  },
+  country: String,
+  streetAddress: String,
+  city: String,
+  province: String,
+  postalCode: String,
+  workLocation: String,
+  preferredWorkAreas: String,
+  currentCompany: String,
+  phone: String,
+  isWorkerVerificationSubmitted: {
+    type: Boolean,
+    default: false
+  },
+  workerVerificationStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  workerVerificationSubmittedAt: Date,
+  workerVerificationApprovedAt: Date,
   isVerified: {
     type: Boolean,
     default: false

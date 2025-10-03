@@ -7,6 +7,13 @@ import authService from '../../services/authService';
 import { toast } from 'react-toastify';
 
 export default function ForgotPasswordPage() {
+  // Handle OTP input backspace navigation
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !pin[index] && index > 0) {
+      const prevInput = document.querySelector(`[aria-label='OTP digit ${index}']`);
+      if (prevInput) prevInput.focus();
+    }
+  };
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1); // 1: email + PIN, 2: password reset
@@ -15,6 +22,7 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [pinSent, setPinSent] = useState(false);
   const [sendingPin, setSendingPin] = useState(false);
+  const [otpRequested, setOtpRequested] = useState(false);
   
   // Form data
   const [email, setEmail] = useState('');
@@ -29,10 +37,7 @@ export default function ForgotPasswordPage() {
     if (emailFromUrl) {
       const decodedEmail = decodeURIComponent(emailFromUrl);
       setEmail(decodedEmail);
-      // Automatically send PIN if email is provided from login page
-      if (decodedEmail && !pinSent && !sendingPin) {
-        handleSendPin(decodedEmail);
-      }
+  // Do not automatically send PIN. User must request PIN explicitly.
     } else {
       // If no email is provided, redirect back to login page
       toast.error(error.message || 'Please enter your email on the login page first.');
@@ -42,6 +47,10 @@ export default function ForgotPasswordPage() {
 
   // Step 1: Send PIN to email
   const handleSendPin = async (emailToUse = email) => {
+  if (otpRequested) return; // Prevent multiple sends
+  setOtpRequested(true);
+  setPin(''); // Clear previous OTP
+
     if (!emailToUse) {
       toast.error('Please enter your email address first.');
       return;
@@ -56,7 +65,7 @@ export default function ForgotPasswordPage() {
         setPinSent(true);
         // Only show toast.error if not auto-sending from login page
         if (!searchParams.get('email')) {
-          toast.error('A 5-digit PIN has been sent to your email address.');
+          toast.success('A 5-digit PIN has been sent to your email address.');
         }
       } else {
         toast.error(response.message || 'Failed to send PIN. Please try again.');
@@ -81,7 +90,7 @@ export default function ForgotPasswordPage() {
     }
 
     if (pin.length !== 5) {
-      toast.error('Please enter a valid 5-digit PIN.');
+      toast.warn('Please enter a valid 5-digit PIN.');
       setIsLoading(false);
       return;
     }
@@ -97,7 +106,7 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       console.error('Error verifying PIN:', error);
-      toast.error(error.message || 'Network error. Please check your connection and try again.');
+      toast.warn(error.message || 'Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +124,7 @@ export default function ForgotPasswordPage() {
     }
 
     if (password.length < 6) {
-      toast.error('Password must be at least 6 characters long.');
+      toast.warn('Password must be at least 6 characters long.');
       setIsLoading(false);
       return;
     }
@@ -124,7 +133,7 @@ export default function ForgotPasswordPage() {
       const response = await authService.resetPassword(resetToken, password);
       
       if (response.success) {
-        toast.error('Password reset successfully! You can now login with your new password.');
+        toast.success('Password reset successfully! You can now login with your new password.');
         navigate('/loginpage');
       } else {
         toast.error(response.message || 'Failed to reset password. Please try again.');
@@ -142,6 +151,23 @@ export default function ForgotPasswordPage() {
     const value = e.target.value.replace(/\D/g, ''); // Only digits
     if (value.length <= 5) {
       setPin(value);
+    }
+  };
+
+  // Handle OTP input change
+  const handleOtpChange = (e, idx) => {
+    const val = e.target.value.replace(/[^0-9]/g, '');
+    let newPinArr = pin.split('');
+    newPinArr[idx] = val;
+    // If cleared, set to empty string
+    if (!val) newPinArr[idx] = '';
+    // Join and pad to 5 digits
+    let newPin = newPinArr.join('').padEnd(5, '');
+    setPin(newPin);
+    // Move focus to next input if typing
+    if (val && idx < 4) {
+      const next = document.querySelector(`[aria-label='OTP digit ${idx+2}']`);
+      if (next) next.focus();
     }
   };
 
@@ -193,30 +219,41 @@ export default function ForgotPasswordPage() {
                   <p className="text-yellow-600 text-sm">
                     🔄 Preparing to send PIN to <strong>{email}</strong>...
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => handleSendPin(email)}
+                    className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium"
+                    disabled={sendingPin || pinSent || !email}
+                  >
+                    {sendingPin ? 'Sending...' : 'Send PIN'}
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* PIN Input - Show if PIN is sent or being sent */}
+            {/* OTP Input - Show if PIN is sent or being sent */}
             {(pinSent || sendingPin) && (
               <div className="flex justify-center items-center">
-                <label htmlFor="pin" className="relative w-full max-w-sm">
-                  <input
-                    required
-                    type="text"
-                    id="pin"
-                    value={pin}
-                    onChange={handlePinChange}
-                    disabled={sendingPin}
-                    className="w-full px-4 py-2 sm:py-3 border border-gray-300 rounded-lg border-opacity-50 outline-none focus:border-blue-500 focus:text-black transition duration-200 peer text-center text-xl sm:text-2xl tracking-widest disabled:bg-gray-100"
-                    placeholder="00000"
-                    maxLength={5}
-                    autoFocus
-                  />
-                  <span className="absolute left-0 top-2 sm:top-3 px-1 text-sm text-gray-600 tracking-wide peer-focus:text-indigo-600 pointer-events-none duration-200 peer-focus:text-sm peer-focus:-translate-y-5 bg-white ml-2 peer-valid:text-sm peer-valid:-translate-y-5">
-                    Enter 5-digit PIN
-                  </span>
-                  <Shield className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <label className="w-full max-w-sm flex flex-col items-center">
+                  <div className="flex gap-2 w-full justify-center">
+                    {[0,1,2,3,4].map((i) => (
+                      <input
+                        key={i}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={pin[i] || ''}
+                        onChange={e => handleOtpChange(e, i)}
+                        onKeyDown={e => handleKeyDown(i, e)}
+                        onFocus={e => e.target.select()}
+                        disabled={sendingPin}
+                        className="w-12 h-12 sm:w-14 sm:h-14 text-center text-2xl font-semibold border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:bg-blue-50 transition duration-200 disabled:bg-gray-100 bg-white shadow-sm"
+                        autoFocus={i === 0}
+                        aria-label={`OTP digit ${i+1}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="mt-2 text-sm text-gray-600 tracking-wide">Enter 5-digit PIN</span>
                 </label>
               </div>
             )}
@@ -242,7 +279,8 @@ export default function ForgotPasswordPage() {
                   onClick={() => {
                     setPinSent(false);
                     setPin('');
-                    handleSendPin();
+                    setOtpRequested(false); // Allow resend
+                    setTimeout(() => handleSendPin(email), 0); // Actually send PIN after state resets
                   }}
                   className="text-blue-500 hover:text-blue-700 text-sm"
                   disabled={sendingPin}

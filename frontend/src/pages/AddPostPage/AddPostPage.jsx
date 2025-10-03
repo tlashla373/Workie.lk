@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Camera,
   Video,
@@ -17,12 +17,20 @@ import {
   Volume2,
   VolumeX,
   RotateCcw,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  CheckCircle
 } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useAuth } from '../../hooks/useAuth';
+import postService from '../../services/postService';
+import { toast } from 'react-toastify';
 
 
 const AddPostPage = () => {
+  const { user, authenticated, authLoading } = useAuth();
+  const { isDarkMode } = useDarkMode();
+  
   const [postText, setPostText] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [privacy, setPrivacy] = useState('public');
@@ -32,13 +40,57 @@ const AddPostPage = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [playingVideo, setPlayingVideo] = useState(null);
   const [mutedVideos, setMutedVideos] = useState(new Set());
-  const { isDarkMode } = useDarkMode(); 
   const [showMaxFilesWarning, setShowMaxFilesWarning] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');
   
   const fileInputRef = useRef(null);
   const videoRefs = useRef({});
 
   const MAX_FILES = 5;
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !authenticated) {
+      // Redirect to login page
+      window.location.href = '/loginpage';
+    }
+  }, [authenticated, authLoading]);
+
+  // Get user display info
+  const getUserDisplayInfo = () => {
+    if (!user) return { name: 'User', avatar: '/default-avatar.png', role: 'user' };
+    
+    const firstName = user.firstName || user.name?.split(' ')[0] || 'User';
+    const lastName = user.lastName || user.name?.split(' ')[1] || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    // Get profile picture URL
+    const avatar = user.profilePicture || 
+                  user.avatar || 
+                  user.profilePic ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=2563eb&color=fff&size=40`;
+    
+    const role = user.role || user.userType || 'worker';
+    
+    return { name: fullName, avatar, role };
+  };
+
+  const { name: userName, avatar: userAvatar, role: userRole } = getUserDisplayInfo();
+
+  // Debug logging for user data
+  useEffect(() => {
+    if (user) {
+      console.log('Current logged in user:', {
+        id: user.id || user._id,
+        name: userName,
+        email: user.email,
+        role: userRole,
+        hasProfilePicture: !!user.profilePicture
+      });
+    }
+  }, [user, userName, userRole]);
 
   const privacyOptions = [
     { value: 'public', label: 'Public', icon: Globe, description: 'Anyone on or off Workie.LK' },
@@ -150,33 +202,112 @@ const AddPostPage = () => {
     setShowEmojiPicker(false);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!postText.trim() && selectedFiles.length === 0) {
-      alert('Please add some content or media to your post');
+      toast.error('Please add some content or media to your post');
       return;
     }
     
-    // Handle post submission here
-    console.log({
-      text: postText,
-      files: selectedFiles,
-      privacy,
-      location,
-      taggedFriends
-    });
+    if (!authenticated || !user) {
+      toast.error('You must be logged in to create a post');
+      return;
+    }
     
-    alert('Post created successfully!');
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStatus('Preparing post...');
     
-    // Reset form
-    setPostText('');
-    selectedFiles.forEach(file => URL.revokeObjectURL(file.url));
-    setSelectedFiles([]);
-    setLocation('');
-    setTaggedFriends([]);
+    try {
+      console.log('Creating post for user:', userName);
+      
+      // Prepare post data
+      const postData = {
+        text: postText,
+        files: selectedFiles,
+        privacy,
+        location,
+        taggedFriends,
+        userId: user.id || user._id,
+        userEmail: user.email
+      };
+      
+      // Update status for media upload
+      if (selectedFiles.length > 0) {
+        setUploadStatus(`Uploading ${selectedFiles.length} file(s) ...`);
+      }
+      
+      // Create post with Cloudinary integration
+      const response = await postService.createPost(postData);
+      
+      console.log('Post created successfully:', response);
+      
+      setUploadProgress(100);
+      setUploadStatus('Post created successfully!');
+      
+      // Show success message
+      setTimeout(() => {
+        toast.success(`Post created successfully! ${response.mediaUploaded}`);
+        
+        // Reset form
+        setPostText('');
+        selectedFiles.forEach(file => URL.revokeObjectURL(file.url));
+        setSelectedFiles([]);
+        setLocation('');
+        setTaggedFriends([]);
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadStatus('');
+        
+        // Optionally redirect to feed or profile
+        // window.location.href = '/feed';
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      
+      setUploadStatus('Upload failed');
+      setIsUploading(false);
+      setUploadProgress(0);
+      
+      // Show detailed error message
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post. Please try again.';
+      toast.error(`Error: ${errorMessage}`);
+    }
   };
 
   const canAddMoreFiles = selectedFiles.length < MAX_FILES;
   const remainingSlots = MAX_FILES - selectedFiles.length;
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if not authenticated
+  if (!authenticated) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="text-center">
+          <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Please log in to create a post
+          </p>
+          <button
+            onClick={() => window.location.href = '/loginpage'}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen py-2 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50'}`}>
@@ -202,12 +333,28 @@ const AddPostPage = () => {
           <div className="p-4">
             <div className="flex items-center space-x-3 mb-4">
               <img
-                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                alt="Profile"
-                className="w-10 h-10 rounded-full"
+                src={userAvatar}
+                alt={`${userName}'s profile`}
+                className="w-10 h-10 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=2563eb&color=fff&size=40`;
+                }}
               />
               <div>
-                <p className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Supun Hashintha</p>
+                <p className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  {userName}
+                  {userRole && (
+                    <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                      userRole === 'employer' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : userRole === 'worker'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {userRole}
+                    </span>
+                  )}
+                </p>
                 <select
                   value={privacy}
                   onChange={(e) => setPrivacy(e.target.value)}
@@ -226,7 +373,7 @@ const AddPostPage = () => {
             <textarea
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
-              placeholder="What's on your mind, Supun?"
+              placeholder={`What's on your mind, ${userName.split(' ')[0]}?`}
               className={`w-full p-3 text-lg border-none outline-none resize-none min-h-[120px] ${isDarkMode ? 'bg-gray-800 text-gray-100 placeholder-gray-400' : 'bg-white text-gray-900 placeholder-gray-500'}`}
               rows="4"
             />
@@ -479,17 +626,61 @@ const AddPostPage = () => {
               </div>
             )}
 
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-blue-50 border border-blue-200'}`}>
+                <div className="flex items-center space-x-3 mb-3">
+                  <Upload className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} animate-bounce`} />
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-blue-800'}`}>
+                    {uploadStatus}
+                  </p>
+                </div>
+                
+                {uploadProgress > 0 && (
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                )}
+                
+                {uploadProgress === 100 && (
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="text-sm">Upload completed!</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              disabled={!postText.trim() && selectedFiles.length === 0}
-              className={`w-full mt-4 py-3 font-medium rounded-lg transition-colors ${
-                (!postText.trim() && selectedFiles.length === 0)
+              disabled={(!postText.trim() && selectedFiles.length === 0) || isUploading}
+              className={`w-full mt-4 py-3 font-medium rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
+                (!postText.trim() && selectedFiles.length === 0) || isUploading
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-[1.02]'
               }`}
             >
-              Post
+              {isUploading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>
+                    {selectedFiles.length > 0 ? 'Uploading...' : 'Creating Post...'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>Post</span>
+                  {selectedFiles.length > 0 && (
+                    <span className="bg-white/20 px-2 py-1 rounded-full text-xs">
+                      +{selectedFiles.length} media
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           </div>
         </div>

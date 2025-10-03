@@ -10,7 +10,7 @@ const WorkHistoryHeader = ({ viewRole, setViewRole }) => {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
         <div>
           <h1 className={`text-xl md:text-2xl lg:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-1 md:mb-2`}>
-            Work History
+            Work Status
           </h1>
           <p className={`text-sm md:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             {viewRole === 'worker' 
