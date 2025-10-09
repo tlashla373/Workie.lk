@@ -112,6 +112,18 @@ const EditJob = () => {
     loadJobData();
   }, [id, jobFromState]);
 
+  // Populate user information when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        clientName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : prev.clientName,
+        contactPhone: user.phone || prev.contactPhone,
+        contactEmail: user.email || prev.contactEmail,
+      }));
+    }
+  }, [user]);
+
   // Function to populate form data from job object
   const populateFormData = (job) => {
     setFormData({
@@ -124,10 +136,13 @@ const EditJob = () => {
       deadline: job.applicationClosingDate ? job.applicationClosingDate.split('T')[0] : '',
       category: mapBackendCategoryToFrontend(job.category),
       tags: job.skills && job.skills.length > 0 ? job.skills : [''],
-      clientName: job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : '',
+      // Use current user data for contact information if available, otherwise use job data
+      clientName: (user?.firstName && user?.lastName) 
+        ? `${user.firstName} ${user.lastName}` 
+        : (job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : ''),
       clientType: 'Individual Client',
-      contactPhone: job.client?.phone || '',
-      contactEmail: job.client?.email || '',
+      contactPhone: user?.phone || job.client?.phone || '',
+      contactEmail: user?.email || job.client?.email || '',
       startDate: job.startDate ? job.startDate.split('T')[0] : '',
       endDate: job.endDate ? job.endDate.split('T')[0] : '',
       paymentType: job.budget?.type || 'fixed',

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, DollarSign, Clock, Building, Save, Send, User, Star, Phone, Mail, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useAuth } from '../../hooks/useAuth';
 import Mason from '../../assets/mason.svg'
 import Welder from '../../assets/welder.svg'
 import Plumber from '../../assets/plumber.svg'
@@ -11,6 +12,9 @@ import axios from 'axios';
 
 const PostJob = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useDarkMode();
+  const { user } = useAuth();
+  
   const [formData, setFormData] = useState({
     title: '',
     location: '',
@@ -36,7 +40,18 @@ const PostJob = () => {
     whatsappNumber: '', // optional
     materialsProvidedByClient: false,
   });
-  const { isDarkMode } = useDarkMode();
+
+  // Populate user information when component mounts or user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        clientName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : prev.clientName,
+        contactPhone: user.phone || prev.contactPhone,
+        contactEmail: user.email || prev.contactEmail,
+      }));
+    }
+  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

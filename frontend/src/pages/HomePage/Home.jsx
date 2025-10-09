@@ -336,8 +336,8 @@ export default function MainFeed() {
     
     // Handle text truncation for long content
     const lines = formattedText.split('<br>');
-    if (lines.length > 5 && !isExpanded) {
-      const truncatedLines = lines.slice(0, 3);
+    if (lines.length > 2 && !isExpanded) {
+      const truncatedLines = lines.slice(0, 2);
       return truncatedLines.join('<br>');
     }
     
@@ -762,7 +762,7 @@ export default function MainFeed() {
         </div>
         
         {/* Post Description */}
-        <div className="mb-3">
+        <div className="mb-0">
           <div 
             className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-xs md:text-sm leading-relaxed`}
             dangerouslySetInnerHTML={{ 
