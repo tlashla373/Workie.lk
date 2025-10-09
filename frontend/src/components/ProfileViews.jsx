@@ -42,13 +42,13 @@ const ProfileViews = () => {
   
   if (loading) {
     return (
-      <div className={`rounded-xl p-6 border shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)] ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFF] border-gray-100'}`}>
+      <div className={`rounded-xl p-4 border shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)] ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFF] border-gray-100'}`}>
         <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Profile Views</h3>
         <div className="text-center">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded mb-2"></div>
-            <div className="h-4 bg-gray-300 rounded mb-2"></div>
-            <div className="h-4 bg-gray-300 rounded"></div>
+            <div className="h-8 bg-gray-800 rounded mb-2"></div>
+            <div className="h-4 bg-gray-800 rounded mb-2"></div>
+            <div className="h-4 bg-gray-800 rounded"></div>
           </div>
         </div>
       </div>
@@ -56,8 +56,8 @@ const ProfileViews = () => {
   }
 
   return (
-    <div className={`rounded-xl p-6 border shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)]  ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFF] border-gray-100'}`}>
-      <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Profile Views</h3>
+    <div className={`rounded-xl p-3 border shadow-[0px_4px_6px_0px_rgba(0,_0,_0,_0.1)]  ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-[#FFFF] border-gray-100'}`}>
+      <h3 className={`text-lg font-bold mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Profile Views</h3>
       <div className="text-center">        
         <div className={`text-3xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>+ {viewData.views}          
         </div>

@@ -26,7 +26,7 @@ const FindJobs = () => {
   const { isDarkMode } = useDarkMode();
 
   // Pagination settings
-  const jobsPerPage = 5;
+  const jobsPerPage = 10;
 
   // Category icons mapping
   const categoryIcons = {
@@ -61,8 +61,8 @@ const FindJobs = () => {
       const token = localStorage.getItem('auth_token');
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       
-      // Fetch all available jobs with status=open
-      const response = await axios.get('/api/jobs?status=open', config);
+      // Fetch all available jobs with status=open (no limit to get all jobs)
+      const response = await axios.get('/api/jobs?status=open&limit=1000', config);
       
       if (response.data && response.data.success) {
         const jobsData = response.data.data.jobs.map(job => ({
@@ -93,6 +93,7 @@ const FindJobs = () => {
           urgency: job.urgency || 'medium'
         }));
         setJobs(jobsData);
+        console.log(`Successfully loaded ${jobsData.length} jobs with status=open`);
       } else {
         throw new Error(response.data.message || 'Failed to fetch jobs');
       }

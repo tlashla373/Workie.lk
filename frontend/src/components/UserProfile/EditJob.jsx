@@ -1,16 +1,52 @@
-import React, { useState } from 'react';
-import { MapPin, DollarSign, Clock, Building, Save, Send, User, Star, Phone, Mail, Plus, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { 
+  ArrowLeft, 
+  MapPin, 
+  DollarSign,
+  Clock,
+  Building,
+  X, 
+  Plus, 
+  Save, 
+  Send, 
+  Trash,
+  Edit,
+  AlertCircle,
+  User,
+  Star,
+  Phone,
+  Mail
+} from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
-import Mason from '../../assets/mason.svg'
-import Welder from '../../assets/welder.svg'
-import Plumber from '../../assets/plumber.svg'
-import Carpenter from '../../assets/carpenter.svg'
-import Painter from '../../assets/painter.svg'
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import AuthChecker from '../../components/ProtectionPage/AuthChecker';
 import axios from 'axios';
+import Mason from '../../assets/mason.svg';
+import Welder from '../../assets/welder.svg';
+import Plumber from '../../assets/plumber.svg';
+import Carpenter from '../../assets/carpenter.svg';
+import Painter from '../../assets/painter.svg';
 
-const PostJob = () => {
+const EditJob = () => {
+  const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const { isDarkMode } = useDarkMode();
+  const { user } = useAuth();
+  
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('auth_token');
+  
+  // If not authenticated, show auth checker
+  if (!isAuthenticated) {
+    return <AuthChecker />;
+  }
+  
+  // Get job data from location state or fetch from API
+  const jobFromState = location.state?.job;
+  
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     location: '',
@@ -36,7 +72,82 @@ const PostJob = () => {
     whatsappNumber: '', // optional
     materialsProvidedByClient: false,
   });
-  const { isDarkMode } = useDarkMode();
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
+  const [errors, setErrors] = useState({});
+
+  // Load job data when component mounts
+  useEffect(() => {
+    const loadJobData = async () => {
+      if (jobFromState) {
+        // Use job data from navigation state
+        populateFormData(jobFromState);
+        setLoading(false);
+      } else if (id) {
+        // Fetch job data from API
+        try {
+          setLoading(true);
+          const token = localStorage.getItem('auth_token');
+          const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+          
+          const response = await axios.get(`/api/jobs/${id}`, config);
+          
+          if (response.data && response.data.success) {
+            populateFormData(response.data.data);
+          } else {
+            throw new Error(response.data.message || 'Failed to fetch job details');
+          }
+        } catch (error) {
+          console.error('Error fetching job details:', error);
+          setErrors({ submit: error.response?.data?.message || error.message || 'Failed to load job details' });
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    loadJobData();
+  }, [id, jobFromState]);
+
+  // Function to populate form data from job object
+  const populateFormData = (job) => {
+    setFormData({
+      title: job.title || '',
+      location: job.location?.city || job.location?.address || '',
+      salary: '',
+      fullDescription: job.description || '',
+      requirements: job.requirements && job.requirements.length > 0 ? job.requirements : [''],
+      benefits: job.benefits || '',
+      deadline: job.applicationClosingDate ? job.applicationClosingDate.split('T')[0] : '',
+      category: mapBackendCategoryToFrontend(job.category),
+      tags: job.skills && job.skills.length > 0 ? job.skills : [''],
+      clientName: job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : '',
+      clientType: 'Individual Client',
+      contactPhone: job.client?.phone || '',
+      contactEmail: job.client?.email || '',
+      startDate: job.startDate ? job.startDate.split('T')[0] : '',
+      endDate: job.endDate ? job.endDate.split('T')[0] : '',
+      paymentType: job.budget?.type || 'fixed',
+      amount: job.budget?.amount ? job.budget.amount.toString() : '',
+      whatsappNumber: job.client?.whatsappNumber || '',
+      materialsProvidedByClient: job.materialsProvidedByClient || false,
+    });
+  };
+
+  // Map backend category to frontend category
+  const mapBackendCategoryToFrontend = (backendCategory) => {
+    const categoryMap = {
+      'other': 'Mason',
+      'carpentry': 'Carpenter',
+      'repair-services': 'Welder',
+      'painting': 'Painter',
+      'plumbing': 'Plumber'
+    };
+    return categoryMap[backendCategory] || '';
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -69,10 +180,6 @@ const PostJob = () => {
     }
   };
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', null
-  const [errors, setErrors] = useState({});
-
   // Validation function
   const validateForm = () => {
     const newErrors = {};
@@ -89,53 +196,42 @@ const PostJob = () => {
       newErrors.amount = 'Please enter a valid amount (e.g. 3500)';
     }
 
-    // Enhanced date validation
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
-
-    if (!formData.deadline) {
-      newErrors.deadline = 'Application closing date is required';
-    }
-
+    // Dates: start/end optional; closing date required
+    if (!formData.deadline) newErrors.deadline = 'Application closing date is required';
+    
+    const today = new Date().toISOString().split('T')[0];
+    
     // Validate start date (cannot be in the past)
-    if (formData.startDate) {
-      const startDate = new Date(formData.startDate);
-      if (startDate < today) {
-        newErrors.startDate = 'Start date cannot be in the past';
-      }
+    if (formData.startDate && formData.startDate < today) {
+      newErrors.startDate = 'Start date cannot be in the past';
     }
-
+    
     // Validate end date (must be after start date)
     if (formData.startDate && formData.endDate) {
       const startDate = new Date(formData.startDate);
       const endDate = new Date(formData.endDate);
-      
       if (endDate <= startDate) {
         newErrors.endDate = 'End date must be after start date';
       }
     }
-
+    
     // Validate application closing date
     if (formData.deadline) {
-      const closingDate = new Date(formData.deadline);
+      const deadlineDate = new Date(formData.deadline);
       
-      // Cannot be in the past
-      if (closingDate < today) {
-        newErrors.deadline = 'Application closing date cannot be in the past';
-      }
-      
-      // Must be between start date and end date (if both are provided)
+      // Must be after start date if start date is provided
       if (formData.startDate) {
         const startDate = new Date(formData.startDate);
-        if (closingDate < startDate) {
-          newErrors.deadline = 'Application closing date cannot be before start date';
+        if (deadlineDate < startDate) {
+          newErrors.deadline = 'Application closing date must be after start date';
         }
       }
       
+      // Must be before end date if end date is provided
       if (formData.endDate) {
         const endDate = new Date(formData.endDate);
-        if (closingDate > endDate) {
-          newErrors.deadline = 'Application closing date cannot be after end date';
+        if (deadlineDate > endDate) {
+          newErrors.deadline = 'Application closing date must be before end date';
         }
       }
     }
@@ -190,7 +286,7 @@ const PostJob = () => {
     return category ? category.logo : null;
   };
 
-  const handleSubmit = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
     setSubmitStatus(null);
     setErrors({});
@@ -213,7 +309,7 @@ const PostJob = () => {
         'Plumber': 'plumbing'
       };
 
-      // Prepare backend payload
+      // Prepare backend payload for update
       const jobPayload = {
         title: formData.title,
         description: formData.fullDescription,
@@ -225,7 +321,7 @@ const PostJob = () => {
         },
         location: {
           address: formData.location,
-          city: formData.location.split(',')[0]?.trim() || formData.location, // Extract city from location
+          city: formData.location.split(',')[0]?.trim() || formData.location,
         },
         requirements: formData.requirements.filter(req => req.trim() !== ''),
         skills: formData.tags.filter(tag => tag.trim() !== ''),
@@ -239,7 +335,6 @@ const PostJob = () => {
         maxApplicants: 50,
         isRemote: false,
         experienceLevel: 'any',
-        // Custom fields for contact
         contact: {
           clientName: formData.clientName,
           clientType: formData.clientType,
@@ -248,35 +343,65 @@ const PostJob = () => {
           email: formData.contactEmail
         },
         materialsProvidedByClient: formData.materialsProvidedByClient,
-        deadline: formData.deadline
+        applicationClosingDate: formData.deadline
       };
 
-      // Auth: get token from localStorage using the correct key
+      // Auth: get token from localStorage
       const token = localStorage.getItem('auth_token');
       
       if (!token) {
         setSubmitStatus('error');
-        setErrors({ submit: 'Please log in to post a job. You need to be authenticated as a client.' });
+        setErrors({ submit: 'Please log in to update the job. You need to be authenticated.' });
         return;
       }
 
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      // POST to backend
-      const response = await axios.post('/api/jobs', jobPayload, config);
+      // PUT request to update the job
+      const response = await axios.put(`/api/jobs/${id}`, jobPayload, config);
       if (response.data && response.data.success) {
         setSubmitStatus('success');
-        // Keep the success message visible longer to allow user interaction
-        // Don't auto-clear the form - let user decide to reset or navigate
+        // Navigate back to job details page after successful update
+        setTimeout(() => {
+          navigate(`/job-details/${id}`);
+        }, 2000);
       } else {
         setSubmitStatus('error');
-        setErrors({ submit: response.data.message || 'Failed to post job. Please try again.' });
+        setErrors({ submit: response.data.message || 'Failed to update job. Please try again.' });
       }
     } catch (error) {
       setSubmitStatus('error');
-      setErrors({ submit: error.response?.data?.message || error.message || 'Failed to post job. Please try again.' });
+      setErrors({ submit: error.response?.data?.message || error.message || 'Failed to update job. Please try again.' });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      if (!token) {
+        setErrors({ submit: 'Please log in to delete the job.' });
+        return;
+      }
+
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      // DELETE request to remove the job
+      const response = await axios.delete(`/api/jobs/${id}`, config);
+      if (response.data && response.data.success) {
+        // Navigate back to client profile posted jobs tab after successful deletion
+        navigate('/clientprofile?tab=posted-jobs');
+      } else {
+        setErrors({ submit: response.data.message || 'Failed to delete job. Please try again.' });
+      }
+    } catch (error) {
+      setErrors({ submit: error.response?.data?.message || error.message || 'Failed to delete job. Please try again.' });
     }
   };
 
@@ -307,12 +432,18 @@ const PostJob = () => {
 
   return (
     <div className="space-y-2 sm:space-y-2 p-2 sm:p-2">
-      {/*<div className="text-center">
-        <h1 className={`text-lg sm:text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Post a New Job</h1>
-        <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Find the perfect candidate for your work</p>
-      </div>*/}
+      <div className="text-center">
+        <h1 className={`text-lg sm:text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Edit Job</h1>
+        <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Update your job details</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-2">
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className={`ml-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading job details...</span>
+        </div>
+      ) : (
+        <form onSubmit={handleUpdate} className="space-y-2 sm:space-y-2">
         {/* Error summary at top if there are any errors */}
         {submitStatus === 'error' && Object.keys(errors).length > 0 && (
           <div className={`p-3 sm:p-2 rounded-xl mb-4 sm:mb-6 ${isDarkMode ? 'bg-red-500/20 border border-red-500/30' : 'bg-red-50 border border-red-200'}`}>
@@ -674,32 +805,25 @@ const PostJob = () => {
               name="deadline"
               value={formData.deadline}
               onChange={handleInputChange}
-              min={formData.startDate || new Date().toISOString().split('T')[0]} // Must be between start date and end date
-              max={formData.endDate || undefined}
+              min={formData.startDate || new Date().toISOString().split('T')[0]} // Must be after start date
+              max={formData.endDate || undefined} // Must be before end date
               className={`${inputClasses} appearance-none ${errors.deadline ? 'border-red-500 focus:ring-red-500' : ''}`}
-              title="Application closing date must be between start date and end date"
               required
             />
             {errors.deadline && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.deadline}</p>}
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Applications will be accepted until this date
+            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {formData.startDate && formData.endDate 
+                ? `Must be between ${formData.startDate} and ${formData.endDate}`
+                : formData.startDate 
+                ? `Must be after ${formData.startDate}`
+                : 'Select start date first for date range validation'
+              }
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
-          <button
-            type="button"
-            className={`flex-1 flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-200 text-sm sm:text-base ${
-              isDarkMode
-                ? 'bg-gray-600/50 text-gray-300 hover:bg-gray-600'
-                : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            <Save className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Save as Draft</span>
-          </button>
           <button
             type="submit"
             disabled={isSubmitting}
@@ -712,19 +836,30 @@ const PostJob = () => {
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Posting Job...</span>
+                <span>Updating Job post...</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Post Job</span>
+                <span>Update Job</span>
               </>
             )}
           </button>
+
+          {/* Delete Button */}
+          <button
+            type="button"
+            onClick={handleDelete}
+            className={`flex-1 flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all duration-200 text-sm sm:text-base bg-red-500 hover:bg-red-600 text-white`}
+          >
+            <Trash className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Delete Job</span>
+          </button>
         </div>
       </form>
+      )}
 
-      {/* Success Message at Bottom */}
+      {/* Success Message */}
       {submitStatus === 'success' && (
         <div className={`mt-6 p-4 sm:p-6 rounded-xl ${isDarkMode ? 'bg-green-500/20 border border-green-500/30' : 'bg-green-50 border border-green-200'}`}>
           <div className="flex items-start space-x-3">
@@ -733,56 +868,11 @@ const PostJob = () => {
             </div>
             <div className="flex-1">
               <h3 className={`font-semibold text-sm sm:text-base mb-2 ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>
-                Job Posted Successfully!
+                Job Updated Successfully!
               </h3>
-              <p className={`text-xs sm:text-sm mb-4 ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
-                Your job has been published and candidates can now view and apply to it. You can manage your posted jobs from your profile.
+              <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
+                Your job has been updated successfully. Redirecting to job details...
               </p>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <button
-                  onClick={() => navigate('/clientprofile?tab=posted-jobs')}
-                  className={`px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors ${
-                    isDarkMode 
-                      ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-green-600 text-white hover:bg-green-700'
-                  }`}
-                >
-                  View Posted Jobs
-                </button>
-                <button
-                  onClick={() => {
-                    setSubmitStatus(null);
-                    setFormData({
-                      title: '',
-                      location: '',
-                      salary: '',
-                      fullDescription: '',
-                      requirements: [''],
-                      benefits: '',
-                      deadline: '',
-                      category: '',
-                      tags: [''],
-                      clientName: '',
-                      clientType: 'Individual Client',
-                      contactPhone: '',
-                      contactEmail: '',
-                      startDate: '',
-                      endDate: '',
-                      paymentType: 'fixed',
-                      amount: '',
-                      whatsappNumber: '',
-                      materialsProvidedByClient: false,
-                    });
-                  }}
-                  className={`px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors border ${
-                    isDarkMode 
-                      ? 'border-green-500 text-green-300 hover:bg-green-500/10' 
-                      : 'border-green-600 text-green-600 hover:bg-green-50'
-                  }`}
-                >
-                  Post Another Job
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -791,4 +881,4 @@ const PostJob = () => {
   );
 };
 
-export default PostJob;
+export default EditJob;

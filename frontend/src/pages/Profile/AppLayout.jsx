@@ -3,12 +3,30 @@ import { Outlet } from 'react-router-dom';
 import SideNavbar from '../../components/NavBar/SideNavbar';
 import UpperNavbar from '../../components/NavBar/UpperNavbar';
 import JobSuggestion from '../JobSuggestions/JobSuggestions';
+import TopRatingWorker from '../JobSuggestions/TopRatingWorker';
 import AdminAccess from '../../components/AdminPanel/AdminAccess';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import useAuth from '../../hooks/useAuth';
 
 const AppLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { isDarkMode } = useDarkMode();
+  const { user } = useAuth();
+
+  // Determine which sidebar component to show based on user type
+  const renderSidebar = () => {
+    if (!user) return <JobSuggestion />; // Default fallback
+    
+    // Show TopRatingWorker for client users, JobSuggestion for worker users
+    if (user.userType === 'client') {
+      return <TopRatingWorker />;
+    } else if (user.userType === 'worker') {
+      return <JobSuggestion />;
+    }
+    
+    // Default fallback for other user types
+    return <JobSuggestion />;
+  };
 
   return (
     <>
@@ -34,9 +52,9 @@ const AppLayout = () => {
               </div>
             </main>
 
-            {/* Job Suggestions Sidebar - Hidden on mobile, visible on desktop */}
-            <div className="hidden lg:flex h-screen w-85 overflow-hidden flex-shrink-0">
-              <JobSuggestion />
+            {/* Right Sidebar - Hidden on mobile, visible on desktop */}
+            <div className="hidden lg:flex h-screen w-85 overflow-hidden flex-shrink-0 p-1">
+              {renderSidebar()}
             </div>
           </div>
         </div>

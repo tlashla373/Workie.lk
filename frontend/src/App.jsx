@@ -38,6 +38,8 @@ import AdminSettings from './pages/Admin/AdminSettings';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import AdminRegistration from './components/AdminPanel/AdminRegistration';
 import JobDetailsContainer from './pages/JobDetails/JobDetailsContainer';
+import JobEditMode from './components/UserProfile/JobEditMode';
+import EditJob from './components/UserProfile/EditJob';
 import ProtectedRoute from './components/ProtectionPage/ProtectedRoute';
 import PublicRoute from './components/ProtectionPage/PublicRoute';
 import AdminRoute from './components/AdminPanel/AdminRoute';
@@ -118,6 +120,14 @@ const App = () => {
         {
           path: 'jobs/:id',
           element: <JobDetailsContainer />,
+        },
+        {
+          path: 'job-details/:id',
+          element: <JobEditMode />,
+        },
+        {
+          path: 'edit-job/:id',
+          element: <EditJob />,
         },
       ],
     },

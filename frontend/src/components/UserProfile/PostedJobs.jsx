@@ -64,6 +64,29 @@ const PostedJobs = ({ isDarkMode, isOwnProfile, userId }) => {
     return `${budget.currency || 'LKR'} ${budget.amount} (${budget.type || 'fixed'})`;
   };
 
+  const handleEdit = (job) => {
+    // Navigate to edit page with job data
+    navigate(`/edit-job/${job._id}`, { state: { job: job } });
+  };
+
+  const handleDelete = async (jobId) => {
+    if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        
+        await axios.delete(`/api/jobs/${jobId}`, config);
+        
+        alert('Job deleted successfully!');
+        // Refresh the jobs list
+        fetchPostedJobs();
+      } catch (error) {
+        console.error('Error deleting job:', error);
+        alert(error.response?.data?.message || 'Failed to delete job. Please try again.');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -148,10 +171,18 @@ const PostedJobs = ({ isDarkMode, isOwnProfile, userId }) => {
               </div>
               {isOwnProfile && (
                 <div className="flex gap-2 ml-4">
-                  <button className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}>
+                  <button 
+                    onClick={() => handleEdit(job)}
+                    className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                    title="Edit Job"
+                  >
                     <Edit className="w-4 h-4 text-blue-500" />
                   </button>
-                  <button className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}>
+                  <button 
+                    onClick={() => handleDelete(job._id)}
+                    className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                    title="Delete Job"
+                  >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
                 </div>
@@ -219,7 +250,7 @@ const PostedJobs = ({ isDarkMode, isOwnProfile, userId }) => {
               </div>
               
               <button 
-                onClick={() => navigate(`/jobs/${job._id}`)}
+                onClick={() => navigate(`/job-details/${job._id}`)}
                 className="px-4 py-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors text-sm font-medium"
               >
                 View Details
