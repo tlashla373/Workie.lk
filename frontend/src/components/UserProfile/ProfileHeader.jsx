@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Edit } from 'lucide-react';
+import { Camera, Edit, ShieldCheck } from 'lucide-react';
 import mediaService from '../../services/mediaService';
 
 const ProfileHeader = ({
@@ -146,7 +146,15 @@ const ProfileHeader = ({
           )}
         </div>
         <div className="text-white mb-0 sm:mb-4">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{profileData.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">{profileData.name}</h1>
+            {profileData.isVerified && (
+              <div className="flex items-center gap-1 bg-blue-500 px-2 py-1 rounded-full" title="Verified Worker">
+                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <span className="text-xs sm:text-sm font-semibold text-white">Verified</span>
+              </div>
+            )}
+          </div>
           <p className="text-sm sm:text-base lg:text-lg opacity-90">{profileData.title}</p>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 sm:mt-2 text-xs sm:text-sm opacity-80">
             <span>{profileData.followers} followers</span>

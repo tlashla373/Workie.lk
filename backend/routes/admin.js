@@ -325,7 +325,7 @@ router.get('/reports/:type', async (req, res) => {
         const totalUsers = await User.countDocuments();
         const newUsers = await User.countDocuments({ createdAt: { $gte: startDate } });
         const activeUsers = await User.countDocuments({ isActive: true });
-        
+
         data = {
           totalUsers,
           newUsersThisMonth: newUsers,
@@ -338,7 +338,7 @@ router.get('/reports/:type', async (req, res) => {
         const totalJobs = await Job.countDocuments();
         const recentJobs = await Job.countDocuments({ createdAt: { $gte: startDate } });
         const completedJobs = await Job.countDocuments({ status: 'completed' });
-        
+
         data = {
           totalJobs,
           jobsThisMonth: recentJobs,
@@ -454,6 +454,352 @@ router.get('/notifications', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin get notifications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// ============= WORKER VERIFICATION ENDPOINTS =============
+
+// @route   GET /api/admin/workers/pending-verification
+// @desc    Get all workers pending verification
+// @access  Admin only
+router.get('/workers/pending-verification', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Find workers with ID documents but not verified
+    const query = {
+      userType: 'worker',
+      isVerified: false,
+      'verificationDocuments.idPhotoFront': { $exists: true, $ne: '' },
+      'verificationDocuments.idPhotoBack': { $exists: true, $ne: '' }
+    };
+
+    const [workers, total] = await Promise.all([
+      User.find(query)
+        .select('-password')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      User.countDocuments(query)
+    ]);
+
+    // Get average rating for each worker
+    const workersWithRatings = await Promise.all(
+      workers.map(async (worker) => {
+        const reviews = await Review.find({ reviewee: worker._id });
+        const avgRating = reviews.length > 0
+          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+          : 0;
+        const reviewCount = reviews.length;
+
+        return {
+          ...worker.toObject(),
+          avgRating: avgRating.toFixed(1),
+          reviewCount
+        };
+      })
+    );
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      success: true,
+      data: {
+        workers: workersWithRatings,
+        totalPages,
+        currentPage: page,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Admin pending verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/workers/:id/verification-details
+// @desc    Get worker verification details including ID photos and rating
+// @access  Admin only
+router.get('/workers/:id/verification-details', async (req, res) => {
+  try {
+    const worker = await User.findById(req.params.id).select('-password');
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Get worker's reviews and calculate average rating
+    const reviews = await Review.find({ reviewee: worker._id })
+      .populate('reviewer', 'firstName lastName')
+      .populate('job', 'title')
+      .sort({ createdAt: -1 });
+
+    const avgRating = reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
+    const reviewCount = reviews.length;
+
+    // Get completed jobs count
+    const completedJobs = await Application.countDocuments({
+      applicant: worker._id,
+      status: 'completed'
+    });
+
+    res.json({
+      success: true,
+      data: {
+        worker: worker.toObject(),
+        avgRating: avgRating.toFixed(1),
+        reviewCount,
+        completedJobs,
+        reviews: reviews.slice(0, 10), // Latest 10 reviews
+        verificationDocuments: {
+          idPhotoFront: worker.verificationDocuments?.idPhotoFront,
+          idPhotoBack: worker.verificationDocuments?.idPhotoBack
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin verification details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/workers/:id/verify
+// @desc    Verify a worker (approve verification)
+// @access  Admin only
+router.post('/workers/:id/verify', async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    const worker = await User.findById(req.params.id);
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Check if worker has uploaded ID documents
+    if (!worker.verificationDocuments?.idPhotoFront || !worker.verificationDocuments?.idPhotoBack) {
+      return res.status(400).json({
+        success: false,
+        message: 'Worker has not uploaded ID documents'
+      });
+    }
+
+    // Get worker's average rating
+    const reviews = await Review.find({ reviewee: worker._id });
+    const avgRating = reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
+    // Check if rating is greater than 3 (if they have reviews)
+    if (reviews.length > 0 && avgRating <= 3) {
+      return res.status(400).json({
+        success: false,
+        message: `Worker's average rating (${avgRating.toFixed(1)}) must be greater than 3.0 to be verified`,
+        avgRating: avgRating.toFixed(1),
+        reviewCount: reviews.length
+      });
+    }
+
+    // Verify the worker
+    worker.isVerified = true;
+    await worker.save();
+
+    // Create notification for the worker
+    await Notification.create({
+      user: worker._id,
+      title: '✅ Verification Approved!',
+      message: `Congratulations! Your account has been verified. You can now display the verified badge on your profile.${notes ? ` Note: ${notes}` : ''}`,
+      type: 'success',
+      createdBy: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: 'Worker verified successfully',
+      data: {
+        worker: {
+          _id: worker._id,
+          firstName: worker.firstName,
+          lastName: worker.lastName,
+          email: worker.email,
+          isVerified: worker.isVerified,
+          avgRating: avgRating.toFixed(1),
+          reviewCount: reviews.length
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin verify worker error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/workers/:id/reject-verification
+// @desc    Reject a worker's verification request
+// @access  Admin only
+router.post('/workers/:id/reject-verification', async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rejection reason is required'
+      });
+    }
+
+    const worker = await User.findById(req.params.id);
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Ensure worker remains unverified
+    worker.isVerified = false;
+    await worker.save();
+
+    // Create notification for the worker
+    await Notification.create({
+      user: worker._id,
+      title: '❌ Verification Not Approved',
+      message: `Your verification request has been reviewed. Reason: ${reason}. Please update your documents and resubmit.`,
+      type: 'warning',
+      createdBy: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: 'Verification request rejected',
+      data: {
+        worker: {
+          _id: worker._id,
+          firstName: worker.firstName,
+          lastName: worker.lastName,
+          email: worker.email,
+          isVerified: worker.isVerified
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin reject verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/workers/:id/revoke-verification
+// @desc    Revoke a worker's verification status
+// @access  Admin only
+router.post('/workers/:id/revoke-verification', async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: 'Revocation reason is required'
+      });
+    }
+
+    const worker = await User.findById(req.params.id);
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Revoke verification
+    worker.isVerified = false;
+    await worker.save();
+
+    // Create notification for the worker
+    await Notification.create({
+      user: worker._id,
+      title: '⚠️ Verification Revoked',
+      message: `Your verification status has been revoked. Reason: ${reason}. Please contact support if you believe this is an error.`,
+      type: 'error',
+      createdBy: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: 'Worker verification revoked successfully',
+      data: {
+        worker: {
+          _id: worker._id,
+          firstName: worker.firstName,
+          lastName: worker.lastName,
+          email: worker.email,
+          isVerified: worker.isVerified
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin revoke verification error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
