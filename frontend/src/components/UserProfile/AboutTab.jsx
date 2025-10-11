@@ -9,7 +9,8 @@ const ProfileAbout = ({
   isDarkMode = false, 
   isOwnProfile = false, 
   isEditModalOpen = false, 
-  setIsEditModalOpen 
+  setIsEditModalOpen,
+  onProfileUpdate // Add callback to refresh profile data
 }) => {
   const [aboutData, setAboutData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -189,7 +190,11 @@ const ProfileAbout = ({
             <div className="flex items-center space-x-3">
               <Phone className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} google-sans-p`}>
-                {profile?.phone || user?.phone || profileData?.phone || 'Not specified'}
+                {(aboutData?.user?.phone || 
+                  profileData?.user?.phone || 
+                  profileData?.phone || 
+                  aboutData?.profile?.phone || 
+                  'Not specified')}
               </span>
             </div>
             {(profile?.website || user?.website || profileData?.website) && (
@@ -298,11 +303,14 @@ const ProfileAbout = ({
         onClose={() => setModalOpen(false)}
         profileData={profileData}
         onSave={() => {
-          // Refresh the component data after save
-          setLoading(true);
-          setTimeout(() => {
-            window.location.reload(); // Simple refresh for now
-          }, 1000);
+          // Trigger parent component to refresh profile data
+          if (onProfileUpdate) {
+            onProfileUpdate();
+          } else {
+            // Fallback to page reload if no callback provided
+            window.location.reload();
+          }
+          setModalOpen(false);
         }}
         isDarkMode={isDarkMode}
       />

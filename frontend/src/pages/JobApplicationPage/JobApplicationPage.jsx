@@ -125,6 +125,21 @@ const JobApplicationPage = ({ onBack }) => {
       newErrors.email = 'Please enter a valid email address';
     }
     
+    // Validate start date is between job start and end dates
+    if (formData.startDate && currentJob?.duration) {
+      const availableStartDate = new Date(formData.startDate);
+      const jobStartDate = currentJob.duration.startDate ? new Date(currentJob.duration.startDate) : null;
+      const jobEndDate = currentJob.duration.endDate ? new Date(currentJob.duration.endDate) : null;
+      
+      if (jobStartDate && availableStartDate < jobStartDate) {
+        newErrors.startDate = `Available start date must be on or after the job start date (${jobStartDate.toLocaleDateString()})`;
+      }
+      
+      if (jobEndDate && availableStartDate > jobEndDate) {
+        newErrors.startDate = `Available start date must be on or before the job end date (${jobEndDate.toLocaleDateString()})`;
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -213,7 +228,7 @@ const JobApplicationPage = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4">
+    <div className="max-w-4xl mx-auto space-y-2 p-2">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <button
@@ -228,7 +243,7 @@ const JobApplicationPage = ({ onBack }) => {
       </div>
 
       {/* Job Info Summary */}
-      <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
+      <div className={`rounded-xl p-4 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
         <h1 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           Apply for {currentJob?.title || 'Job Position'}
         </h1>
@@ -258,9 +273,9 @@ const JobApplicationPage = ({ onBack }) => {
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-2">
         {/* Personal Information */}
-        <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
+        <div className={`rounded-xl p-4 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
           <div className="flex items-center justify-between mb-6">
             <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Personal Information
@@ -292,7 +307,7 @@ const JobApplicationPage = ({ onBack }) => {
             )}
           </div>
           
-          <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Your profile information has been automatically filled below. You can edit any field as needed.
           </p>
           
@@ -379,17 +394,30 @@ const JobApplicationPage = ({ onBack }) => {
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Available Start Date *
               </label>
+              {/* Show job duration info if available */}
+              {currentJob?.duration && (currentJob.duration.startDate || currentJob.duration.endDate) && (
+                <div className={`mb-2 p-2 rounded-lg text-xs ${isDarkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'}`}>
+                  <strong>Job Timeline:</strong> 
+                  {currentJob.duration.startDate && ` Starts: ${new Date(currentJob.duration.startDate).toLocaleDateString()}`}
+                  {currentJob.duration.startDate && currentJob.duration.endDate && ' | '}
+                  {currentJob.duration.endDate && ` Ends: ${new Date(currentJob.duration.endDate).toLocaleDateString()}`}
+                </div>
+              )}
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors duration-200 ${
+                  min={currentJob?.duration?.startDate ? new Date(currentJob.duration.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                  max={currentJob?.duration?.endDate ? new Date(currentJob.duration.endDate).toISOString().split('T')[0] : undefined}
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-colors duration-200 appearance-none ${
                     isDarkMode 
                       ? 'bg-gray-600/50 border-gray-500 text-white focus:border-blue-400' 
                       : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'
-                  } ${errors.startDate ? 'border-red-500' : ''}`}
+                  } ${errors.startDate ? 'border-red-500 focus:ring-red-500' : ''}`}
+                  title="Available start date must be between job start date and end date"
+                  required
                 />
                 {errors.startDate && (
                   <div className="flex items-center space-x-1 mt-2 text-red-500 text-sm">
@@ -403,12 +431,12 @@ const JobApplicationPage = ({ onBack }) => {
         </div>
 
         {/* Professional Information */}
-        <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
+        <div className={`rounded-xl p-4 ${isDarkMode ? 'bg-gray-700/30' : 'bg-white border border-gray-200'}`}>
           <h2 className={`text-xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Professional Information
           </h2>
           
-          <div className="space-y-6">
+          <div className="space-y-2">
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Expected Rate *
@@ -424,7 +452,7 @@ const JobApplicationPage = ({ onBack }) => {
                       ? 'bg-gray-600/50 border-gray-500 text-white placeholder-gray-400 focus:border-blue-400' 
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
                   } ${errors.expectedRate ? 'border-red-500' : ''}`}
-                  placeholder="e.g., $50/hour or $80,000/year"
+                  placeholder="e.g., 3500 LKR"
                 />
                 {errors.expectedRate && (
                   <div className="flex items-center space-x-1 mt-2 text-red-500 text-sm">
@@ -454,7 +482,7 @@ const JobApplicationPage = ({ onBack }) => {
 
             <div>
               <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Cover Letter *
+                Description *
               </label>
               <textarea
                 value={formData.coverLetter}
