@@ -4,6 +4,7 @@ const Job = require('../models/Job');
 const Application = require('../models/Application');
 const Review = require('../models/Review');
 const Notification = require('../models/Notification');
+const Report = require('../models/Report');
 const { auth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -325,7 +326,7 @@ router.get('/reports/:type', async (req, res) => {
         const totalUsers = await User.countDocuments();
         const newUsers = await User.countDocuments({ createdAt: { $gte: startDate } });
         const activeUsers = await User.countDocuments({ isActive: true });
-        
+
         data = {
           totalUsers,
           newUsersThisMonth: newUsers,
@@ -338,7 +339,7 @@ router.get('/reports/:type', async (req, res) => {
         const totalJobs = await Job.countDocuments();
         const recentJobs = await Job.countDocuments({ createdAt: { $gte: startDate } });
         const completedJobs = await Job.countDocuments({ status: 'completed' });
-        
+
         data = {
           totalJobs,
           jobsThisMonth: recentJobs,
@@ -454,6 +455,251 @@ router.get('/notifications', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin get notifications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   DELETE /api/admin/jobs/:id
+// @desc    Delete job (hard delete for admin)
+// @access  Admin only
+router.delete('/jobs/:id', async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    // Admin can delete any job regardless of status
+    await Job.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Job permanently deleted successfully'
+    });
+  } catch (error) {
+    console.error('Admin delete job error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PATCH /api/admin/jobs/:id/status
+// @desc    Update job status (admin only)
+// @access  Admin only
+router.patch('/jobs/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['open', 'in_progress', 'completed', 'cancelled'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: ' + validStatuses.join(', ')
+      });
+    }
+
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found'
+      });
+    }
+
+    job.status = status;
+    await job.save();
+
+    res.json({
+      success: true,
+      message: `Job status updated to ${status}`,
+      data: { job }
+    });
+  } catch (error) {
+    console.error('Admin update job status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/reports
+// @desc    Get all user reports with pagination and filtering
+// @access  Admin only
+router.get('/user-reports', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const status = req.query.status || '';
+    const type = req.query.type || '';
+    const severity = req.query.severity || '';
+
+    // Build query
+    let query = { isActive: true };
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+    if (type && type !== 'all') {
+      query.type = type;
+    }
+    if (severity && severity !== 'all') {
+      query.severity = severity;
+    }
+
+    const [reports, total] = await Promise.all([
+      Report.find(query)
+        .populate('reportedBy', 'firstName lastName email')
+        .populate('reportedUser', 'firstName lastName email')
+        .populate('reportedJob', 'title budget')
+        .populate('reportedPost', 'content')
+        .populate('resolvedBy', 'firstName lastName')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Report.countDocuments(query)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      success: true,
+      data: {
+        reports,
+        totalPages,
+        currentPage: page,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Admin reports error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/reports/:id
+// @desc    Get single report details
+// @access  Admin only
+router.get('/user-reports/:id', async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id)
+      .populate('reportedBy', 'firstName lastName email profilePicture')
+      .populate('reportedUser', 'firstName lastName email profilePicture')
+      .populate('reportedJob', 'title description budget location')
+      .populate('reportedPost', 'content images')
+      .populate('resolvedBy', 'firstName lastName');
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: { report }
+    });
+  } catch (error) {
+    console.error('Admin get report error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PATCH /api/admin/reports/:id/status
+// @desc    Update report status
+// @access  Admin only
+router.patch('/user-reports/:id/status', async (req, res) => {
+  try {
+    const { status, adminNotes } = req.body;
+    const validStatuses = ['pending', 'investigating', 'resolved', 'dismissed'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be one of: ' + validStatuses.join(', ')
+      });
+    }
+
+    const report = await Report.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    report.status = status;
+    if (adminNotes) report.adminNotes = adminNotes;
+
+    if (status === 'resolved' || status === 'dismissed') {
+      report.resolvedBy = req.user.id;
+      report.resolvedAt = new Date();
+    }
+
+    await report.save();
+
+    res.json({
+      success: true,
+      message: `Report status updated to ${status}`,
+      data: { report }
+    });
+  } catch (error) {
+    console.error('Admin update report status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   DELETE /api/admin/reports/:id
+// @desc    Delete report (soft delete)
+// @access  Admin only
+router.delete('/user-reports/:id', async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    // Soft delete
+    report.isActive = false;
+    await report.save();
+
+    res.json({
+      success: true,
+      message: 'Report deleted successfully'
+    });
+  } catch (error) {
+    console.error('Admin delete report error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
