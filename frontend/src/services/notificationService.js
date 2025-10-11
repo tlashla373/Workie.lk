@@ -73,10 +73,7 @@ class NotificationService {
       this.handleJobEvent(data, event);
     });
 
-    // Subscribe to message notifications
-    socketService.subscribeToMessageEvents((data, event) => {
-      this.handleMessageEvent(data, event);
-    });
+    // Message notifications removed after WhatsApp migration - no longer needed
 
     // Subscribe to connection notifications
     socketService.subscribeToConnectionEvents((data, event) => {
