@@ -44,6 +44,7 @@ import ProtectedRoute from './components/ProtectionPage/ProtectedRoute';
 import PublicRoute from './components/ProtectionPage/PublicRoute';
 import AdminRoute from './components/AdminPanel/AdminRoute';
 import EditPostPage from './pages/EditPost/EditPostPage';
+import PaymentGateway from './pages/PaymentGateway/PaymentGateway';
 
 
 const App = () => {
@@ -133,6 +134,10 @@ const App = () => {
         {
           path: 'edit-post/:postId',
           element: <EditPostPage />,
+        },
+        {
+          path: 'payment-gateway',
+          element: <PaymentGateway />,
         },
       ],
     },

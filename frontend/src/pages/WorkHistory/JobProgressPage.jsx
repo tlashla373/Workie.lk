@@ -224,6 +224,7 @@ const JobProgressPage = () => {
           jobData={job}
           applicationData={job}
           applicationStatus={job.status}
+          jobId={jobId}
         />
       </div>
     </div>
