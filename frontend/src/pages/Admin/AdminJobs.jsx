@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Eye, Edit, Trash2, MapPin, DollarSign, Clock } from 'lucide-react';
 import apiService from '../../services/apiService';
 import { toast } from 'react-toastify';
@@ -7,77 +7,122 @@ const AdminJobs = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
 
-  useEffect(() => {
-    fetchJobs();
-  }, [currentPage, filterStatus, searchTerm]);
 
-  const fetchJobs = async () => {
+
+  // Define fetchJobs function first
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
         page: currentPage,
-        limit: 10,
-        search: searchTerm,
-        status: filterStatus !== 'all' ? filterStatus : ''
+        limit: 5,
+        search: debouncedSearchTerm,
+        status: filterStatus
       });
 
-      const response = await apiService.request(`/jobs?${queryParams}`);
-      setJobs(response.data?.jobs || []);
-      setTotalPages(response.data?.totalPages || 1);
+      let response;
+      try {
+        // Try admin endpoint first
+        response = await apiService.request(`/admin/jobs?${queryParams}`);
+      } catch {
+        // Fallback to regular jobs endpoint if admin fails
+        const fallbackParams = new URLSearchParams({
+          page: currentPage,
+          limit: 5,
+          search: debouncedSearchTerm,
+          ...(filterStatus !== 'all' && { status: filterStatus })
+        });
+        
+        response = await apiService.request(`/jobs?${fallbackParams}`);
+      }
+      
+      // Handle different response structures
+      const jobs = response.data?.jobs || [];
+      const totalPages = response.data?.totalPages || response.data?.pagination?.pages || 1;
+      
+      setJobs(jobs);
+      setTotalPages(totalPages);
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      console.error('❌ Error fetching jobs:', error);
+      console.error('Error details:', error.response?.data || error.message);
       toast.error('Failed to fetch jobs');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filterStatus, debouncedSearchTerm]);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search term or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, debouncedSearchTerm]);
+
+  // Fetch jobs when dependencies change
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const handleJobAction = async (jobId, action) => {
     try {
+      // Show confirmation dialog for delete action
+      if (action === 'delete') {
+        const confirmDelete = window.confirm(
+          'Are you sure you want to delete this job? This action cannot be undone.'
+        );
+        if (!confirmDelete) {
+          return;
+        }
+      }
+
       let endpoint = '';
       let message = '';
       
       switch (action) {
-        case 'complete':
-          endpoint = `/jobs/${jobId}/complete`;
-          message = 'Job marked as completed';
-          break;
-        case 'cancel':
-          endpoint = `/jobs/${jobId}/cancel`;
-          message = 'Job cancelled successfully';
-          break;
         case 'delete':
-          endpoint = `/jobs/${jobId}`;
-          message = 'Job deleted successfully';
+          // Try admin endpoint first, fallback to regular endpoint
+          endpoint = `/admin/jobs/${jobId}`;
+          message = 'Job deleted permanently';
           break;
         default:
           return;
       }
 
       if (action === 'delete') {
-        await apiService.request(endpoint, { method: 'DELETE' });
-      } else {
-        await apiService.request(endpoint, { method: 'PATCH' });
+        try {
+          // Try admin delete endpoint first
+          await apiService.request(endpoint, { method: 'DELETE' });
+        } catch {
+          // Fallback to regular delete endpoint
+          await apiService.request(`/jobs/${jobId}`, { method: 'DELETE' });
+        }
       }
       
       toast.success(message);
-      fetchJobs();
+      fetchJobs(); // Refresh the jobs list
     } catch (error) {
       console.error(`Error ${action} job:`, error);
-      toast.error(`Failed to ${action} job`);
+      toast.error(`Failed to ${action} job: ${error.response?.data?.message || error.message}`);
     }
   };
 
   const viewJobDetails = async (jobId) => {
     try {
       const response = await apiService.request(`/jobs/${jobId}`);
-      setSelectedJob(response.data?.job);
+      setSelectedJob(response.data || response.data?.job);
       setShowJobModal(true);
     } catch (error) {
       console.error('Error fetching job details:', error);
@@ -98,6 +143,30 @@ const AdminJobs = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const formatLocation = (location) => {
+    if (!location) return 'Location not specified';
+    if (typeof location === 'string') return location;
+    
+    const parts = [];
+    if (location.address) parts.push(location.address);
+    if (location.city) parts.push(location.city);
+    if (location.state) parts.push(location.state);
+    
+    return parts.length > 0 ? parts.join(', ') : 'Location not specified';
+  };
+
+  const formatBudget = (budget) => {
+    if (!budget) return 'Not specified';
+    if (typeof budget === 'number') return `$${budget}`;
+    if (typeof budget === 'string') return budget;
+    
+    const amount = budget.amount || 0;
+    const currency = budget.currency || 'LKR';
+    const type = budget.type || 'fixed';
+    
+    return `${currency} ${amount} (${type})`;
   };
 
   const JobModal = () => {
@@ -136,9 +205,9 @@ const AdminJobs = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Skills Required</label>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  {selectedJob.skillsRequired?.map((skill, index) => (
+                  {(selectedJob.skillsRequired || selectedJob.skills || []).map((skill, index) => (
                     <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                      {skill}
+                      {typeof skill === 'string' ? skill : skill?.name || 'Unknown skill'}
                     </span>
                   ))}
                 </div>
@@ -148,12 +217,14 @@ const AdminJobs = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Budget</label>
-                <p className="mt-1 text-sm text-gray-900">${selectedJob.budget}</p>
+                <p className="mt-1 text-sm text-gray-900">{formatBudget(selectedJob.budget)}</p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700">Location</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedJob.location}</p>
+                <p className="mt-1 text-sm text-gray-900">
+                  {formatLocation(selectedJob.location)}
+                </p>
               </div>
               
               <div>
@@ -197,7 +268,7 @@ const AdminJobs = () => {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">
             Job Management
           </h2>
           <p className="mt-1 text-sm text-gray-600">
@@ -247,6 +318,19 @@ const AdminJobs = () => {
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+            <p className="ml-4 text-gray-600">Loading jobs...</p>
+          </div>
+        ) : jobs.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">No jobs found</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Try adjusting your search criteria or filters
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                Current filters: Search="{debouncedSearchTerm}", Status="{filterStatus}"
+              </p>
+            </div>
           </div>
         ) : (
           <>
@@ -280,24 +364,24 @@ const AdminJobs = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {job.title}
+                            {job.title || 'Untitled Job'}
                           </div>
                           <div className="text-sm text-gray-500 flex items-center">
                             <MapPin className="w-4 h-4 mr-1" />
-                            {job.location}
+                            {formatLocation(job.location)}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {job.client?.firstName} {job.client?.lastName}
+                          {job.client?.firstName || job.client?.name || 'Unknown'} {job.client?.lastName || ''}
                         </div>
-                        <div className="text-sm text-gray-500">{job.client?.email}</div>
+                        <div className="text-sm text-gray-500">{job.client?.email || 'No email'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
                           <DollarSign className="w-4 h-4 mr-1" />
-                          {job.budget}
+                          {formatBudget(job.budget)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -317,16 +401,15 @@ const AdminJobs = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          
-                          {job.status === 'open' && (
-                            <button
-                              onClick={() => handleJobAction(job._id, 'cancel')}
-                              className="text-red-600 hover:text-red-900"
-                              title="Cancel Job"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+
+                          {/* Admin can delete any job */}
+                          <button
+                            onClick={() => handleJobAction(job._id, 'delete')}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete Job Permanently"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -340,15 +423,15 @@ const AdminJobs = () => {
               <div className="flex-1 flex justify-between sm:hidden">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  disabled={currentPage <= 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  disabled={currentPage >= totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -365,15 +448,15 @@ const AdminJobs = () => {
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      disabled={currentPage <= 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      disabled={currentPage >= totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>

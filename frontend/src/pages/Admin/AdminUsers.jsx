@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, MoreVertical, Eye, UserX, UserCheck, Edit } from 'lucide-react';
 import apiService from '../../services/apiService';
 import { toast } from 'react-toastify';
@@ -7,36 +7,52 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when search term or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, debouncedSearchTerm]);
+
+  // Fetch users when dependencies change
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, filterType, searchTerm]);
+  }, [currentPage, filterType, debouncedSearchTerm]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
         page: currentPage,
-        limit: 10,
-        search: searchTerm,
+        limit: 5,
+        search: debouncedSearchTerm,
         userType: filterType !== 'all' ? filterType : ''
       });
 
       const response = await apiService.request(`/users?${queryParams}`);
+      
       setUsers(response.data?.users || []);
-      setTotalPages(response.data?.totalPages || 1);
+      setTotalPages(response.data?.pagination?.pages || 1);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to fetch users');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filterType, debouncedSearchTerm]);
 
   const handleUserAction = async (userId, action) => {
     try {
@@ -45,26 +61,24 @@ const AdminUsers = () => {
       
       switch (action) {
         case 'activate':
-          endpoint = `/users/${userId}/activate`;
-          message = 'User activated successfully';
-          break;
         case 'deactivate':
-          endpoint = `/users/${userId}/deactivate`;
-          message = 'User deactivated successfully';
+          endpoint = `/admin/users/${userId}/activate`;
+          message = `User ${action}d successfully`;
           break;
         case 'delete':
-          endpoint = `/users/${userId}`;
+          endpoint = `/admin/users/${userId}`;
           message = 'User deleted successfully';
           break;
         default:
           return;
       }
 
-      if (action === 'delete') {
-        await apiService.request(endpoint, { method: 'DELETE' });
-      } else {
-        await apiService.request(endpoint, { method: 'PATCH' });
-      }
+      await apiService.request(endpoint, { 
+        method: action === 'delete' ? 'DELETE' : 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       toast.success(message);
       fetchUsers();
@@ -159,7 +173,7 @@ const AdminUsers = () => {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">
             User Management
           </h2>
           <p className="mt-1 text-sm text-gray-600">
@@ -207,6 +221,15 @@ const AdminUsers = () => {
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">No users found</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Try adjusting your search criteria or filters
+              </p>
+            </div>
           </div>
         ) : (
           <>
@@ -308,15 +331,15 @@ const AdminUsers = () => {
               <div className="flex-1 flex justify-between sm:hidden">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  disabled={currentPage <= 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  disabled={currentPage >= totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -333,15 +356,15 @@ const AdminUsers = () => {
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      disabled={currentPage <= 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                      disabled={currentPage >= totalPages}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>
