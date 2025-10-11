@@ -592,6 +592,8 @@ const Profile = () => {
           isDarkMode={isDarkMode}
           isOwnProfile={isOwnProfile}
           onEditProfile={handleEditProfile}
+          userId={userId || currentUserId}
+          profileData={profileData}
         />
         
         <div className="p-4 sm:p-6">

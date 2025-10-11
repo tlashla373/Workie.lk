@@ -64,6 +64,61 @@ router.get('/', auth, authorize('admin'), async (req, res) => {
   }
 });
 
+// @route   GET /api/users/search
+// @desc    Search users for chat (authenticated users only)
+// @access  Private
+router.get('/search', auth, async (req, res) => {
+  try {
+    const { q: query, limit = 10, userType } = req.query;
+    const currentUserId = req.user.id;
+
+    if (!query || query.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query must be at least 2 characters long'
+      });
+    }
+
+    const limitNum = parseInt(limit);
+
+    // Build filter
+    const filter = {
+      _id: { $ne: currentUserId }, // Exclude current user
+      isActive: true, // Only active users
+      $or: [
+        { firstName: new RegExp(query, 'i') },
+        { lastName: new RegExp(query, 'i') },
+        { email: new RegExp(query, 'i') }
+      ]
+    };
+
+    // Filter by user type if specified
+    if (userType && ['worker', 'client'].includes(userType)) {
+      filter.userType = userType;
+    }
+
+    const users = await User.find(filter)
+      .select('firstName lastName email userType profilePicture isActive createdAt')
+      .limit(limitNum)
+      .sort({ firstName: 1, lastName: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users,
+        count: users.length
+      }
+    });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching users',
+      error: error.message
+    });
+  }
+});
+
 // @route   GET /api/users/:id
 // @desc    Get user by ID
 // @access  Private

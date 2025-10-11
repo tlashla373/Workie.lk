@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import connectionService from '../../services/connectionService';
+import profileService from '../../services/profileService';
+import { buildWhatsAppUrl } from '../../utils/whatsapp';
 
 const NavigationTabs = ({ 
   activeTab, 
@@ -10,11 +12,14 @@ const NavigationTabs = ({
   setIsFollowing,
   isDarkMode = false,
   isOwnProfile = false, // New prop to determine if viewing own profile
-  onEditProfile // New prop for edit profile callback
+  onEditProfile, // New prop for edit profile callback
+  userId, // User ID of the profile being viewed
+  profileData // Profile data containing user information
 }) => {
   const [friendCount, setFriendCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userType, setUserType] = useState(null);
+  const [openingWhatsApp, setOpeningWhatsApp] = useState(false);
   const navigate = useNavigate();
 
   // Get current user type
@@ -53,6 +58,39 @@ const NavigationTabs = ({
 
     fetchConnectionStats();
   }, []);
+
+  // Handle WhatsApp icon click
+  const handleWhatsAppClick = async () => {
+    const targetUserId = userId || profileData?.user?._id;
+    if (!targetUserId) {
+      console.error('No user ID available for WhatsApp chat');
+      return;
+    }
+
+    try {
+      setOpeningWhatsApp(true);
+      const response = await profileService.getUserProfile(targetUserId);
+      const user = response?.data?.user || response?.user || response?.data;
+      const phoneNumber = user?.phone || user?.contactNumber || user?.mobile;
+
+      const url = buildWhatsAppUrl({
+        phoneNumber,
+        text: `Hi${user?.firstName ? ' ' + user.firstName : ''}, I found you on Workie.lk and would like to connect!`
+      });
+
+      if (!url) {
+        alert('This user has no valid WhatsApp number on file.');
+        return;
+      }
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Error opening WhatsApp chat:', error);
+      alert('Unable to open WhatsApp chat right now.');
+    } finally {
+      setOpeningWhatsApp(false);
+    }
+  };
 
   const tabs = [
     { id: 'timeline', label: 'Timeline' },
@@ -120,8 +158,23 @@ const NavigationTabs = ({
                 >
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
-                <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
-                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                <button 
+                  onClick={handleWhatsAppClick}
+                  disabled={openingWhatsApp}
+                  className={`p-2 rounded-lg transition-colors ${
+                    openingWhatsApp 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : isDarkMode 
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  title="Chat on WhatsApp"
+                >
+                  {openingWhatsApp ? (
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                  )}
                 </button>
               </>
             )}

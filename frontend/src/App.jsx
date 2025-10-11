@@ -70,7 +70,7 @@ const App = () => {
         {
           path: 'friends',
           element: <Friends />,
-        },
+        },   
         {
           path: 'clientprofile',
           element: <Profile />,

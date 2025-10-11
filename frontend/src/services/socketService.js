@@ -6,6 +6,8 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.isConnected = false;
+    this.isAuthenticated = false;
+    this.authenticatedUserId = null;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
     this.reconnectInterval = 1000;
@@ -14,13 +16,21 @@ class SocketService {
 
   // Initialize socket connection
   connect() {
+    // If already connected, don't create a new connection
     if (this.socket?.connected) {
-      console.log('Socket already connected');
+      console.log('✅ Socket already connected, reusing existing connection');
+      return this.socket;
+    }
+
+    // If socket exists but disconnected, try to reconnect
+    if (this.socket && !this.socket.connected) {
+      console.log('🔄 Socket exists but disconnected, attempting to reconnect...');
+      this.socket.connect();
       return this.socket;
     }
 
     try {
-      console.log('Attempting to connect to Socket.IO server...');
+      console.log('🚀 Initializing new Socket.IO connection...');
       
       const token = apiService.getAuthToken();
       if (!token) {
@@ -66,55 +76,58 @@ class SocketService {
 
     // Connection events
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket.id);
+      console.log('✅ Socket connected with ID:', this.socket.id);
       this.isConnected = true;
       this.reconnectAttempts = 0;
       
-      // Authenticate user with socket
+      // Authenticate only if not already authenticated for this user
       const user = authService.getUser();
-      console.log('User data for socket authentication:', user);
+      const userId = user?.id || user?._id;
       
-      if (user) {
-        const userId = user.id || user._id; // Handle both possible ID fields
-        if (userId) {
-          console.log('Authenticating socket with user ID:', userId);
-          this.socket.emit('authenticate', userId);
-        } else {
-          console.error('No user ID found in user data:', user);
-        }
-      } else {
-        console.warn('No user data found for socket authentication');
+      if (userId && (!this.isAuthenticated || this.authenticatedUserId !== userId)) {
+        console.log('🔐 Authenticating socket for user:', userId);
+        this.socket.emit('authenticate', userId);
+        this.authenticatedUserId = userId;
+        this.isAuthenticated = true;
+      } else if (this.isAuthenticated && this.authenticatedUserId === userId) {
+        console.log('✅ Already authenticated for user:', userId, '- skipping re-authentication');
       }
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+      console.log('🔌 Socket disconnected:', reason);
       this.isConnected = false;
+      
+      // Reset authentication status on disconnect
+      if (reason === 'io server disconnect' || reason === 'io client disconnect') {
+        this.isAuthenticated = false;
+        this.authenticatedUserId = null;
+      }
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      console.error('❌ Socket connection error:', error);
       this.isConnected = false;
       this.reconnectAttempts++;
       
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('Max reconnection attempts reached');
+        console.error('❌ Max reconnection attempts reached');
       }
     });
 
     // Reconnection events
     this.socket.on('reconnect', (attemptNumber) => {
-      console.log('Socket reconnected after', attemptNumber, 'attempts');
+      console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
       this.isConnected = true;
       this.reconnectAttempts = 0;
     });
 
     this.socket.on('reconnect_error', (error) => {
-      console.error('Socket reconnection error:', error);
+      console.error('❌ Socket reconnection error:', error);
     });
 
     this.socket.on('reconnect_failed', () => {
-      console.error('Socket reconnection failed');
+      console.error('❌ Socket reconnection failed');
     });
   }
 
@@ -171,22 +184,36 @@ class SocketService {
     });
   }
 
-  // Subscribe to message events
-  subscribeToMessageEvents(callback) {
-    if (!this.socket) return;
+  // Chat-related APIs removed after WhatsApp migration
 
-    const messageEvents = [
-      'new-message',
-      'message-read',
-      'user-typing',
-      'user-stopped-typing'
+  // Listen for user status updates
+  onUserStatusUpdate(callback) {
+    if (!this.socket) return;
+    this.socket.on('userStatusUpdate', callback);
+  }
+
+  // Remove all listeners (useful for cleanup)
+  removeAllListeners() {
+    if (!this.socket) return;
+    
+    const events = [
+      'userStatusUpdate',
+      'notifications-bulk-update',
+      'notification-deleted',
+      'notification-updated',
+      'newNotification',
+      // legacy chat events (no-ops if server doesn’t emit)
+      'newMessage',
+      'messageDeleted',
+      'messageReaction',
+      'messagesRead',
+      'userTyping',
+      'newGroupChat',
+      'chatUpdated'
     ];
 
-    messageEvents.forEach(event => {
-      this.socket.on(event, (data) => {
-        console.log(`Message event received (${event}):`, data);
-        callback(data, event);
-      });
+    events.forEach(event => {
+      this.socket.off(event);
     });
   }
 
@@ -298,10 +325,12 @@ class SocketService {
   // Disconnect socket
   disconnect() {
     if (this.socket) {
-      console.log('Disconnecting socket...');
+      console.log('🔌 Disconnecting socket...');
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.isAuthenticated = false;
+      this.authenticatedUserId = null;
       this.eventListeners.clear();
     }
   }
@@ -310,6 +339,8 @@ class SocketService {
   getConnectionStatus() {
     return {
       isConnected: this.isConnected,
+      isAuthenticated: this.isAuthenticated,
+      authenticatedUserId: this.authenticatedUserId,
       socketId: this.socket?.id || null,
       reconnectAttempts: this.reconnectAttempts
     };
@@ -343,9 +374,7 @@ const cleanupSocket = () => {
   socketService.disconnect();
 };
 
-// Try to connect immediately if user is already authenticated
-setTimeout(() => {
-  initializeSocket();
-}, 1000); // Small delay to ensure auth is ready
+// Export the cleanup function for use by authService
+export { cleanupSocket };
 
 export default socketService;

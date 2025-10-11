@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, MessageCircle, Check } from 'lucide-react';
-
+import { useNavigate } from 'react-router-dom';
 import connectionService from '../../services/connectionService';
+import profileService from '../../services/profileService';
+import { buildWhatsAppUrl } from '../../utils/whatsapp';
 
 const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [openingWhatsApp, setOpeningWhatsApp] = useState(null);
+  const navigate = useNavigate();
 
   // Fetch friends data from API
   useEffect(() => {
@@ -79,6 +83,34 @@ const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
 
     fetchFriends();
   }, []);
+
+  // Handle WhatsApp icon click
+  const handleWhatsAppClick = async (friendId, friendName) => {
+    try {
+      setOpeningWhatsApp(friendId);
+      // Fetch friend's profile to get phone number
+      const response = await profileService.getUserProfile(friendId);
+      const user = response?.data?.user || response?.user || response?.data; // handle possible shapes
+      const phoneNumber = user?.phone || user?.contactNumber || user?.mobile;
+
+      const url = buildWhatsAppUrl({
+        phoneNumber,
+        text: `Hi${friendName ? ' ' + friendName : ''}, I found you on Workie.lk and would like to connect!`
+      });
+
+      if (!url) {
+        alert('This user has no valid WhatsApp number on file.');
+        return;
+      }
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Error opening WhatsApp chat:', error);
+      alert('Unable to open WhatsApp chat right now.');
+    } finally {
+      setOpeningWhatsApp(null);
+    }
+  };
 
   const handleConnect = (friendId) => {
     setFriends(prevFriends =>
@@ -159,8 +191,23 @@ const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
                       <span>Connected</span>
                     </button>
 
-                    <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
-                      <MessageCircle className="w-4 h-4" />
+                    <button 
+                      onClick={() => handleWhatsAppClick(friend.id, friend.name)}
+                      disabled={openingWhatsApp === friend.id}
+                      className={`p-2 rounded-lg transition-colors ${
+                        openingWhatsApp === friend.id 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : isDarkMode 
+                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title="Chat on WhatsApp"
+                    >
+                      {openingWhatsApp === friend.id ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <MessageCircle className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -217,8 +264,23 @@ const ProfileFriends = ({ isDarkMode = false, onConnect }) => {
                       <span>Connect</span>
                     </button>
 
-                    <button className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}>
-                      <MessageCircle className="w-4 h-4" />
+                    <button 
+                      onClick={() => handleWhatsAppClick(friend.id, friend.name)}
+                      disabled={openingWhatsApp === friend.id}
+                      className={`p-2 rounded-lg transition-colors ${
+                        openingWhatsApp === friend.id 
+                          ? 'opacity-50 cursor-not-allowed' 
+                          : isDarkMode 
+                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title="Chat on WhatsApp"
+                    >
+                      {openingWhatsApp === friend.id ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <MessageCircle className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>

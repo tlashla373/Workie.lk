@@ -1,6 +1,7 @@
 import apiService from './apiService.js';
 import { API_ENDPOINTS } from '../config/api.js';
 import profileService from './profileService.js';
+import socketService from './socketService.js';
 
 export class AuthService {
   // Register new user
@@ -16,6 +17,13 @@ export class AuthService {
           apiService.setUser(response.data.user);
           const userId = response.data.user.id || response.data.user._id;
           profileService.handleLogin(userId);
+          
+          // Initialize socket connection after successful registration (only if not already connected)
+          if (!socketService.isConnected) {
+            setTimeout(() => {
+              socketService.connect();
+            }, 500);
+          }
         }
         
         return response;
@@ -50,6 +58,13 @@ export class AuthService {
             // Store the latest user data from database
             apiService.setUser(userDataResponse.data.user);
             
+            // Initialize socket connection after successful Google sign-in (only if not already connected)
+            if (!socketService.isConnected) {
+              setTimeout(() => {
+                socketService.connect();
+              }, 500);
+            }
+            
             // Return the response with fresh user data
             return {
               ...response,
@@ -64,6 +79,13 @@ export class AuthService {
           // Fallback to login response data
           if (response.data.user) {
             apiService.setUser(response.data.user);
+            
+            // Initialize socket connection after successful Google sign-in (only if not already connected)
+            if (!socketService.isConnected) {
+              setTimeout(() => {
+                socketService.connect();
+              }, 500);
+            }
           }
         }
         
@@ -94,6 +116,13 @@ export class AuthService {
             const userId = userDataResponse.data.user.id || userDataResponse.data.user._id;
             profileService.handleLogin(userId);
             
+            // Initialize socket connection after successful login (only if not already connected)
+            if (!socketService.isConnected) {
+              setTimeout(() => {
+                socketService.connect();
+              }, 500);
+            }
+            
             // Return the response with fresh user data
             return {
               ...response,
@@ -110,6 +139,13 @@ export class AuthService {
             apiService.setUser(response.data.user);
             const userId = response.data.user.id || response.data.user._id;
             profileService.handleLogin(userId);
+            
+            // Initialize socket connection after successful login (only if not already connected)
+            if (!socketService.isConnected) {
+              setTimeout(() => {
+                socketService.connect();
+              }, 500);
+            }
           }
         }
         
@@ -133,10 +169,18 @@ export class AuthService {
       apiService.removeUser();
       profileService.handleLogout();
       
+      // Disconnect socket
+      socketService.disconnect();
+      
       return { success: true };
     } catch (error) {
       // Even if API call fails, remove token locally
       apiService.removeAuthToken();
+      apiService.removeUser();
+      
+      // Disconnect socket
+      socketService.disconnect();
+      
       console.error('Logout error:', error);
       return { success: true };
     }
