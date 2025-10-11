@@ -39,7 +39,7 @@ const AdminReports = () => {
     try {
       setLoading(true);
       
-      // Fetch various report data in parallel
+      // Fetch various report data in parallel from REAL analytics endpoints
       const [
         userStatsResponse,
         jobStatsResponse,
@@ -48,98 +48,63 @@ const AdminReports = () => {
         workersResponse,
         clientsResponse
       ] = await Promise.all([
-        apiService.request(`/reports/user-stats?days=${dateRange}`),
-        apiService.request(`/reports/job-stats?days=${dateRange}`),
-        apiService.request(`/reports/revenue-stats?days=${dateRange}`),
-        apiService.request(`/reports/top-categories?days=${dateRange}`),
-        apiService.request(`/reports/top-workers?days=${dateRange}`),
-        apiService.request(`/reports/top-clients?days=${dateRange}`)
+        apiService.request(`/analytics/admin/user-stats?days=${dateRange}`),
+        apiService.request(`/analytics/admin/job-stats?days=${dateRange}`),
+        apiService.request(`/analytics/admin/revenue-stats?days=${dateRange}`),
+        apiService.request(`/analytics/admin/top-categories?days=${dateRange}`),
+        apiService.request(`/analytics/admin/top-workers?days=${dateRange}`),
+        apiService.request(`/analytics/admin/top-clients?days=${dateRange}`)
       ]);
 
       setReportData({
         userStats: userStatsResponse.data || {
-          totalUsers: 150,
-          newUsersThisMonth: 23,
-          activeUsers: 120,
-          userGrowthRate: 15.3
+          totalUsers: 0,
+          newUsersThisMonth: 0,
+          activeUsers: 0,
+          userGrowthRate: 0
         },
         jobStats: jobStatsResponse.data || {
-          totalJobs: 89,
-          jobsThisMonth: 12,
-          completedJobs: 67,
-          averageJobValue: 450
+          totalJobs: 0,
+          jobsThisMonth: 0,
+          completedJobs: 0,
+          averageJobValue: 0
         },
         revenueStats: revenueStatsResponse.data || {
-          totalRevenue: 45000,
-          monthlyRevenue: 8500,
-          averageTransactionValue: 520,
-          revenueGrowthRate: 12.8
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          averageTransactionValue: 0,
+          revenueGrowthRate: 0
         },
-        topCategories: categoriesResponse.data?.categories || [
-          { name: 'Plumbing', count: 25, revenue: 12500 },
-          { name: 'Electrical', count: 18, revenue: 9800 },
-          { name: 'Carpentry', count: 15, revenue: 7500 },
-          { name: 'Painting', count: 12, revenue: 5200 },
-          { name: 'Cleaning', count: 10, revenue: 3000 }
-        ],
-        topWorkers: workersResponse.data?.workers || [
-          { name: 'John Doe', completedJobs: 15, rating: 4.8, earnings: 5400 },
-          { name: 'Jane Smith', completedJobs: 12, rating: 4.9, earnings: 4800 },
-          { name: 'Mike Johnson', completedJobs: 10, rating: 4.7, earnings: 3200 },
-          { name: 'Sarah Wilson', completedJobs: 8, rating: 4.6, earnings: 2800 },
-          { name: 'Tom Brown', completedJobs: 7, rating: 4.5, earnings: 2100 }
-        ],
-        topClients: clientsResponse.data?.clients || [
-          { name: 'ABC Corp', totalSpent: 8500, jobsPosted: 12 },
-          { name: 'XYZ Ltd', totalSpent: 6200, jobsPosted: 8 },
-          { name: 'Tech Solutions', totalSpent: 4800, jobsPosted: 6 },
-          { name: 'Home Services', totalSpent: 3600, jobsPosted: 5 },
-          { name: 'Quick Fix', totalSpent: 2900, jobsPosted: 4 }
-        ]
+        topCategories: categoriesResponse.data?.categories || [],
+        topWorkers: workersResponse.data?.workers || [],
+        topClients: clientsResponse.data?.clients || []
       });
     } catch (error) {
       console.error('Error fetching report data:', error);
-      // Use mock data on error
+      toast.error('Failed to fetch analytics data. Please try again.');
+      // Set empty data on error
       setReportData({
         userStats: {
-          totalUsers: 150,
-          newUsersThisMonth: 23,
-          activeUsers: 120,
-          userGrowthRate: 15.3
+          totalUsers: 0,
+          newUsersThisMonth: 0,
+          activeUsers: 0,
+          userGrowthRate: 0
         },
         jobStats: {
-          totalJobs: 89,
-          jobsThisMonth: 12,
-          completedJobs: 67,
-          averageJobValue: 450
+          totalJobs: 0,
+          jobsThisMonth: 0,
+          completedJobs: 0,
+          averageJobValue: 0
         },
         revenueStats: {
-          totalRevenue: 45000,
-          monthlyRevenue: 8500,
-          averageTransactionValue: 520,
-          revenueGrowthRate: 12.8
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          averageTransactionValue: 0,
+          revenueGrowthRate: 0
         },
-        topCategories: [
-          { name: 'Plumbing', count: 25, revenue: 12500 },
-          { name: 'Electrical', count: 18, revenue: 9800 },
-          { name: 'Carpentry', count: 15, revenue: 7500 },
-          { name: 'Painting', count: 12, revenue: 5200 },
-          { name: 'Cleaning', count: 10, revenue: 3000 }
-        ],
-        topWorkers: [
-          { name: 'John Doe', completedJobs: 15, rating: 4.8, earnings: 5400 },
-          { name: 'Jane Smith', completedJobs: 12, rating: 4.9, earnings: 4800 },
-          { name: 'Mike Johnson', completedJobs: 10, rating: 4.7, earnings: 3200 },
-          { name: 'Sarah Wilson', completedJobs: 8, rating: 4.6, earnings: 2800 },
-          { name: 'Tom Brown', completedJobs: 7, rating: 4.5, earnings: 2100 }
-        ],
-        topClients: [
-          { name: 'ABC Corp', totalSpent: 8500, jobsPosted: 12 },
-          { name: 'XYZ Ltd', totalSpent: 6200, jobsPosted: 8 },
-          { name: 'Tech Solutions', totalSpent: 4800, jobsPosted: 6 },
-          { name: 'Home Services', totalSpent: 3600, jobsPosted: 5 },
-          { name: 'Quick Fix', totalSpent: 2900, jobsPosted: 4 }
-        ]
+        topCategories: [],
+        topWorkers: [],
+        topClients: []
       });
     } finally {
       setLoading(false);
@@ -272,19 +237,25 @@ const AdminReports = () => {
             <h3 className="text-lg font-medium text-gray-900">Top Job Categories</h3>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {reportData.topCategories.map((category, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                    <div className="text-sm text-gray-500">{category.count} jobs</div>
+            {reportData.topCategories.length > 0 ? (
+              <div className="space-y-4">
+                {reportData.topCategories.map((category, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 capitalize">{category.name}</div>
+                      <div className="text-sm text-gray-500">{category.count} jobs</div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">
+                      ${category.revenue ? category.revenue.toLocaleString() : '0'}
+                    </div>
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
-                    ${category.revenue.toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">No category data available for this period</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -292,23 +263,51 @@ const AdminReports = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Top Performing Workers</h3>
+            <p className="text-sm text-gray-500 mt-1">Ranked by average rating</p>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {reportData.topWorkers.map((worker, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{worker.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {worker.completedJobs} jobs • ⭐ {worker.rating}
+            {reportData.topWorkers.length > 0 ? (
+              <div className="space-y-4">
+                {reportData.topWorkers.map((worker, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{worker.name}</div>
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <span>{worker.completedJobs} jobs</span>
+                          {worker.reviewCount && (
+                            <>
+                              <span>•</span>
+                              <span>{worker.reviewCount} reviews</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="text-right">
+                        <div className="flex items-center space-x-1">
+                          <span className="text-yellow-500">⭐</span>
+                          <span className="text-sm font-bold text-gray-900">
+                            {worker.rating ? worker.rating.toFixed(1) : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ${worker.earnings ? worker.earnings.toLocaleString() : '0'}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
-                    ${worker.earnings.toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">No worker data available for this period</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -321,19 +320,25 @@ const AdminReports = () => {
             <h3 className="text-lg font-medium text-gray-900">Top Clients</h3>
           </div>
           <div className="p-6">
-            <div className="space-y-4">
-              {reportData.topClients.map((client, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{client.name}</div>
-                    <div className="text-sm text-gray-500">{client.jobsPosted} jobs posted</div>
+            {reportData.topClients.length > 0 ? (
+              <div className="space-y-4">
+                {reportData.topClients.map((client, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{client.name}</div>
+                      <div className="text-sm text-gray-500">{client.jobsPosted} jobs posted</div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">
+                      ${client.totalSpent ? client.totalSpent.toLocaleString() : '0'}
+                    </div>
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
-                    ${client.totalSpent.toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">No client data available for this period</p>
+              </div>
+            )}
           </div>
         </div>
 

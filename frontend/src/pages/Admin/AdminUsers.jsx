@@ -22,16 +22,6 @@ const AdminUsers = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Reset to page 1 when search term or filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filterType, debouncedSearchTerm]);
-
-  // Fetch users when dependencies change
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, filterType, debouncedSearchTerm]);
-
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -53,6 +43,16 @@ const AdminUsers = () => {
       setLoading(false);
     }
   }, [currentPage, filterType, debouncedSearchTerm]);
+
+  // Reset to page 1 when search term or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, debouncedSearchTerm]);
+
+  // Fetch users when dependencies change
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleUserAction = async (userId, action) => {
     try {
@@ -102,65 +102,234 @@ const AdminUsers = () => {
   const UserModal = () => {
     if (!selectedUser) return null;
 
+    const formatDate = (date) => {
+      if (!date) return 'N/A';
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    const formatAddress = (address) => {
+      if (!address) return 'N/A';
+      const parts = [
+        address.street,
+        address.city,
+        address.state,
+        address.zipCode,
+        address.country
+      ].filter(Boolean);
+      return parts.length > 0 ? parts.join(', ') : 'N/A';
+    };
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">User Details</h3>
+      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-2xl font-bold text-blue-600">
+                  {selectedUser.firstName?.[0]}{selectedUser.lastName?.[0]}
+                </span>
+              </div>
+              <div className="text-white">
+                <h2 className="text-2xl font-bold">
+                  {selectedUser.firstName} {selectedUser.lastName}
+                </h2>
+                <p className="text-blue-100 text-sm">{selectedUser.email}</p>
+              </div>
+            </div>
             <button
               onClick={() => setShowUserModal(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all duration-200"
+              title="Close"
             >
-              ×
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <p className="mt-1 text-sm text-gray-900">
-                {selectedUser.firstName} {selectedUser.lastName}
-              </p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">User Type</label>
-              <p className="mt-1 text-sm text-gray-900">{selectedUser.userType}</p>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <span className={`mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                selectedUser.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+
+          {/* Content */}
+          <div className="overflow-y-auto flex-1 p-6">
+            {/* Status Badges */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                selectedUser.isActive 
+                  ? 'bg-green-100 text-green-800 border border-green-200' 
+                  : 'bg-red-100 text-red-800 border border-red-200'
               }`}>
+                <span className={`w-2 h-2 rounded-full mr-2 ${
+                  selectedUser.isActive ? 'bg-green-500' : 'bg-red-500'
+                }`}></span>
                 {selectedUser.isActive ? 'Active' : 'Inactive'}
               </span>
+              <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                selectedUser.userType === 'worker'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                  : selectedUser.userType === 'client'
+                  ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                  : 'bg-gray-100 text-gray-800 border border-gray-200'
+              }`}>
+                {selectedUser.userType?.toUpperCase()}
+              </span>
+              {selectedUser.isVerified && (
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Verified
+                </span>
+              )}
+              {selectedUser.isEmailVerified && (
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-teal-100 text-teal-800 border border-teal-200">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  Email Verified
+                </span>
+              )}
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Phone</label>
-              <p className="mt-1 text-sm text-gray-900">{selectedUser.phone || 'N/A'}</p>
+
+            {/* Personal Information Section */}
+            <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Name</label>
+                  <p className="text-base text-gray-900 font-medium">
+                    {selectedUser.firstName} {selectedUser.lastName}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
+                  <p className="text-base text-gray-900 font-medium break-all">{selectedUser.email}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone Number</label>
+                  <p className="text-base text-gray-900 font-medium">{selectedUser.phone || 'Not provided'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Date of Birth</label>
+                  <p className="text-base text-gray-900 font-medium">
+                    {selectedUser.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : 'Not provided'}
+                  </p>
+                </div>
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Joined</label>
-              <p className="mt-1 text-sm text-gray-900">
-                {new Date(selectedUser.createdAt).toLocaleDateString()}
-              </p>
+
+            {/* Address Section */}
+            {selectedUser.address && (
+              <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Address Information
+                </h3>
+                <div className="space-y-1">
+                  <p className="text-base text-gray-900">{formatAddress(selectedUser.address)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Account Details Section */}
+            <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Account Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">User ID</label>
+                  <p className="text-sm text-gray-900 font-mono bg-white px-3 py-2 rounded border">
+                    {selectedUser._id}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account Created</label>
+                  <p className="text-base text-gray-900 font-medium">{formatDate(selectedUser.createdAt)}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Updated</label>
+                  <p className="text-base text-gray-900 font-medium">{formatDate(selectedUser.updatedAt)}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Login</label>
+                  <p className="text-base text-gray-900 font-medium">{formatDate(selectedUser.lastLogin)}</p>
+                </div>
+              </div>
             </div>
+
+            {/* Profile Pictures Section */}
+            {(selectedUser.profilePicture || selectedUser.coverPhoto) && (
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Media
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {selectedUser.profilePicture && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Profile Picture</label>
+                      <div className="relative aspect-square w-full max-w-xs mx-auto bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300">
+                        <img 
+                          src={selectedUser.profilePicture} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {selectedUser.coverPhoto && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Cover Photo</label>
+                      <div className="relative aspect-video w-full max-w-xs mx-auto bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300">
+                        <img 
+                          src={selectedUser.coverPhoto} 
+                          alt="Cover" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div className="mt-6 flex justify-end space-x-3">
+
+          {/* Footer */}
+          <div className="bg-gray-100 px-6 py-4 flex justify-end space-x-3 border-t border-gray-200">
             <button
               onClick={() => setShowUserModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
             >
               Close
+            </button>
+            <button
+              onClick={() => {
+                // Add edit functionality here
+                toast.info('Edit functionality coming soon');
+              }}
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Edit User
             </button>
           </div>
         </div>

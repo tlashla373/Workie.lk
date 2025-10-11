@@ -172,90 +172,188 @@ const AdminJobs = () => {
   const JobModal = () => {
     if (!selectedJob) return null;
 
+    const formatDate = (date) => {
+      if (!date) return 'Not specified';
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const getStatusBadge = (status) => {
+      const statusColors = {
+        open: 'bg-green-100 text-green-800 border-green-300',
+        in_progress: 'bg-blue-100 text-blue-800 border-blue-300',
+        completed: 'bg-gray-100 text-gray-800 border-gray-300',
+        cancelled: 'bg-red-100 text-red-800 border-red-300'
+      };
+      return statusColors[status] || statusColors.open;
+    };
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Job Details</h3>
-            <button
-              onClick={() => setShowJobModal(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ×
-            </button>
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+          {/* Header with Gradient */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Job Details</h2>
+                <p className="text-blue-100 text-sm mt-1">Complete job information</p>
+              </div>
+              <button
+                onClick={() => setShowJobModal(false)}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Title</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedJob.title}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedJob.description}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Category</label>
-                <p className="mt-1 text-sm text-gray-900">{selectedJob.category}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Skills Required</label>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {(selectedJob.skillsRequired || selectedJob.skills || []).map((skill, index) => (
-                    <span key={index} className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                      {typeof skill === 'string' ? skill : skill?.name || 'Unknown skill'}
-                    </span>
-                  ))}
+
+          {/* Content */}
+          <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-8 py-6">
+            {/* Status and Basic Info */}
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-6 border border-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Status</p>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border ${getStatusBadge(selectedJob.status)}`}>
+                    {selectedJob.status?.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Job ID</p>
+                  <p className="text-sm font-mono text-gray-900">{selectedJob._id?.slice(-8)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Active</p>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                    selectedJob.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {selectedJob.isActive ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
               </div>
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Budget</label>
-                <p className="mt-1 text-sm text-gray-900">{formatBudget(selectedJob.budget)}</p>
+
+            {/* Job Information */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <div className="w-1 h-6 bg-blue-600 rounded-full mr-3"></div>
+                Job Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
+                  <p className="text-base text-gray-900 font-medium">{selectedJob.title || 'Not specified'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Category</label>
+                  <p className="text-base text-gray-900">{selectedJob.category || 'Not specified'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Description</label>
+                  <p className="text-base text-gray-700 leading-relaxed">{selectedJob.description || 'No description provided'}</p>
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Location</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {formatLocation(selectedJob.location)}
-                </p>
+            </div>
+
+            {/* Skills Required */}
+            {(selectedJob.skillsRequired || selectedJob.skills || []).length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <div className="w-1 h-6 bg-blue-600 rounded-full mr-3"></div>
+                  Skills Required
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedJob.skillsRequired || selectedJob.skills || []).map((skill, index) => (
+                      <span 
+                        key={index} 
+                        className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                      >
+                        {typeof skill === 'string' ? skill : skill?.name || 'Unknown skill'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <span className={`mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedJob.status)}`}>
-                  {selectedJob.status}
-                </span>
+            )}
+
+            {/* Budget & Location */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <div className="w-1 h-6 bg-blue-600 rounded-full mr-3"></div>
+                Budget & Location
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Budget</label>
+                  <p className="text-lg text-gray-900 font-semibold">{formatBudget(selectedJob.budget)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
+                  <p className="text-base text-gray-900">{formatLocation(selectedJob.location)}</p>
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Created</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {new Date(selectedJob.createdAt).toLocaleDateString()}
-                </p>
+            </div>
+
+            {/* Client Information */}
+            {selectedJob.client && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <div className="w-1 h-6 bg-blue-600 rounded-full mr-3"></div>
+                  Client Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Client Name</label>
+                    <p className="text-base text-gray-900 font-medium">
+                      {selectedJob.client.firstName || ''} {selectedJob.client.lastName || ''}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                    <p className="text-base text-gray-900">{selectedJob.client.email || 'Not specified'}</p>
+                  </div>
+                </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Client</label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedJob.client?.firstName} {selectedJob.client?.lastName}
-                </p>
+            )}
+
+            {/* Timeline */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <div className="w-1 h-6 bg-blue-600 rounded-full mr-3"></div>
+                Timeline
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 rounded-xl p-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Created Date</label>
+                  <p className="text-base text-gray-900">{formatDate(selectedJob.createdAt)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Last Updated</label>
+                  <p className="text-base text-gray-900">{formatDate(selectedJob.updatedAt)}</p>
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="mt-6 flex justify-end space-x-3">
+
+          {/* Footer */}
+          <div className="px-8 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
             <button
               onClick={() => setShowJobModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Close
+            </button>
+            <button
+              onClick={() => toast.info('Edit functionality coming soon')}
+              className="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+            >
+              Edit Job
             </button>
           </div>
         </div>

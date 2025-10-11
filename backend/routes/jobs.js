@@ -28,12 +28,12 @@ router.get('/', async (req, res) => {
 
     // Build filter object
     const filter = { isActive: true };
-    
+
     if (status) filter.status = status;
     if (category) filter.category = category;
     if (city) filter['location.city'] = new RegExp(city, 'i');
     if (urgency) filter.urgency = urgency;
-    
+
     // Budget range filter
     if (minBudget || maxBudget) {
       filter['budget.amount'] = {};
@@ -172,7 +172,7 @@ router.put('/:id', auth, async (req, res) => {
     if (job.status === 'in-progress' && req.body.status !== 'completed' && req.body.status !== 'cancelled') {
       const restrictedFields = ['budget', 'category', 'location'];
       const hasRestrictedFields = restrictedFields.some(field => req.body[field]);
-      
+
       if (hasRestrictedFields) {
         return res.status(400).json({
           success: false,
@@ -628,3 +628,39 @@ router.get('/user/my-jobs', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// @route   GET /api/jobs/stats/overview
+// @desc    Get job statistics (admin/dashboard)
+// @access  Public (Admin will use auth when required on router mounting)
+router.get('/stats/overview', async (req, res) => {
+  try {
+    // Basic job stats
+    const totalJobs = await Job.countDocuments();
+    const activeJobs = await Job.countDocuments({ status: 'open', isActive: true });
+    const completedJobs = await Job.countDocuments({ status: 'completed' });
+
+    // Recent jobs (limit 5)
+    const recentJobs = await Job.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('title status createdAt client')
+      .populate('client', 'firstName lastName');
+
+    // Mock monthly revenue for now (frontend expects monthlyRevenue)
+    const monthlyRevenue = Math.floor(Math.random() * 10000) + 5000;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalJobs,
+        activeJobs,
+        completedJobs,
+        monthlyRevenue,
+        recentJobs
+      }
+    });
+  } catch (error) {
+    console.error('Jobs stats error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+});
