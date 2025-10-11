@@ -378,6 +378,100 @@ router.delete('/:postId', auth, async (req, res) => {
   }
 });
 
+// Update post
+router.put('/:postId', auth, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content, privacy, location } = req.body;
+    
+    console.log('✏️ Updating post:', postId);
+    console.log('👤 User requesting update:', req.user._id);
+    console.log('📝 Update data:', { content, privacy, location });
+
+    // Validate content
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Content is required and must be a string'
+      });
+    }
+
+    if (content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content cannot be empty'
+      });
+    }
+
+    if (content.length > 5000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content cannot exceed 5000 characters'
+      });
+    }
+
+    // Find the post
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      console.log('❌ Post not found:', postId);
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    console.log('📝 Post found, owner:', post.userId);
+    
+    // Check if user owns the post
+    if (post.userId.toString() !== req.user._id.toString()) {
+      console.log('❌ User not authorized to update post');
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this post'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {
+      content: content.trim(),
+      updatedAt: new Date()
+    };
+
+    // Add optional fields if provided
+    if (privacy && ['public', 'friends', 'private'].includes(privacy)) {
+      updateData.privacy = privacy;
+    }
+
+    if (location !== undefined) {
+      updateData.location = location.trim();
+    }
+
+    // Update the post
+    const updatedPost = await Post.findByIdAndUpdate(
+      postId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    console.log('✅ Post updated successfully');
+
+    res.json({
+      success: true,
+      message: 'Post updated successfully',
+      data: updatedPost
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating post:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating post',
+      error: error.message
+    });
+  }
+});
+
 // Like/Unlike post
 router.post('/:postId/like', auth, async (req, res) => {
   try {

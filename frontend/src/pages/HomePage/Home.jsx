@@ -993,7 +993,7 @@ export default function MainFeed() {
       {selectedPost && (
         <div className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
           {/* Header Bar */}
-          <div className={`flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex items-center justify-between p-2 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
             <div className="flex items-center space-x-3">
               <img
                 src={selectedPost.avatar}
@@ -1020,7 +1020,7 @@ export default function MainFeed() {
               {selectedPost.media.length > 1 && currentImageIndex > 0 && (
                 <button
                   onClick={prevImage}
-                  className="absolute left-2 md:left-4 z-10 bg-black bg-opacity-50 text-white p-2 md:p-3 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                  className="absolute left-2 md:left-4 z-10 bg-black bg-opacity-50 text-white p-1 md:p-2 rounded-full hover:bg-opacity-70 transition-all duration-200"
                 >
                   <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </button>

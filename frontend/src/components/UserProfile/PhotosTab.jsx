@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share,  Upload,Plus, X, ChevronLeft, ChevronRight, MessageCircle, Send, MoreHorizontal } from 'lucide-react';
+import { Heart, Share, Upload, Plus, X, ChevronLeft, ChevronRight, MessageCircle, Send, MoreHorizontal, Share2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import profileService from '../../services/profileService';
 import postService from '../../services/postService';
 import apiService from '../../services/apiService';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
+import ProfilePosts from './ProfilePosts';
+import EditMediaPost from './EditMediaPost';
 
 // Photos Tab Component
 const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
   console.log('PhotosTab rendered with props:', { profileData: !!profileData, isDarkMode, isOwnProfile, userId });
   
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,9 +29,37 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [likedPosts, setLikedPosts] = useState(new Set()); // Track liked posts
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Get the target user ID (either from props or current user)
-  const targetUserId = userId || user?.id || user?._id;
+  // If no userId provided, use current logged-in user's ID  
+  const targetUserId = userId || user?._id || user?.id;
+
+  console.log('PhotosTab - Props:', { profileData: !!profileData, isDarkMode, isOwnProfile, userId });
+  console.log('PhotosTab - Current user:', user);
+  console.log('PhotosTab - Target user ID:', targetUserId);
+
+  // Helper function to format time ago
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const postDate = new Date(dateString);
+    const diffInMs = now - postDate;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+    } else {
+      return postDate.toLocaleDateString();
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -228,27 +260,125 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
     if (!selectedItem) return;
     
     if (selectedItem.type === 'post') {
-      // For posts, you could implement an edit modal or redirect to edit page
-      console.log('Edit post clicked for:', selectedItem.source._id);
-      toast.info('Post editing functionality will be implemented soon!');
-      
-      // TODO: Implement post editing
-      // Options:
-      // 1. Open an edit modal with the post content
-      // 2. Navigate to a dedicated edit page
-      // 3. Make the content inline editable
+      // Navigate to edit post page
+      navigate(`/edit-post/${selectedItem.source._id}`);
       
     } else if (selectedItem.type === 'portfolio') {
-      // For portfolio items, implement edit functionality
-      console.log('Edit portfolio item clicked for:', selectedItem.source._id);
-      toast.info('Portfolio editing functionality will be implemented soon!');
-      
-      // TODO: Implement portfolio editing
-      // Options:
-      // 1. Open an edit modal with portfolio details
-      // 2. Navigate to portfolio edit page
-      // 3. Make the fields inline editable
+      // Keep modal for portfolio items
+      setEditData({
+        id: selectedItem.source._id,
+        type: 'portfolio',
+        title: selectedItem.source.title || selectedItem.title || '',
+        description: selectedItem.source.description || '',
+        mediaFiles: selectedItem.source.media || selectedItem.source.images?.map(url => ({ url, type: 'image' })) || []
+      });
+      setIsEditModalOpen(true);
     }
+  };
+
+  // Handle EditMediaPost functions
+  const handleEditDescriptionChange = (newDescription) => {
+    if (editData) {
+      setEditData(prev => ({ ...prev, description: newDescription }));
+    }
+  };
+
+  const handleEditMediaRemove = (index) => {
+    if (editData && editData.mediaFiles) {
+      const newMediaFiles = [...editData.mediaFiles];
+      newMediaFiles.splice(index, 1);
+      setEditData(prev => ({ ...prev, mediaFiles: newMediaFiles }));
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!editData || editLoading) return;
+
+    try {
+      setEditLoading(true);
+
+      if (editData.type === 'post') {
+        // Update post using the API
+        const response = await postService.updatePost(editData.id, {
+          content: editData.description.trim()
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to update post');
+        }
+
+        // Update local state
+        setUserPosts(prevPosts =>
+          prevPosts.map(post =>
+            post._id === editData.id
+              ? { ...post, content: editData.description.trim() }
+              : post
+          )
+        );
+
+        // Update selectedItem if it's the same post
+        if (selectedItem && selectedItem.source._id === editData.id) {
+          setSelectedItem(prev => ({
+            ...prev,
+            source: { ...prev.source, content: editData.description.trim() }
+          }));
+        }
+
+        toast.success('Post updated successfully!');
+      } else if (editData.type === 'portfolio') {
+        // Update portfolio item
+        const userId = user?.id || user?._id;
+        if (!userId) {
+          throw new Error('User not authenticated');
+        }
+
+        const response = await apiService.put(`/profiles/${userId}/portfolio/${editData.id}`, {
+          title: editData.title?.trim() || '',
+          description: editData.description.trim()
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to update portfolio item');
+        }
+
+        // Update local state
+        setPortfolioItems(prevItems =>
+          prevItems.map(item =>
+            item._id === editData.id
+              ? { ...item, title: editData.title?.trim() || '', description: editData.description.trim() }
+              : item
+          )
+        );
+
+        // Update selectedItem if it's the same portfolio item
+        if (selectedItem && selectedItem.source._id === editData.id) {
+          setSelectedItem(prev => ({
+            ...prev,
+            title: editData.title?.trim() || prev.title,
+            source: { 
+              ...prev.source, 
+              title: editData.title?.trim() || '', 
+              description: editData.description.trim() 
+            }
+          }));
+        }
+
+        toast.success('Portfolio item updated successfully!');
+      }
+
+      setIsEditModalOpen(false);
+      setEditData(null);
+    } catch (error) {
+      console.error(`Error updating ${editData.type}:`, error);
+      toast.error(`Failed to update ${editData.type}. Please try again.`);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setIsEditModalOpen(false);
+    setEditData(null);
   };
 
   const handleDeletePost = async () => {
@@ -667,143 +797,161 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
         ))}
       </div>
 
-      {/* Media Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredItems.map((item) => (
-          <div 
-            key={item.id} 
-            className="relative group overflow-hidden rounded-lg aspect-square cursor-pointer"
-            onClick={() => handleItemClick(item)}
-          >
-            {item.fileType === 'video' ? (
-              <video
-                src={item.url}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                controls={false}
-                muted
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-            ) : (
-              <img
-                src={item.url}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
-                }}
-              />
-            )}
-            
-            {/* Fallback for broken media */}
-            <div className="hidden w-full h-full bg-gray-200 items-center justify-center">
-              <Upload className="w-12 h-12 text-gray-400" />
-            </div>
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
-                <button 
-                  className={`p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors ${
-                    item.source && likedPosts.has(item.source._id) ? 'text-red-400' : ''
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (item.source && item.source._id) {
-                      handleLike(item.source._id);
-                    }
+      {/* Conditional Rendering based on active view */}
+      {activeView === 'posts' ? (
+        /* Posts View - Use ProfilePosts Component */
+        <ProfilePosts 
+          userId={isOwnProfile ? (user?._id || user?.id) : targetUserId} 
+          isOwnProfile={isOwnProfile} 
+        />
+      ) : (
+        /* Grid View - Portfolio and All items */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredItems.map((item) => (
+            <div 
+              key={item.id} 
+              className="relative group overflow-hidden rounded-lg aspect-square cursor-pointer"
+              onClick={() => handleItemClick(item)}
+            >
+              {item.fileType === 'video' ? (
+                <video
+                  src={item.url}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  controls={false}
+                  muted
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
                   }}
-                >
-                  <Heart className={`w-5 h-5 ${
-                    item.source && likedPosts.has(item.source._id) ? 'fill-current text-red-400' : ''
-                  }`} />
-                </button>
-                <button 
-                  className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Add share functionality here
-                    if (navigator.share) {
-                      navigator.share({
-                        title: item.title,
-                        text: `Check out this ${item.category}`,
-                        url: item.url,
-                      });
-                    } else {
-                      navigator.clipboard.writeText(item.url);
-                      toast.success("Link copied to clipboard!");
-                    }
+                />
+              ) : (
+                <img
+                  src={item.url}
+                  alt={item.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
                   }}
-                >
-                  <Share className="w-5 h-5" />
-                </button>
+                />
+              )}
+              
+              {/* Fallback for broken media */}
+              <div className="hidden w-full h-full bg-gray-200 items-center justify-center">
+                <Upload className="w-12 h-12 text-gray-400" />
               </div>
-            </div>
-            
-            {/* Media Info */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-              <h3 className="text-white font-medium text-sm">{item.title}</h3>
-              <div className="flex items-center justify-between">
-                <p className="text-white/80 text-xs">{item.category}</p>
-                {item.fileType === 'video' && (
-                  <span className="text-white/80 text-xs bg-black/30 px-2 py-1 rounded">
-                    Video
-                  </span>
+              
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
+                  <button 
+                    className={`p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors ${
+                      item.source && likedPosts.has(item.source._id) ? 'text-red-400' : ''
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (item.source && item.source._id) {
+                        handleLike(item.source._id);
+                      }
+                    }}
+                  >
+                    <Heart className={`w-5 h-5 ${
+                      item.source && likedPosts.has(item.source._id) ? 'fill-current text-red-400' : ''
+                    }`} />
+                  </button>
+                  <button 
+                    className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Add share functionality here
+                      if (navigator.share) {
+                        navigator.share({
+                          title: item.title,
+                          text: `Check out this ${item.category}`,
+                          url: item.url,
+                        });
+                      } else {
+                        navigator.clipboard.writeText(item.url);
+                        toast.success("Link copied to clipboard!");
+                      }
+                    }}
+                  >
+                    <Share className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Media Info */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                <h3 className="text-white font-medium text-sm">{item.title}</h3>
+                <div className="flex items-center justify-between">
+                  <p className="text-white/80 text-xs">{item.category}</p>
+                  {item.fileType === 'video' && (
+                    <span className="text-white/80 text-xs bg-black/30 px-2 py-1 rounded">
+                      Video
+                    </span>
+                  )}
+                </div>
+                {item.createdAt && (
+                  <p className="text-white/60 text-xs mt-1">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </p>
                 )}
               </div>
-              {item.createdAt && (
-                <p className="text-white/60 text-xs mt-1">
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </p>
-              )}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Full Screen Modal - Similar to Home Page */}
+      {/* Full Screen Modal - Home Page Design */}
       {selectedItem && (
-        <div 
-          className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}  `}
-          onClick={handleDropdownClose}
-        >
+        <div className={`fixed inset-0 z-50 flex flex-col animate-in slide-in-from-bottom duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
           {/* Header Bar */}
-          <div className={`flex items-center justify-between p-2 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
             <div className="flex items-center space-x-3">
-              {selectedItem.type === 'post' && selectedItem.source.userInfo ? (
-                // Post owner profile
-                <div className="w-10 h-10 rounded-full overflow-hidden">
-                  <img
-                    src={selectedItem.source.userInfo.profilePicture || 'https://via.placeholder.com/40x40?text=User'}
-                    alt={`${selectedItem.source.userInfo.firstName} ${selectedItem.source.userInfo.lastName}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/40x40?text=User';
-                    }}
-                  />
-                </div>
-              ) : (
-                // Portfolio badge
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedItem.type === 'portfolio' ? 'bg-blue-100' : 'bg-green-100'}`}>
-                  <span className={`text-sm font-bold ${selectedItem.type === 'portfolio' ? 'text-blue-600' : 'text-green-600'}`}>
-                    P
-                  </span>
-                </div>
-              )}
-              <div>
-                <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-sm md:text-base`}>
-                  {selectedItem.type === 'post' && selectedItem.source.userInfo 
-                    ? `${selectedItem.source.userInfo.firstName} ${selectedItem.source.userInfo.lastName}`
-                    : selectedItem.title
+              {(() => {
+                // Get profile display data like home page
+                let displayAvatar, displayAuthor, displayProfession;
+                
+                if (selectedItem.type === 'post') {
+                  // For posts, use the same logic as home page
+                  const post = selectedItem.source;
+                  displayAuthor = `${post.userId?.firstName || post.userInfo?.firstName || 'Unknown'} ${post.userId?.lastName || post.userInfo?.lastName || 'User'}`;
+                  displayAvatar = post.userId?.profilePicture || post.userInfo?.profilePicture || 'https://via.placeholder.com/40x40?text=User';
+                  displayProfession = post.userId?.profession || post.userInfo?.profession || 'Worker';
+                } else {
+                  // For portfolio items, use profile data or current user
+                  if (profileData?.firstName) {
+                    displayAuthor = `${profileData.firstName} ${profileData.lastName || ''}`.trim();
+                    displayAvatar = profileData.profilePicture || profileData.profile?.profilePicture || 'https://via.placeholder.com/40x40?text=User';
+                    displayProfession = profileData.title || profileData.profession || 'Portfolio';
+                  } else {
+                    displayAuthor = `${user?.firstName || 'Unknown'} ${user?.lastName || 'User'}`;
+                    displayAvatar = user?.profilePicture || 'https://via.placeholder.com/40x40?text=User';
+                    displayProfession = user?.profession || 'Worker';
                   }
-                </h3>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>
-                  {selectedItem.type === 'post' ? 'Post' : selectedItem.category}
-                  {selectedItem.createdAt && ` • ${new Date(selectedItem.createdAt).toLocaleDateString()}`}
-                </p>
-              </div>
+                }
+                
+                return (
+                  <>
+                    <img
+                      src={displayAvatar}
+                      alt={displayAuthor}
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/40x40?text=User';
+                      }}
+                    />
+                    <div>
+                      <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-sm md:text-base`}>
+                        {displayAuthor}
+                      </h3>
+                      <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>
+                        {displayProfession} • {selectedItem.createdAt && getTimeAgo(selectedItem.createdAt)}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             
             {/* Action buttons */}
@@ -969,46 +1117,50 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
               })()}
             </div>
 
-            {/* Details Section - Bottom on mobile, right side on desktop */}
+            {/* Post Details & Comments Section - Bottom on mobile, right side on desktop */}
             <div className={`w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} max-h-[40vh] lg:max-h-none`}>
-              {/* Item Details */}
+              {/* Post Description */}
               <div className={`p-3 md:p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                <h4 className={`font-semibold text-lg mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                  {selectedItem.title}
-                </h4>
-                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm mb-3`}>
-                  Category: {selectedItem.category}
-                </p>
+                <div>
+                  {selectedItem.type === 'post' && selectedItem.source.content ? (
+                    <div 
+                      className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm md:text-base leading-relaxed`}
+                      dangerouslySetInnerHTML={{ 
+                        __html: selectedItem.source.content
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <h4 className={`font-semibold text-lg mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                        {selectedItem.title}
+                      </h4>
+                      {selectedItem.source.description && (
+                        <div 
+                          className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm md:text-base leading-relaxed`}
+                        >
+                          {selectedItem.source.description}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
                 
-                {selectedItem.type === 'post' && selectedItem.source.content && (
-                  <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm mb-3`}>
-                    {selectedItem.source.content}
-                  </p>
-                )}
-
-                {selectedItem.source.description && (
-                  <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm mb-3`}>
-                    {selectedItem.source.description}
-                  </p>
-                )}
-
                 {/* Post Stats */}
-                {selectedItem.type === 'post' && selectedItem.source && (
-                  <div className={`flex items-center justify-between mt-3 mb-3 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <span>{(selectedItem.source.likes || []).length} likes</span>
-                    <span>{comments.length} comments</span>
-                  </div>
-                )}
+                <div className={`flex items-center justify-between mt-3 md:mt-4 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <span>{selectedItem.source?.likes?.length || 0} likes</span>
+                  <span>{comments.length} comments</span>
+                </div>
 
                 {/* Action Buttons */}
-                <div className={`flex items-center justify-between mt-4 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                <div className={`flex items-center justify-between mt-3 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
                   <button 
+                    type="button"
                     onClick={() => {
                       if (selectedItem.source && selectedItem.source._id) {
                         handleLike(selectedItem.source._id);
                       }
                     }}
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center mr-1 ${
+                    className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${
                       selectedItem.source && likedPosts.has(selectedItem.source._id)
                         ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400'
                         : isDarkMode 
@@ -1016,14 +1168,14 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                           : 'hover:bg-gray-50'
                     }`}
                   >
-                    <Heart className={`w-4 h-4 ${
+                    <Heart className={`w-4 h-4 md:w-5 md:h-5 ${
                       selectedItem.source && likedPosts.has(selectedItem.source._id) 
                         ? 'text-red-600 fill-current dark:text-red-400' 
                         : isDarkMode 
                           ? 'text-gray-300' 
                           : 'text-gray-600'
                     }`} />
-                    <span className={`font-medium text-xs ${
+                    <span className={`font-medium text-xs md:text-sm ${
                       selectedItem.source && likedPosts.has(selectedItem.source._id)
                         ? 'text-red-600 dark:text-red-400'
                         : isDarkMode 
@@ -1033,12 +1185,16 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                       Like
                     </span>
                   </button>
-                  <button className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center mx-1 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                    <MessageCircle className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className={`font-medium text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Comment</span>
+                  <button 
+                    type="button"
+                    className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                  >
+                    <MessageCircle className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                    <span className={`font-medium text-xs md:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Comment</span>
                   </button>
                   <button 
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ml-1 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                    type="button"
+                    className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-2 rounded-lg transition-colors duration-200 flex-1 justify-center ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                     onClick={() => {
                       if (navigator.share) {
                         navigator.share({
@@ -1052,109 +1208,99 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                       }
                     }}
                   >
-                    <Share className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className={`font-medium text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
+                    <Share2 className={`w-4 h-4 md:w-5 md:h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+                    <span className={`font-medium text-xs md:text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Share</span>
                   </button>
                 </div>
               </div>
 
               {/* Comments Section - Only for posts */}
               {selectedItem.type === 'post' && (
-                <div className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  {/* Comment Input */}
-                  <div className={`p-3 md:p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                        <img
-                          src={user?.profilePicture || 'https://via.placeholder.com/32x32?text=You'}
-                          alt={`${user?.firstName} ${user?.lastName}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/32x32?text=You';
-                          }}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <textarea
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          onKeyPress={handleKeyPress}
-                          placeholder="Write a comment..."
-                          className={`w-full px-3 py-2 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400' 
-                              : 'bg-white border-gray-200 text-gray-900 placeholder-gray-500'
-                          }`}
-                          rows="2"
-                        />
-                        <div className="flex justify-between items-center mt-2">
-                          <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Press Enter to post
-                          </span>
-                          <button
-                            onClick={handleAddComment}
-                            disabled={!newComment.trim()}
-                            className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                              newComment.trim()
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                : isDarkMode
-                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            <Send className="w-3 h-3" />
-                            <span>Post</span>
-                          </button>
-                        </div>
-                      </div>
+                <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-3 md:space-y-4 no-scrollbar">
+                  <h4 className={`font-semibold mb-2 md:mb-3 text-sm md:text-base ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Comments</h4>
+                  
+                  {commentsLoading ? (
+                    <div className="text-center py-6 md:py-8">
+                      <div className={`w-6 h-6 md:w-8 md:h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-2 ${isDarkMode ? 'border-gray-400' : 'border-gray-300'}`}></div>
+                      <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm md:text-base`}>Loading comments...</p>
                     </div>
-                  </div>
-
-                  {/* Comments List */}
-                  <div className="flex-1 overflow-y-auto max-h-64">
-                    {commentsLoading ? (
-                      <div className="p-4 text-center">
-                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Loading comments...
-                        </div>
-                      </div>
-                    ) : comments.length > 0 ? (
-                      <div className="space-y-3 p-3 md:p-4">
-                        {comments.map((comment) => (
-                          <div key={comment._id} className="flex items-start space-x-3">
-                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                              <img
-                                src={comment.userInfo?.profilePicture || 'https://via.placeholder.com/32x32?text=User'}
-                                alt={`${comment.userInfo?.firstName} ${comment.userInfo?.lastName}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.src = 'https://via.placeholder.com/32x32?text=User';
-                                }}
-                              />
+                  ) : comments.length === 0 ? (
+                    <div className="text-center py-6 md:py-8">
+                      <MessageCircle className={`w-8 h-8 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm md:text-base`}>No comments yet</p>
+                      <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-xs md:text-sm`}>Be the first to comment!</p>
+                    </div>
+                  ) : (
+                    comments.map((comment) => {
+                      // Get comment author info like home page
+                      const author = comment.userId || comment.userInfo;
+                      const authorName = author?.firstName && author?.lastName 
+                        ? `${author.firstName} ${author.lastName}`
+                        : author?.firstName || 'Anonymous';
+                      const authorAvatar = author?.profilePicture || 'https://via.placeholder.com/32x32?text=User';
+                      
+                      return (
+                        <div key={comment._id} className="flex space-x-2 md:space-x-3">
+                          <img
+                            src={authorAvatar}
+                            alt={authorName}
+                            className="w-7 h-7 md:w-9 md:h-9 rounded-full object-cover flex-shrink-0"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/32x32?text=User';
+                            }}
+                          />
+                          <div className="flex-1">
+                            <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-2xl px-3 md:px-4 py-2 md:py-3`}>
+                              <p className={`font-semibold text-xs md:text-sm ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                                {authorName}
+                              </p>
+                              <p className={`text-xs md:text-sm mt-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                {comment.comment}
+                              </p>
                             </div>
-                            <div className="flex-1">
-                              <div className={`inline-block px-3 py-2 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                <div className={`font-medium text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                                  {comment.userInfo?.firstName} {comment.userInfo?.lastName}
-                                </div>
-                                <div className={`text-sm mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                  {comment.comment}
-                                </div>
-                              </div>
-                              <div className={`text-xs mt-1 px-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {new Date(comment.commentedAt || comment.createdAt).toLocaleString()}
-                              </div>
+                            <div className={`flex items-center space-x-4 mt-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <span>{getTimeAgo(comment.commentedAt || comment.createdAt)}</span>
+                              <button className={`font-medium ${isDarkMode ? 'hover:text-gray-200' : 'hover:text-gray-700'}`}>Like</button>
+                              <button className={`font-medium ${isDarkMode ? 'hover:text-gray-200' : 'hover:text-gray-700'}`}>Reply</button>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-4 text-center">
-                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          No comments yet. Be the first to comment!
                         </div>
-                      </div>
-                    )}
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* Comment Input */}
+              {selectedItem.type === 'post' && (
+                <div className={`p-3 md:p-4 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className="flex space-x-2 md:space-x-3">
+                    <img
+                      src={user?.profilePicture || 'https://via.placeholder.com/32x32?text=You'}
+                      alt={`${user?.firstName || 'You'} ${user?.lastName || ''}`}
+                      className="w-7 h-7 md:w-9 md:h-9 rounded-full object-cover flex-shrink-0"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/32x32?text=You';
+                      }}
+                    />
+                    <div className="flex-1 flex space-x-2">
+                      <input
+                        type="text"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Write a comment..."
+                        className={`flex-1 px-3 md:px-4 py-2 md:py-3 rounded-full text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-black placeholder-gray-500'}`}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddComment}
+                        disabled={!newComment.trim()}
+                        className={`p-2 md:p-3 text-blue-600 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${isDarkMode ? 'hover:bg-blue-900' : 'hover:bg-blue-50'}`}
+                      >
+                        <Send className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1175,6 +1321,25 @@ const PhotosTab = ({ profileData, isDarkMode, isOwnProfile, userId }) => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* EditMediaPost Modal */}
+      {isEditModalOpen && editData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <EditMediaPost
+              mediaFiles={editData.mediaFiles || []}
+              description={editData.description || ''}
+              type={editData.type || 'post'}
+              onDescriptionChange={handleEditDescriptionChange}
+              onMediaRemove={handleEditMediaRemove}
+              onSave={handleEditSave}
+              onCancel={handleEditCancel}
+              loading={editLoading}
+              isDarkMode={isDarkMode}
+            />
           </div>
         </div>
       )}

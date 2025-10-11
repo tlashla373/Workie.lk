@@ -43,6 +43,7 @@ import EditJob from './components/UserProfile/EditJob';
 import ProtectedRoute from './components/ProtectionPage/ProtectedRoute';
 import PublicRoute from './components/ProtectionPage/PublicRoute';
 import AdminRoute from './components/AdminPanel/AdminRoute';
+import EditPostPage from './pages/EditPost/EditPostPage';
 
 
 const App = () => {
@@ -128,6 +129,10 @@ const App = () => {
         {
           path: 'edit-job/:id',
           element: <EditJob />,
+        },
+        {
+          path: 'edit-post/:postId',
+          element: <EditPostPage />,
         },
       ],
     },
