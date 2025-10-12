@@ -12,6 +12,9 @@ import Mason from '../../assets/mason.svg'
 import Cleaner from '../../assets/cleaner.svg'
 import Mechanic from '../../assets/Mechanic.svg'
 
+// Default avatar for users without profile pictures
+const DEFAULT_AVATAR = 'https://via.placeholder.com/40x40?text=User';
+
 export default function MainFeed() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -807,7 +810,7 @@ export default function MainFeed() {
         <div className="flex items-center justify-between mb-3">
           <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>{post.likes} likes</span>
           <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs md:text-sm`}>
-            {post.comments + (comments[post.id] || []).length} comments
+            {post.comments || (comments[post.id] || []).length} comments
           </span>
         </div>
         
@@ -1015,8 +1018,8 @@ export default function MainFeed() {
 
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            {/* Media Section - Full width on mobile, left side on desktop */}
-            <div className="flex-1 bg-black flex items-center justify-center relative">
+            {/* Media Section - Reduced height on mobile only, full flexible on desktop */}
+            <div className="flex-shrink-0 lg:flex-1 bg-black flex items-center justify-center relative h-[35vh] lg:h-auto">
               {selectedPost.media.length > 1 && currentImageIndex > 0 && (
                 <button
                   onClick={prevImage}
@@ -1089,8 +1092,8 @@ export default function MainFeed() {
               )}
             </div>
 
-            {/* Post Details & Comments Section - Bottom on mobile, right side on desktop */}
-            <div className={`w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} max-h-[40vh] lg:max-h-none`}>
+            {/* Post Details & Comments Section - Larger on mobile for better UX */}
+            <div className={`w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} flex-1 lg:flex-none min-h-[60vh] lg:min-h-0`}>
               {/* Post Description */}
               <div className={`p-3 md:p-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
                 <div>
@@ -1122,7 +1125,7 @@ export default function MainFeed() {
                 {/* Post Stats */}
                 <div className={`flex items-center justify-between mt-3 md:mt-4 text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   <span>{selectedPost.likes} likes</span>
-                  <span>{selectedPost.comments + (comments[selectedPost.id] || []).length} comments</span>
+                  <span>{selectedPost.comments || (comments[selectedPost.id] || []).length} comments</span>
                 </div>
 
                 {/* Action Buttons */}
@@ -1181,7 +1184,7 @@ export default function MainFeed() {
               </div>
 
               {/* Comments Section */}
-              <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-3 md:space-y-4 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-2 md:p-3 space-y-3 md:space-y-4 no-scrollbar min-h-0">
                 <h4 className={`font-semibold mb-2 md:mb-3 text-sm md:text-base ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Comments</h4>
                 
                 {loadingComments ? (
