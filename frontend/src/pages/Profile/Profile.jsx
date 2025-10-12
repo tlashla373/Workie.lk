@@ -471,6 +471,109 @@ const Profile = () => {
     }
   };
 
+  // Function to refresh profile data after updates
+  const refreshProfileData = async () => {
+    try {
+      console.log('Refreshing profile data...');
+      setLoading(true);
+      setError(null);
+      
+      let response;
+      
+      if (isOwnProfile || !userId) {
+        response = await profileService.getCurrentUserProfile();
+      } else {
+        response = await profileService.getUserProfile(userId);
+      }
+      
+      if (response.success) {
+        let user, profile;
+        
+        if (isOwnProfile || !userId) {
+          user = response.data.user;
+          profile = response.data.profile;
+        } else {
+          if (response.data.user && response.data.profile) {
+            user = response.data.user;
+            profile = response.data.profile;
+          } else {
+            profile = response.data;
+            user = profile.user;
+          }
+        }
+        
+        if (!user) {
+          throw new Error('User data not found');
+        }
+        
+        // Map updated data
+        const mappedData = {
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
+          profession: user.userType === 'client' ? 'Client' : (profile?.preferences?.jobTypes?.join(', ') || profile?.skills?.map(skill => skill.name)?.join(', ') || "Professional"),
+          location: (() => {
+            if (profile?.country && profile?.city) {
+              return `${profile.country}, ${profile.city}`;
+            }
+            if (user?.address?.country && user?.address?.city) {
+              return `${user.address.country}, ${user.address.city}`;
+            }
+            if (profile?.country) {
+              return profile.country;
+            }
+            if (user?.address?.country) {
+              return user.address.country;
+            }
+            if (profile?.city) {
+              return profile.city;
+            }
+            if (user?.address?.city) {
+              return user.address.city;
+            }
+            return "Not specified";
+          })(),
+          phone: user.phone || "",
+          email: user.email || "",
+          website: profile?.socialLinks?.website || "",
+          coverImage: user.coverPhoto || "https://res.cloudinary.com/workielk/image/upload/v1757439643/65561496_9602752_ewn2nj.png",
+          profileImage: user.profilePicture || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png",
+          followers: 0,
+          following: 0,
+          posts: 0,
+          rating: profile?.ratings?.average || 0,
+          completedJobs: user.userType === 'client' ? (profile?.completedJobs || 0) : 0,
+          bio: profile?.bio || "",
+          title: profile?.title || "",
+          skills: profile?.skills?.map(skill => skill.name || skill) || [],
+          experience: profile?.experience?.map(exp => ({
+            title: exp.title,
+            company: exp.company || "",
+            duration: exp.isCurrent ? 
+              `${new Date(exp.startDate).getFullYear()} - Present` : 
+              `${new Date(exp.startDate).getFullYear()} - ${new Date(exp.endDate).getFullYear()}`,
+            description: exp.description || ""
+          })) || [],
+          portfolio: profile?.portfolio?.map(item => item.images?.[0] || "").filter(img => img) || [],
+          user: user,
+          profile: profile,
+          userType: user.userType,
+          isVerified: user.isVerified || false,
+          joinDate: user.createdAt,
+          availability: profile?.availability?.status || 'available'
+        };
+        
+        console.log('Profile data refreshed successfully, updated phone:', mappedData.phone);
+        setProfileData(mappedData);
+      } else {
+        throw new Error(response.message || 'Failed to refresh profile data');
+      }
+    } catch (error) {
+      console.error('Error refreshing profile data:', error);
+      setError('Failed to refresh profile data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFriendConnect = (friendId) => {
     console.log(`Connected with friend ID: ${friendId}`);
     // You can add additional logic here like API calls
@@ -529,6 +632,7 @@ const Profile = () => {
             isOwnProfile={isOwnProfile}
             isEditModalOpen={isEditModalOpen}
             setIsEditModalOpen={setIsEditModalOpen}
+            onProfileUpdate={refreshProfileData}
           />        );      
       case 'photos':
         return (
@@ -568,6 +672,7 @@ const Profile = () => {
             isOwnProfile={isOwnProfile}
             isEditModalOpen={isEditModalOpen}
             setIsEditModalOpen={setIsEditModalOpen}
+            onProfileUpdate={refreshProfileData}
           />
         );
     }
@@ -592,6 +697,8 @@ const Profile = () => {
           isDarkMode={isDarkMode}
           isOwnProfile={isOwnProfile}
           onEditProfile={handleEditProfile}
+          userId={userId || currentUserId}
+          profileData={profileData}
         />
         
         <div className="p-4 sm:p-6">

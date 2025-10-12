@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, Play, FileCheck, CreditCard, DollarSign, Star, XCircle } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import RatingSystem from '../RatingReviewPage/RatingSystem';
+import { useNavigate } from 'react-router-dom';
 import { 
   acceptApplication, 
   startWork, 
@@ -13,8 +14,9 @@ import {
   getStageFromStatus 
 } from '../../services/applicationProgressService';
 
-const JobProgress = ({ role = 'worker', initialStage = 1, jobData, applicationData, applicationStatus }) => {
+const JobProgress = ({ role = 'worker', initialStage = 1, jobData, applicationData, applicationStatus, jobId }) => {
   const { isDarkMode } = useDarkMode();
+  const navigate = useNavigate();
   
   // Use application status to determine current stage if available
   const actualInitialStage = applicationStatus ? getStageFromStatus(applicationStatus) : initialStage;
@@ -58,6 +60,35 @@ const JobProgress = ({ role = 'worker', initialStage = 1, jobData, applicationDa
       return () => clearTimeout(timer);
     }
   }, [currentStage, paymentProcessing]);
+
+  // Handle return from payment gateway
+  useEffect(() => {
+    const handlePaymentReturn = () => {
+      const paymentResult = sessionStorage.getItem('paymentResult');
+      if (paymentResult) {
+        const result = JSON.parse(paymentResult);
+        sessionStorage.removeItem('paymentResult');
+        
+        if (result.success) {
+          // Payment was successful, proceed to stage 6
+          const paymentData = {
+            paymentMethod: 'online',
+            amount: result.amount,
+            transactionId: result.transactionId,
+            notes: result.notes || undefined
+          };
+          
+          // Call API to confirm payment and move to stage 6
+          handleApiAction(() => releasePayment(applicationId, paymentData), 'Payment completed successfully', 6);
+        } else {
+          // Payment failed, show error and stay in stage 5
+          setError(result.error || 'Payment failed. Please try again.');
+        }
+      }
+    };
+
+    handlePaymentReturn();
+  }, []); // Only run on component mount
 
   // Generic API action handler
   const handleApiAction = async (actionFn, successMessage, nextStage) => {
@@ -112,6 +143,28 @@ const JobProgress = ({ role = 'worker', initialStage = 1, jobData, applicationDa
       return;
     }
 
+    if (paymentMethod === 'online') {
+      // Navigate to payment gateway with job and payment details
+      const paymentData = {
+        jobId: application?.jobId?._id || application?._id,
+        applicationId: applicationId,
+        amount: parseFloat(paymentAmount),
+        description: application?.jobId?.title || 'Job Payment',
+        recipient: application?.workerId?.name || 'Service Provider',
+        notes: paymentNotes.trim() || undefined,
+        returnTo: jobId ? `/job-progress/${jobId}` : '/workhistory', // Where to return after payment
+        jobData: application
+      };
+      
+      // Store payment data in sessionStorage for the payment gateway
+      sessionStorage.setItem('pendingPayment', JSON.stringify(paymentData));
+      
+      // Navigate to payment gateway
+      navigate('/payment-gateway');
+      return;
+    }
+
+    // For physical payment, continue with existing logic
     setPaymentProcessing(true);
     
     const paymentData = {

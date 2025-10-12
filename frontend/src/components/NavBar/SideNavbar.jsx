@@ -13,7 +13,8 @@ import {
   Bell,
   ImagePlus,
   Menu,
-  X
+  X,
+  MessageCircle
 } from 'lucide-react';
 import profileImage from '../../assets/profile.jpeg';
 import Logo from '../../assets/Logo.png'
@@ -187,6 +188,7 @@ const SideNavbar = ({
   const workerNavigationLinks = [
     { icon: Home, label: 'Home', href: '/' },
     { icon: Users, label: 'Connections', href: '/friends' },
+    // Chat removed; WhatsApp is used per-profile
     { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
     { icon: BriefcaseBusiness, label: 'Find Jobs', href: '/findjobs' },
     { icon: History, label: 'Work Status', href: '/workhistory' },
@@ -202,6 +204,7 @@ const SideNavbar = ({
     { icon: Home, label: 'Home', href: '/' },
     { icon: Edit3, label: 'Post Jobs', href: '/post-job' },
     { icon: Users, label: 'Connections', href: '/friends' },
+    // Chat removed; WhatsApp is used per-profile
     { icon: ImagePlus, label: 'Photo/video', href: '/add-post'},
     { icon: History, label: 'Work Status', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },
@@ -214,8 +217,8 @@ const SideNavbar = ({
   // Navigation links for workers (mobile bottom nav)
   const workerMobileNavLinks = [
     { icon: Home, label: 'Home', href: '/' },
+    // Chat removed
     { icon: BriefcaseBusiness, label: 'Jobs', href: '/findjobs' },
-    { icon: ImagePlus, label: 'Post', href: '/add-post'},
     { icon: Users, label: 'Connections', href: '/friends' },
     { icon: Menu, label: 'More', href: '#', isMore: true },
   ];
@@ -223,14 +226,15 @@ const SideNavbar = ({
   // Navigation links for clients (mobile bottom nav)
   const clientMobileNavLinks = [
     { icon: Home, label: 'Home', href: '/' },
+    // Chat removed
     { icon: Edit3, label: 'Post Job', href: '/post-job' },
-    { icon: ImagePlus, label: 'Post', href: '/add-post'},
     { icon: Users, label: 'Connections', href: '/friends' },
     { icon: Menu, label: 'More', href: '#', isMore: true },
   ];
 
   // Additional menu items for mobile "More" section
   const moreMenuItems = [
+    { icon: ImagePlus, label: 'Photo/video', href: '/add-post' },
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: notificationCount > 0 ? notificationCount : null },
     { icon: History, label: 'Work Status', href: '/workhistory' },
     { icon: Video, label: 'Video', href: '/video' },

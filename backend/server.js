@@ -21,6 +21,7 @@ const mediaRoutes = require('./routes/media');
 const connectionRoutes = require('./routes/connections');
 const analyticsRoutes = require('./routes/analytics');
 const postRoutes = require('./routes/posts'); // New: Posts route
+// Chat routes removed - migrating to WhatsApp integration
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -152,6 +153,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/posts', postRoutes); // New: Posts routes
+// Chat routes removed - migrating to WhatsApp integration
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -186,41 +188,6 @@ const io = new Server(server, {
 // Initialize Socket.IO service
 const SocketService = require('./services/socketService');
 SocketService.init(io);
-
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log(`📡 New socket connection: ${socket.id}`);
-
-  // Handle user authentication and store socket
-  socket.on('authenticate', (userId) => {
-    console.log(`🔐 Authenticate request from socket ${socket.id} for user: ${userId}`);
-    if (userId) {
-      SocketService.addUserSocket(userId, socket.id);
-      socket.join(`user_${userId}`); // Join user-specific room
-      console.log(`✅ User ${userId} authenticated and joined room user_${userId}`);
-    } else {
-      console.warn(`❌ Invalid userId provided for authentication: ${userId}`);
-    }
-  });
-
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log(`📡 User disconnected: ${socket.id}`);
-    // Find and remove user from socket mapping
-    for (const [userId, socketId] of SocketService.userSockets.entries()) {
-      if (socketId === socket.id) {
-        SocketService.removeUserSocket(userId);
-        break;
-      }
-    }
-  });
-
-  // Handle notification acknowledgments
-  socket.on('notificationRead', (notificationId) => {
-    // Handle marking notification as read
-    console.log(`📖 Notification ${notificationId} marked as read`);
-  });
-});
 
 // Start server
 server.listen(PORT, () => {
