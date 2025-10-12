@@ -48,7 +48,7 @@ const AdminVerifications = () => {
       }
       
       const response = await fetch(
-        `http://localhost:5001/api/admin/workers/pending-verification?page=${currentPage}&limit=10`,
+        `http://localhost:5000/api/admin/workers/pending-verification?page=${currentPage}&limit=10`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -57,6 +57,9 @@ const AdminVerifications = () => {
       );
 
       const result = await response.json();
+
+      console.log('✅ API Response:', result);
+      console.log('📊 Workers received:', result.data?.workers?.length || 0);
 
       if (result.success) {
         setWorkers(result.data.workers);
@@ -82,7 +85,7 @@ const AdminVerifications = () => {
       setLoadingDetails(true);
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `http://localhost:5001/api/admin/workers/${workerId}/verification-details`,
+        `http://localhost:5000/api/admin/workers/${workerId}/verification-details`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -117,7 +120,7 @@ const AdminVerifications = () => {
         setActionLoading(true);
         const token = localStorage.getItem('auth_token');
         const response = await fetch(
-          `http://localhost:5001/api/admin/workers/${workerId}/verify`,
+          `http://localhost:5000/api/admin/workers/${workerId}/verify`,
           {
             method: 'POST',
             headers: {
@@ -156,7 +159,7 @@ const AdminVerifications = () => {
       setActionLoading(true);
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `http://localhost:5001/api/admin/workers/${selectedWorker._id}/reject-verification`,
+        `http://localhost:5000/api/admin/workers/${selectedWorker._id}/reject-verification`,
         {
           method: 'POST',
           headers: {
@@ -207,7 +210,8 @@ const AdminVerifications = () => {
 
   const canVerify = (worker) => {
     const rating = parseFloat(worker.avgRating);
-    return worker.reviewCount === 0 || rating > 3;
+    // Only allow verification if worker has reviews AND rating > 3
+    return worker.reviewCount > 0 && rating > 3;
   };
 
   return (
@@ -221,7 +225,7 @@ const AdminVerifications = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Worker Verification</h1>
-              <p className="text-gray-600 mt-1">Review and verify worker identity documents</p>
+              <p className="text-gray-600 mt-1">Review and verify worker identity documents (Rating must be &gt; 3.0)</p>
             </div>
           </div>
         </div>
@@ -234,13 +238,13 @@ const AdminVerifications = () => {
                 <AlertCircle className="w-8 h-8 text-white" />
               </div>
               <div>
-                <p className="text-gray-600 text-sm font-medium">Pending Verifications</p>
+                <p className="text-gray-600 text-sm font-medium">Eligible Workers for Verification</p>
                 <p className="text-3xl font-bold text-gray-900">{total}</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">
-                Workers waiting for identity verification
+                Workers with rating &gt; 3.0 or no reviews yet
               </p>
             </div>
           </div>
@@ -255,8 +259,10 @@ const AdminVerifications = () => {
           ) : workers.length === 0 ? (
             <div className="text-center py-20">
               <ShieldCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No pending verifications</p>
-              <p className="text-gray-400 text-sm mt-2">All workers are verified or haven't submitted documents yet</p>
+              <p className="text-gray-500 text-lg">No eligible workers for verification</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Workers must have both ID documents and either rating &gt; 3.0 or no reviews yet
+              </p>
             </div>
           ) : (
             <>
@@ -337,15 +343,20 @@ const AdminVerifications = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-center">
-                            {canVerify(worker) ? (
+                            {worker.reviewCount > 0 && worker.avgRating > 3 ? (
                               <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1">
                                 <CheckCircle className="w-4 h-4" />
-                                Eligible
+                                ✓ Eligible (Rating {worker.avgRating})
                               </span>
-                            ) : (
+                            ) : worker.reviewCount > 0 ? (
                               <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold flex items-center gap-1">
                                 <XCircle className="w-4 h-4" />
-                                Rating ≤ 3
+                                ✗ Low Rating ({worker.avgRating})
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" />
+                                No Reviews Yet
                               </span>
                             )}
                           </div>
@@ -572,9 +583,8 @@ const AdminVerifications = () => {
                             </p>
                             <ul className="list-disc list-inside mt-2 text-green-700 space-y-1">
                               <li>Both ID documents uploaded ✓</li>
-                              <li>{verificationDetails.reviewCount === 0 
-                                ? 'New worker (no rating requirement)' 
-                                : `Average rating ${verificationDetails.avgRating} > 3.0`} ✓</li>
+                              <li>Has customer reviews ({verificationDetails.reviewCount} reviews) ✓</li>
+                              <li>Average rating {verificationDetails.avgRating} &gt; 3.0 ✓</li>
                             </ul>
                           </div>
                         </>
@@ -587,8 +597,11 @@ const AdminVerifications = () => {
                               This worker does not meet the requirements:
                             </p>
                             <ul className="list-disc list-inside mt-2 text-red-700 space-y-1">
-                              <li>Average rating {verificationDetails.avgRating} ≤ 3.0 ✗</li>
-                              <li>Must improve rating before verification</li>
+                              {verificationDetails.reviewCount === 0 ? (
+                                <li>No customer reviews yet ✗ (Must have at least one completed job with rating &gt; 3.0)</li>
+                              ) : (
+                                <li>Average rating {verificationDetails.avgRating} ≤ 3.0 ✗ (Must be greater than 3.0)</li>
+                              )}
                             </ul>
                           </div>
                         </>

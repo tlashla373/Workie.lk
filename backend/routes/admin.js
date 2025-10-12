@@ -471,7 +471,6 @@ router.get('/workers/pending-verification', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
 
     // Find workers with ID documents but not verified
     const query = {
@@ -481,38 +480,71 @@ router.get('/workers/pending-verification', async (req, res) => {
       'verificationDocuments.idPhotoBack': { $exists: true, $ne: '' }
     };
 
-    const [workers, total] = await Promise.all([
-      User.find(query)
-        .select('-password')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      User.countDocuments(query)
-    ]);
+    // Get all workers matching the query (without pagination first)
+    const allWorkers = await User.find(query).select('-password');
 
-    // Get average rating for each worker
+    // Calculate average rating for each worker and filter by rating > 3
     const workersWithRatings = await Promise.all(
-      workers.map(async (worker) => {
-        const reviews = await Review.find({ reviewee: worker._id });
-        const avgRating = reviews.length > 0
-          ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      allWorkers.map(async (worker) => {
+        // Get ratings from Review collection (if any)
+        const reviews = await Review.find({
+          reviewee: worker._id,
+          reviewType: 'client-to-worker'
+        });
+
+        // Get ratings from Application collection (embedded reviews)
+        const applications = await Application.find({
+          worker: worker._id,
+          'review.rating': { $exists: true, $ne: null }
+        });
+
+        // Combine ratings from both sources
+        const allRatings = [
+          ...reviews.map(r => r.rating),
+          ...applications.map(a => a.review.rating)
+        ];
+
+        const avgRating = allRatings.length > 0
+          ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
           : 0;
-        const reviewCount = reviews.length;
+        const reviewCount = allRatings.length;
 
         return {
           ...worker.toObject(),
-          avgRating: avgRating.toFixed(1),
+          avgRating: parseFloat(avgRating.toFixed(1)),
           reviewCount
         };
       })
     );
 
+    // Filter workers with average rating > 3 OR no reviews yet (new workers)
+    const eligibleWorkers = workersWithRatings.filter(worker => {
+      // If worker has reviews, rating must be > 3
+      if (worker.reviewCount > 0) {
+        return worker.avgRating > 3;
+      }
+      // If worker has no reviews yet, include them (give new workers a chance)
+      return true;
+    });
+
+    // Sort by rating (highest first) and then by creation date
+    eligibleWorkers.sort((a, b) => {
+      if (b.avgRating !== a.avgRating) {
+        return b.avgRating - a.avgRating;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    // Apply pagination to filtered results
+    const total = eligibleWorkers.length;
     const totalPages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+    const paginatedWorkers = eligibleWorkers.slice(skip, skip + limit);
 
     res.json({
       success: true,
       data: {
-        workers: workersWithRatings,
+        workers: paginatedWorkers,
         totalPages,
         currentPage: page,
         total
@@ -549,32 +581,68 @@ router.get('/workers/:id/verification-details', async (req, res) => {
       });
     }
 
-    // Get worker's reviews and calculate average rating
-    const reviews = await Review.find({ reviewee: worker._id })
+    // Get worker's reviews from Review collection
+    const reviews = await Review.find({
+      reviewee: worker._id,
+      reviewType: 'client-to-worker'
+    })
       .populate('reviewer', 'firstName lastName')
       .populate('job', 'title')
       .sort({ createdAt: -1 });
 
-    const avgRating = reviews.length > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    // Get ratings from Application collection (embedded reviews)
+    const applicationsWithReviews = await Application.find({
+      worker: worker._id,
+      'review.rating': { $exists: true, $ne: null }
+    })
+      .populate('job', 'title')
+      .sort({ 'review.submittedAt': -1 });
+
+    // Combine ratings from both sources
+    const allRatings = [
+      ...reviews.map(r => r.rating),
+      ...applicationsWithReviews.map(a => a.review.rating)
+    ];
+
+    const avgRating = allRatings.length > 0
+      ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
       : 0;
 
-    const reviewCount = reviews.length;
+    const reviewCount = allRatings.length;
 
-    // Get completed jobs count
+    // Combine all reviews for display
+    const combinedReviews = [
+      ...reviews.map(r => ({
+        rating: r.rating,
+        comment: r.comment,
+        reviewer: r.reviewer,
+        job: r.job,
+        createdAt: r.createdAt,
+        source: 'review'
+      })),
+      ...applicationsWithReviews.map(a => ({
+        rating: a.review.rating,
+        comment: a.review.comment,
+        job: a.job,
+        createdAt: a.review.submittedAt || a.updatedAt,
+        source: 'application'
+      }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Get completed jobs count (using correct field name 'worker', not 'applicant')
     const completedJobs = await Application.countDocuments({
-      applicant: worker._id,
-      status: 'completed'
+      worker: worker._id,
+      status: { $in: ['completed', 'payment-released', 'payment-confirmed', 'reviewed', 'closed'] }
     });
 
     res.json({
       success: true,
       data: {
         worker: worker.toObject(),
-        avgRating: avgRating.toFixed(1),
-        reviewCount,
+        averageRating: parseFloat(avgRating.toFixed(1)),
+        totalReviews: reviewCount,
         completedJobs,
-        reviews: reviews.slice(0, 10), // Latest 10 reviews
+        reviews: combinedReviews.slice(0, 10), // Latest 10 reviews
         verificationDocuments: {
           idPhotoFront: worker.verificationDocuments?.idPhotoFront,
           idPhotoBack: worker.verificationDocuments?.idPhotoBack
@@ -622,19 +690,44 @@ router.post('/workers/:id/verify', async (req, res) => {
       });
     }
 
-    // Get worker's average rating
-    const reviews = await Review.find({ reviewee: worker._id });
-    const avgRating = reviews.length > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-      : 0;
+    // Get worker's average rating from BOTH Review collection and Application.review
+    const reviews = await Review.find({
+      reviewee: worker._id,
+      reviewType: 'client-to-worker'
+    });
 
-    // Check if rating is greater than 3 (if they have reviews)
-    if (reviews.length > 0 && avgRating <= 3) {
+    const applications = await Application.find({
+      worker: worker._id,
+      'review.rating': { $exists: true, $ne: null }
+    });
+
+    // Combine ratings from both sources
+    const allRatings = [
+      ...reviews.map(r => r.rating),
+      ...applications.map(a => a.review.rating)
+    ];
+
+    const avgRating = allRatings.length > 0
+      ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
+      : 0;
+    const reviewCount = allRatings.length;
+
+    // REQUIRE rating > 3.0 for verification (no exceptions)
+    if (reviewCount === 0) {
       return res.status(400).json({
         success: false,
-        message: `Worker's average rating (${avgRating.toFixed(1)}) must be greater than 3.0 to be verified`,
+        message: 'Worker has no ratings yet. Cannot verify without customer reviews.',
+        avgRating: 0,
+        reviewCount: 0
+      });
+    }
+
+    if (avgRating <= 3) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient rating for verification. Worker's rating (${avgRating.toFixed(1)}) must be greater than 3.0`,
         avgRating: avgRating.toFixed(1),
-        reviewCount: reviews.length
+        reviewCount: reviewCount
       });
     }
 
@@ -662,7 +755,7 @@ router.post('/workers/:id/verify', async (req, res) => {
           email: worker.email,
           isVerified: worker.isVerified,
           avgRating: avgRating.toFixed(1),
-          reviewCount: reviews.length
+          reviewCount: reviewCount
         }
       }
     });

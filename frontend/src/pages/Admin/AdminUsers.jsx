@@ -322,15 +322,6 @@ const AdminUsers = () => {
             >
               Close
             </button>
-            <button
-              onClick={() => {
-                // Add edit functionality here
-                toast.info('Edit functionality coming soon');
-              }}
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              Edit User
-            </button>
           </div>
         </div>
       </div>

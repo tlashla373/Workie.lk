@@ -216,7 +216,7 @@ const AdminJobs = () => {
           <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-8 py-6">
             {/* Status and Basic Info */}
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-6 border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-600 mb-1">Status</p>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border ${getStatusBadge(selectedJob.status)}`}>
@@ -227,14 +227,7 @@ const AdminJobs = () => {
                   <p className="text-sm font-medium text-gray-600 mb-1">Job ID</p>
                   <p className="text-sm font-mono text-gray-900">{selectedJob._id?.slice(-8)}</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Active</p>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                    selectedJob.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {selectedJob.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
+                
               </div>
             </div>
 
@@ -348,12 +341,6 @@ const AdminJobs = () => {
               className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Close
-            </button>
-            <button
-              onClick={() => toast.info('Edit functionality coming soon')}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
-            >
-              Edit Job
             </button>
           </div>
         </div>
