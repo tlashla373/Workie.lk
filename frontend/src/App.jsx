@@ -30,7 +30,6 @@ import AdminLayout from './pages/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import AdminUsers from './pages/Admin/AdminUsers';
 import AdminJobs from './pages/Admin/AdminJobs';
-import AdminApplications from './pages/Admin/AdminApplications';
 import AdminVerifications from './pages/Admin/AdminVerifications';
 import AdminReviews from './pages/Admin/AdminReviews';
 import AdminReports from './pages/Admin/AdminReports';
@@ -161,10 +160,6 @@ const App = () => {
         {
           path: 'jobs',
           element: <AdminJobs />,
-        },
-        {
-          path: 'applications',
-          element: <AdminApplications />,
         },
         {
           path: 'verifications',

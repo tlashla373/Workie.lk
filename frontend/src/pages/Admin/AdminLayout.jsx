@@ -11,7 +11,6 @@ import {
   Menu, 
   X,
   Home,
-  FileText,
   Star,
   Bell,
   ShieldCheck
@@ -29,7 +28,6 @@ const AdminLayout = () => {
     { name: 'Dashboard', path: '/admin', icon: Home },
     { name: 'Users', path: '/admin/users', icon: Users },
     { name: 'Jobs', path: '/admin/jobs', icon: Briefcase },
-    { name: 'Applications', path: '/admin/applications', icon: FileText },
     { name: 'Verifications', path: '/admin/verifications', icon: ShieldCheck },
     { name: 'Reviews', path: '/admin/reviews', icon: Star },
     { name: 'Reports', path: '/admin/reports', icon: BarChart3 },
