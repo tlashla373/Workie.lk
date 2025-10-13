@@ -95,30 +95,30 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onSave, isDarkMode = f
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl w-full max-w-screen max-h-screen overflow-y-auto no-scrollbar `}>
         {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className={`flex items-center justify-between p-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200 bg-blue-500'}`}>
+          <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Edit Profile
           </h2>
           <button
             onClick={onClose}
             className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
           >
-            <X className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            <X className={`w-5 h-5 font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4">
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
             {/* First Name */}
             <div>
               <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
@@ -164,8 +164,9 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onSave, isDarkMode = f
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
           {/* Phone */}
-          <div className="mb-4">
+          <div className="mb-2">
             <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Phone Number
             </label>
@@ -187,7 +188,7 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onSave, isDarkMode = f
           </div>
 
           {/* Location */}
-          <div className="mb-4">
+          <div className="mb-2">
             <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Location
             </label>
@@ -207,9 +208,10 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onSave, isDarkMode = f
               />
             </div>
           </div>
+          </div>
 
           {/* Website */}
-          <div className="mb-4">
+          <div className="mb-2">
             <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
               Website
             </label>
