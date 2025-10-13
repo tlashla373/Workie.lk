@@ -659,7 +659,7 @@ router.post('/google-signin', async (req, res) => {
         emailVerificationExpires: undefined,
         isEmailVerified: payload.email_verified || true,
         userType: 'client', // Default user type
-        isVerified: true,
+        isVerified: false,
         isActive: true,
         profilePicture: payload.picture || '',
       });

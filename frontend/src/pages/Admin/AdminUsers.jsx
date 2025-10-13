@@ -133,10 +133,19 @@ const AdminUsers = () => {
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-2xl font-bold text-blue-600">
-                  {selectedUser.firstName?.[0]}{selectedUser.lastName?.[0]}
-                </span>
+              <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shadow-lg bg-white">
+                {(selectedUser.profilePicture || selectedUser.profile?.profilePicture || selectedUser.avatar) ? (
+                  <img
+                    src={selectedUser.profilePicture || selectedUser.profile?.profilePicture || selectedUser.avatar}
+                    alt={`${selectedUser.firstName} ${selectedUser.lastName}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-blue-600">
+                    {selectedUser.firstName?.[0]}{selectedUser.lastName?.[0]}
+                  </span>
+                )}
               </div>
               <div className="text-white">
                 <h2 className="text-2xl font-bold">
@@ -476,10 +485,19 @@ const AdminUsers = () => {
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-700">
-                              {user.firstName?.[0]}{user.lastName?.[0]}
-                            </span>
+                          <div className="w-10 h-10 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                            {user.profilePicture ? (
+                              <img
+                                src={user.profilePicture}
+                                alt={`${user.firstName} ${user.lastName}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <span className="text-sm font-medium text-gray-700">
+                                {user.firstName?.[0]}{user.lastName?.[0]}
+                              </span>
+                            )}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">

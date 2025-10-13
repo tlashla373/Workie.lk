@@ -17,15 +17,7 @@ const Friends = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [showConnections, setShowConnections] = useState(true); // Toggle between connections and discover
 
-  // Check if user is authenticated
-  const isAuthenticated = localStorage.getItem('auth_token');
-  
-  // If not authenticated, show auth checker
-  if (!isAuthenticated) {
-    return <AuthChecker />;
-  }
-
-  // Custom hooks for data fetching
+  // Custom hooks for data fetching (must be called before any early returns)
   const { 
     connections, 
     loading: connectionsLoading, 
@@ -42,6 +34,14 @@ const Friends = () => {
     error: peopleError, 
     refetch: refetchPeople 
   } = useDiscoverPeople();
+
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('auth_token');
+  
+  // If not authenticated, show auth checker
+  if (!isAuthenticated) {
+    return <AuthChecker />;
+  }
 
   // Determine which data to show
   const currentData = showConnections ? connections : people;
