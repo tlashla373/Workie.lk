@@ -323,11 +323,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                 )}
               </button>
             </Link>
-            
-            <button className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 text-gray-100 hover:bg-gray-700 hover:text-white' : 'bg-gray-700/30 text-gray-100 hover:bg-gray-700/50 hover:text-white'}`}>
-              <MessageCircle className="w-5 h-5" />
-            </button>
-            
+                      
             {/* New Real-time Notification Component */}
             <Notification />
             </div>
