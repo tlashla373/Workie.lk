@@ -5,6 +5,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import jsPDF from 'jspdf';
+import LogoImage from '../../../assets/Logo.png';
 
 const PaymentConfirmation = ({ 
   result, 
@@ -41,243 +42,210 @@ const PaymentConfirmation = ({
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
       
-      // Colors
-      const primaryColor = '#3B82F6'; // Blue
-      const darkGray = '#374151';
-      const lightGray = '#6B7280';
-      const successColor = '#10B981'; // Green
+      // Colors matching the design
+      const primaryBlue = '#4F46E5'; // Indigo blue for branding
+      const darkGray = '#1F2937';
+      const mediumGray = '#6B7280';
+      const lightGray = '#9CA3AF';
+      const greenSuccess = '#10B981';
       
-      // Add Workie Logo (text-based since we don't have the actual logo file)
-      pdf.setFontSize(24);
-      pdf.setTextColor(primaryColor);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('WORKIE', 20, 25);
-      
-      // Add tagline
-      pdf.setFontSize(10);
-      pdf.setTextColor(lightGray);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Your Trusted Service Platform', 20, 32);
-      
-      // Add header line
-      pdf.setDrawColor(primaryColor);
-      pdf.setLineWidth(0.5);
-      pdf.line(20, 38, pageWidth - 20, 38);
-      
-      // Receipt Title
-      pdf.setFontSize(20);
-      pdf.setTextColor(darkGray);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('PAYMENT RECEIPT', 20, 55);
-      
-      // Receipt Status
-      if (result?.success) {
-        pdf.setFontSize(12);
-        pdf.setTextColor(successColor);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('✓ PAYMENT SUCCESSFUL', 20, 68);
-      }
-      
-      // Transaction Details Section
-      let yPosition = 85;
-      
-      pdf.setFontSize(14);
-      pdf.setTextColor(darkGray);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Transaction Details', 20, yPosition);
-      
-      yPosition += 10;
-      pdf.setDrawColor(lightGray);
-      pdf.setLineWidth(0.3);
-      pdf.line(20, yPosition, pageWidth - 20, yPosition);
-      
-      yPosition += 15;
-      
-      // Transaction info
-      const transactionDetails = [
-        ['Transaction ID:', result?.transactionId || 'N/A'],
-        ['Date & Time:', new Date(result?.timestamp).toLocaleString()],
-        ['Amount:', `$${result?.amount?.toFixed(2)} ${result?.currency || 'USD'}`],
-        ['Payment Method:', result?.method === 'card' ? 'Credit/Debit Card' :
-                          result?.method === 'paypal' ? 'PayPal' :
-                          result?.method === 'bank' ? 'Bank Transfer' : 'Digital Wallet'],
-        ['Status:', result?.status || 'Completed']
-      ];
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
-      transactionDetails.forEach(([label, value]) => {
-        pdf.setTextColor(lightGray);
-        pdf.text(label, 20, yPosition);
-        pdf.setTextColor(darkGray);
-        pdf.text(value, 80, yPosition);
-        yPosition += 12;
-      });
-      
-      // Job Details Section (if it's a job payment)
-      if (isJobPayment && jobDetails) {
-        yPosition += 10;
-        
-        pdf.setFontSize(14);
-        pdf.setTextColor(darkGray);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('Job Details', 20, yPosition);
-        
-        yPosition += 10;
-        pdf.setDrawColor(lightGray);
-        pdf.setLineWidth(0.3);
-        pdf.line(20, yPosition, pageWidth - 20, yPosition);
-        
-        yPosition += 15;
-        
-        const jobInfo = [
-          ['Job Description:', jobDetails?.description || result?.description || 'Service Payment'],
-          ['Job ID:', jobDetails?.jobId || 'N/A'],
-          ['Application ID:', jobDetails?.applicationId || 'N/A']
-        ];
-        
-        if (jobDetails?.notes) {
-          jobInfo.push(['Notes:', jobDetails.notes]);
-        }
-        
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        
-        jobInfo.forEach(([label, value]) => {
-          pdf.setTextColor(lightGray);
-          pdf.text(label, 20, yPosition);
-          pdf.setTextColor(darkGray);
-          
-          // Handle long text wrapping
-          const maxWidth = pageWidth - 100;
-          const lines = pdf.splitTextToSize(value, maxWidth);
-          pdf.text(lines, 80, yPosition);
-          yPosition += 12 * lines.length;
+      // Function to load and convert image to base64
+      const loadImageAsBase64 = (imagePath) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = this.width;
+            canvas.height = this.height;
+            ctx.drawImage(this, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            resolve(dataURL);
+          };
+          img.onerror = reject;
+          img.src = imagePath;
         });
+      };
+
+      // Try to load and add the logo
+      try {
+        const logoBase64 = await loadImageAsBase64(LogoImage);
+        // Add logo - positioned at top left
+        pdf.addImage(logoBase64, 'PNG', 20, 15, 25, 25);
+      } catch (error) {
+        console.log('Could not load logo, using text instead');
+        // Fallback to text logo
+        pdf.setFontSize(20);
+        pdf.setTextColor(primaryBlue);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('W', 25, 35);
       }
+
+      // Company name next to logo
+      pdf.setFontSize(16);
+      pdf.setTextColor(primaryBlue);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Workie.lk Payment Receipt', 55, 30);
       
-      // Client Details Section
-      yPosition += 10;
+      // Header line
+      pdf.setDrawColor(primaryBlue);
+      pdf.setLineWidth(1);
+      pdf.line(20, 50, pageWidth - 20, 50);
       
-      pdf.setFontSize(14);
+      // Payment Receipt Title
+      let yPosition = 70;
+      pdf.setFontSize(18);
       pdf.setTextColor(darkGray);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Client Details', 20, yPosition);
+      pdf.text('Payment Receipt', 20, yPosition);
       
-      yPosition += 10;
-      pdf.setDrawColor(lightGray);
-      pdf.setLineWidth(0.3);
-      pdf.line(20, yPosition, pageWidth - 20, yPosition);
-      
-      yPosition += 15;
-      
-      const clientDetails = [
-        ['Name:', user?.name || user?.firstName + ' ' + user?.lastName || 'N/A'],
-        ['Email:', user?.email || 'N/A'],
-        ['User ID:', user?.id || user?._id || 'N/A']
-      ];
-      
+      yPosition += 5;
       pdf.setFontSize(10);
+      pdf.setTextColor(mediumGray);
       pdf.setFont('helvetica', 'normal');
+      pdf.text(`Transaction ID: PAY_${result?.transactionId || Date.now()}`, 20, yPosition);
       
-      clientDetails.forEach(([label, value]) => {
-        pdf.setTextColor(lightGray);
-        pdf.text(label, 20, yPosition);
-        pdf.setTextColor(darkGray);
-        pdf.text(value, 80, yPosition);
-        yPosition += 12;
-      });
-      
-      // Worker Details Section (if available)
-      if (isJobPayment && jobDetails?.recipient) {
-        yPosition += 10;
-        
-        pdf.setFontSize(14);
-        pdf.setTextColor(darkGray);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('Service Provider Details', 20, yPosition);
-        
-        yPosition += 10;
-        pdf.setDrawColor(lightGray);
-        pdf.setLineWidth(0.3);
-        pdf.line(20, yPosition, pageWidth - 20, yPosition);
-        
-        yPosition += 15;
-        
-        const workerDetails = [
-          ['Name:', jobDetails.recipient || 'N/A'],
-          ['Service Type:', 'Professional Service']
-        ];
-        
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        
-        workerDetails.forEach(([label, value]) => {
-          pdf.setTextColor(lightGray);
-          pdf.text(label, 20, yPosition);
-          pdf.setTextColor(darkGray);
-          pdf.text(value, 80, yPosition);
-          yPosition += 12;
-        });
-      }
-      
-      // Payment Summary Box
       yPosition += 20;
       
-      // Check if we need a new page
-      if (yPosition > pageHeight - 60) {
-        pdf.addPage();
-        yPosition = 20;
-      }
+      // Main content area with border
+      const contentStartY = yPosition;
       
-      // Summary box
-      const boxHeight = 40;
-      pdf.setFillColor(245, 247, 250); // Light gray background
-      pdf.rect(20, yPosition, pageWidth - 40, boxHeight, 'F');
-      
-      pdf.setDrawColor(primaryColor);
-      pdf.setLineWidth(1);
-      pdf.rect(20, yPosition, pageWidth - 40, boxHeight);
-      
-      // Summary content
+      // Job Details Section
       pdf.setFontSize(12);
       pdf.setTextColor(darkGray);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('TOTAL AMOUNT PAID', 30, yPosition + 15);
+      pdf.text('Job Title', 20, yPosition);
       
-      pdf.setFontSize(16);
-      pdf.setTextColor(successColor);
+      yPosition += 8;
+      pdf.setFontSize(11);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(jobDetails?.description || result?.description || 'Logo Design for Tech Startup', 20, yPosition);
+      
+      // Payment Method (top right)
+      pdf.setFontSize(12);
+      pdf.setTextColor(darkGray);
       pdf.setFont('helvetica', 'bold');
-      pdf.text(`$${result?.amount?.toFixed(2)} ${result?.currency || 'USD'}`, 30, yPosition + 30);
+      pdf.text('Payment Method', pageWidth - 100, contentStartY);
       
-      // Footer
-      yPosition = pageHeight - 40;
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      const paymentMethodText = result?.method === 'card' ? 'Card' :
+                               result?.method === 'paypal' ? 'PayPal' :
+                               result?.method === 'bank' ? 'Bank Transfer' : 'Card';
+      pdf.text(paymentMethodText, pageWidth - 100, contentStartY + 8);
       
+      yPosition += 20;
+      
+      // Worker Section
+      pdf.setFontSize(12);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Worker', 20, yPosition);
+      
+      yPosition += 8;
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(jobDetails?.recipient || 'Saman Bandara', 20, yPosition);
+      
+      // Payment Date (top right)
+      pdf.setFontSize(12);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Payment Date', pageWidth - 100, yPosition - 8);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      const paymentDate = new Date(result?.timestamp || Date.now()).toLocaleDateString('en-GB');
+      pdf.text(paymentDate, pageWidth - 100, yPosition);
+      
+      yPosition += 20;
+      
+      // Client Section
+      pdf.setFontSize(12);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Client', 20, yPosition);
+      
+      yPosition += 8;
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      const clientName = user?.name || user?.firstName + ' ' + user?.lastName || 'Avishka Madhushan';
+      pdf.text(clientName, 20, yPosition);
+      
+      // Amount Paid (top right)
+      pdf.setFontSize(12);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Amount Paid', pageWidth - 100, yPosition - 8);
+      
+      pdf.setFontSize(14);
+      pdf.setTextColor(greenSuccess);
+      pdf.setFont('helvetica', 'bold');
+      const currency = result?.currency === 'LKR' ? 'LKR' : 'LKR ';
+      const amount = result?.amount || 1025;
+      pdf.text(`${currency}${amount.toLocaleString()}`, pageWidth - 100, yPosition);
+      
+      yPosition += 30;
+      
+      // Payment Breakdown Section
+      pdf.setFontSize(14);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Payment Breakdown', 20, yPosition);
+      
+      yPosition += 15;
+      
+      // Breakdown details
+      const jobAmount = result?.amount ? (result.amount * 0.975) : 1000; // 97.5% to worker
+      const platformFee = result?.amount ? (result.amount * 0.025) : 25; // 2.5% platform fee
+      const total = result?.amount || 1025;
+      
+      // Job Amount line
+      pdf.setFontSize(11);
+      pdf.setTextColor(mediumGray);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Job Amount', 30, yPosition);
+      pdf.text(`${currency}${jobAmount.toLocaleString()}`, pageWidth - 50, yPosition);
+      
+      yPosition += 12;
+      
+      // Platform Fee line
+      pdf.text('Platform Fee (2.5%)', 30, yPosition);
+      pdf.text(`${currency}${platformFee.toLocaleString()}`, pageWidth - 50, yPosition);
+      
+      yPosition += 15;
+      
+      // Total line with emphasis
       pdf.setDrawColor(lightGray);
-      pdf.setLineWidth(0.3);
+      pdf.setLineWidth(0.5);
+      pdf.line(30, yPosition - 8, pageWidth - 30, yPosition - 8);
+      
+      pdf.setFontSize(12);
+      pdf.setTextColor(darkGray);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Total', 30, yPosition);
+      pdf.text(`${currency}${total.toLocaleString()}`, pageWidth - 50, yPosition);
+      
+      yPosition += 30;
+      
+      // Footer section
+      pdf.setDrawColor(lightGray);
+      pdf.setLineWidth(0.5);
       pdf.line(20, yPosition, pageWidth - 20, yPosition);
       
       yPosition += 15;
       
-      pdf.setFontSize(8);
-      pdf.setTextColor(lightGray);
+      // Footer text
+      pdf.setFontSize(9);
+      pdf.setTextColor(mediumGray);
       pdf.setFont('helvetica', 'normal');
       pdf.text('This is a computer-generated receipt. No signature required.', 20, yPosition);
-      pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, yPosition + 8);
       
-      // Support info
-      pdf.text('For support: support@workie.lk | +94 123 456 789', pageWidth - 120, yPosition);
-      pdf.text('Visit: www.workie.lk', pageWidth - 120, yPosition + 8);
-      
-      // Add page numbers if multiple pages
-      const pageCount = pdf.internal.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(lightGray);
-        pdf.text(`Page ${i} of ${pageCount}`, pageWidth - 30, pageHeight - 10);
-      }
+      yPosition += 10;
+      pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, yPosition);
+      pdf.text('For support: support@workie.lk', pageWidth - 80, yPosition);
       
       // Save the PDF
       const fileName = `workie-receipt-${result?.transactionId || Date.now()}.pdf`;
@@ -290,7 +258,7 @@ const PaymentConfirmation = ({
       
       // Fallback to JSON download if PDF generation fails
       const receiptData = {
-        companyName: 'Workie',
+        companyName: 'Workie.lk',
         receiptTitle: 'Payment Receipt',
         transactionId: result?.transactionId,
         amount: result?.amount,
@@ -405,7 +373,7 @@ const PaymentConfirmation = ({
               <div className="flex justify-between">
                 <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Amount:</span>
                 <span className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                  ${result.amount?.toFixed(2)} {result.currency}
+                  LKR {result.amount?.toFixed(2)}
                 </span>
               </div>
               

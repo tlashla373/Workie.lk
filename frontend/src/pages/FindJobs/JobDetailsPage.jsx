@@ -83,24 +83,18 @@ const JobDetailsPage = ({ job, onBack, isDarkMode }) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row">
               <button
               onClick={() => navigate('/job-application-page', { state: { job: job, jobId: job.id } })} 
-              className="flex-1 py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium">
+              className="flex-1 py-2 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium">
                 Apply Now
-              </button>
-              <button className={`flex-1 py-3 px-6 rounded-lg transition-all duration-200 border ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-                Save for Later
-              </button>
-              <button className={`p-3 rounded-lg transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-red-600 hover:bg-red-100'}`}>
-                <Heart className="w-6 h-6" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Job Description */}
