@@ -31,7 +31,7 @@ const useDiscoverPeople = () => {
       try {
         const queryParams = new URLSearchParams({
           page: filters.page || 1,
-          limit: filters.limit || 30,
+          limit: filters.limit || 50,
           userType: 'both',
           ...filters
         });

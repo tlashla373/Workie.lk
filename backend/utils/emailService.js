@@ -1,21 +1,35 @@
 const nodemailer = require('nodemailer');
 const logger = require('./logger');
 
-// Create transporter
+// Create transporter with enhanced configuration
 const createTransporter = () => {
+  // Remove spaces from app password if any
+  const cleanPassword = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '';
+  
+  // Log configuration (without sensitive data)
+  logger.info('Creating email transporter', {
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || 587,
+    user: process.env.EMAIL_USER ? '***configured***' : 'missing',
+    passwordConfigured: !!cleanPassword
+  });
+
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use TLS
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: false, // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      pass: cleanPassword
     },
     tls: {
       rejectUnauthorized: false
-    }
+    },
+    debug: process.env.NODE_ENV === 'development', // Enable debug in development
+    logger: process.env.NODE_ENV === 'development' // Enable logging in development
   });
 };
+
 
 // Send email function
 const sendEmail = async (options) => {
@@ -345,6 +359,63 @@ const sendOtpEmail = async (email, otp, firstName) => {
   });
 };
 
+// Test email connection
+const testEmailConnection = async () => {
+  try {
+    const transporter = createTransporter();
+    
+    // Test the connection
+    const isConnected = await new Promise((resolve, reject) => {
+      transporter.verify(function (error, success) {
+        if (error) {
+          logger.error('Email connection test failed', {
+            error: error.message,
+            code: error.code,
+            command: error.command,
+            stack: error.stack
+          });
+          reject(error);
+        } else {
+          logger.info('Email connection test successful');
+          resolve(success);
+        }
+      });
+    });
+
+    return { success: true, message: 'Email connection successful' };
+  } catch (error) {
+    logger.error('Email connection test error', {
+      error: error.message,
+      code: error.code,
+      command: error.command
+    });
+    return { success: false, error: error.message };
+  }
+};
+
+// Send test email
+const sendTestEmail = async (toEmail = process.env.EMAIL_USER) => {
+  try {
+    const result = await sendEmail({
+      to: toEmail,
+      subject: 'Test Email - Workie.lk',
+      text: 'This is a test email to verify email sending functionality.',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #3B82F6;">Test Email - Workie.lk</h2>
+          <p>This is a test email to verify email sending functionality.</p>
+          <p>If you receive this email, the email service is working correctly.</p>
+          <p>Timestamp: ${new Date().toISOString()}</p>
+        </div>
+      `
+    });
+
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
@@ -355,5 +426,7 @@ module.exports = {
   sendReviewReceivedEmail,
   sendEmailVerificationCode,
   sendPasswordResetPin,
-  sendOtpEmail
+  sendOtpEmail,
+  testEmailConnection,
+  sendTestEmail
 };
