@@ -54,11 +54,6 @@ const RoleSelection = () => {
     }
   };
 
-  const handleSkip = () => {
-    // Navigate to a Home 
-    navigate('/'); // Go to home
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full space-y-8">
@@ -171,13 +166,6 @@ const RoleSelection = () => {
                 <ArrowRight className="w-6 h-6 ml-2" />
               </>
             )}
-          </button>
-
-          <button
-            onClick={handleSkip}
-            className="w-full px-8 py-4 border-2 border-gray-300 rounded-xl font-semibold text-lg text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-          >
-            Skip for now
           </button>
         </div>
 

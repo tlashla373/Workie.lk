@@ -137,8 +137,6 @@ const FindJobs = () => {
   };
 
   const handleApply = async (jobId, e) => {
-    e.stopPropagation();
-    
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) {
@@ -301,20 +299,6 @@ const FindJobs = () => {
                     <h3 className={`text-lg sm:text-xl font-semibold hover:text-blue-400 transition-colors duration-200 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
                       {job.title}
                     </h3>
-                    <div className="flex items-center space-x-2 flex-shrink-0">
-                      <button 
-                        className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10' : 'text-gray-500 hover:text-red-600 hover:bg-red-100'}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-                      <button 
-                        className={`p-1.5 sm:p-2 rounded-lg transition-all duration-200 ${isDarkMode ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-100'}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-                    </div>
                   </div>
                   
                   {/* Publisher Info */}
@@ -362,14 +346,8 @@ const FindJobs = () => {
                     <span className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Posted {job.posted}</span>
                     <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                       <button 
-                        className={`px-3 sm:px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isDarkMode ? 'bg-gray-600/50 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Save for Later
-                      </button>
-                      <button 
                         className="px-4 sm:px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm"
-                        onClick={(e) => handleApply(job.id, e)}
+                        onClick={() => navigate('/job-application-page', { state: { job: job, jobId: job.id } })} 
                       >
                         Apply Now
                       </button>

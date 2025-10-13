@@ -1,11 +1,10 @@
 import React from 'react'
 import { useState } from "react";
 import useAuth from '../../hooks/useAuth.js';
+import authService from '../../services/authService.js';
 import { Eye, EyeOff } from "lucide-react";
 import Logo from '../../assets/Logo.png'
-import Facebook from '../../assets/facebook.svg'
 import Google from '../../assets/google.svg'
-
 import { Link, useNavigate } from 'react-router-dom'
 import InfiniteSlider from '../../components/ui/InfiniteSlider';
 import { toast } from 'react-toastify';
@@ -27,6 +26,59 @@ const SignUpPage = () => {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
   // Fixed phone validation - accepts +94771234567 (12), 0771234567 (10), 771234567 (9)
   const phoneRegex = /^(\+94[0-9]{9}|0[0-9]{9}|[0-9]{9})$/;
+
+  // Google Sign-In handler
+  const handleGoogleSignIn = async () => {
+    try {
+      // Use Google Identity Services (GIS) for client-side sign-in
+      /* global google */
+      if (!window.google) {
+        toast.error('Google Sign-In SDK not loaded.');
+        return;
+      }
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'email profile',
+        callback: async (response) => {
+          if (response && response.access_token) {
+            try {
+              // Send token to backend for verification
+              const result = await authService.googleSignIn(response.access_token);
+              if (result.success && result.data) {
+                toast.success('Signed in with Google!');
+                
+                // Check user type and redirect appropriately
+                const user = result.data.user;
+                if (user && user.userType) {
+                  if (user.userType === 'admin') {
+                    navigate('/admin');
+                  } else if (user.userType === 'client') {
+                    navigate('/clientprofile');
+                  } else if (user.userType === 'worker') {
+                    navigate('/workerprofile');
+                  } else {
+                    navigate('/roleselection');
+                  }
+                } else {
+                  navigate('/roleselection');
+                }
+              } else {
+                toast.error(result.message || 'Google Sign-In failed');
+              }
+            } catch (err) {
+              console.error('Google Sign-In error:', err);
+              toast.error('Google Sign-In error: ' + (err.message || 'Unknown error'));
+            }
+          } else {
+            toast.error('Google Sign-In failed to get token.');
+          }
+        }
+      });
+      client.requestAccessToken();
+    } catch (error) {
+      toast.error('Google Sign-In error: ' + (error.message || 'Unknown error'));
+    }
+  };
 
   // Form submission handler
   const handleSubmit = async (e) => {
@@ -302,21 +354,13 @@ const SignUpPage = () => {
               <button
                 type="button"
                 className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
+                onClick={handleGoogleSignIn}
               >
                 <div className="w-5 h-5 mr-3">
-                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Google} alt="Google"/>
+                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Google} alt="Google"
+                  />
                 </div>
                 Continue with Google
-              </button>
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
-              >
-                <div className="w-5 h-5 mr-3">
-                  <img className="h-5 w-5 sm:h-6 sm:w-6" src={Facebook} alt="Facebook"/>
-                </div>
-                Continue with Facebook
               </button>
             </div>
           </form>

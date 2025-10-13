@@ -3,7 +3,6 @@ import useAuth from '../../hooks/useAuth.js';
 import authService from '../../services/authService.js';
 import { Eye, EyeOff } from "lucide-react";
 import Logo from '../../assets/Logo.png'
-import Facebook from '../../assets/facebook.svg'
 import Google from '../../assets/google.svg'
 import { Link, useNavigate } from 'react-router-dom'
 import InfiniteSlider from "../../components/ui/InfiniteSlider";
@@ -230,14 +229,6 @@ export default function LoginPage() {
               >
                 <img className="h-5 w-5 sm:h-6 sm:w-6 mr-3" src={Google} alt="Google"/>
                 Continue with Google
-              </button>
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-center px-4 py-3 sm:py-4 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition duration-200 text-sm sm:text-base font-medium"
-              >
-                <img className="h-5 w-5 sm:h-6 sm:w-6 mr-3" src={Facebook} alt="Facebook"/>
-                Continue with Facebook
               </button>
             </div>
           </form>
