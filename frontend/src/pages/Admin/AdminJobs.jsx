@@ -192,7 +192,7 @@ const AdminJobs = () => {
     };
 
     return (
-      <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
           {/* Header with Gradient */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
@@ -213,7 +213,7 @@ const AdminJobs = () => {
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-8 py-6">
+          <div className="overflow-y-auto no-scrollbar max-h-[calc(90vh-180px)] px-8 py-6">
             {/* Status and Basic Info */}
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-6 border border-blue-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import './App.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Home from './pages/HomePage/Home';
@@ -34,6 +33,7 @@ import AdminVerifications from './pages/Admin/AdminVerifications';
 import AdminReviews from './pages/Admin/AdminReviews';
 import AdminReports from './pages/Admin/AdminReports';
 import AdminNotifications from './pages/Admin/AdminNotifications';
+import AdminComplaints from './pages/Admin/AdminComplaints';
 import AdminSettings from './pages/Admin/AdminSettings';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import AdminRegistration from './components/AdminPanel/AdminRegistration';
@@ -48,8 +48,7 @@ import PaymentGateway from './pages/PaymentGateway/PaymentGateway';
 
 
 const App = () => {
-  const [count, setCount] = useState(0);
-
+  
   const router = createBrowserRouter([
     {
       path: '/',
@@ -176,6 +175,10 @@ const App = () => {
         {
           path: 'notifications',
           element: <AdminNotifications />,
+        },
+        {
+          path: 'complaints',
+          element: <AdminComplaints />,
         },
         {
           path: 'settings',

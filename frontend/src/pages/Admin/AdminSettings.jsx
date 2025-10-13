@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Save, Shield, Mail, Globe, Database, Key } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -396,7 +396,7 @@ const AdminSettings = () => {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">
             System Settings
           </h2>
           <p className="mt-1 text-sm text-gray-600">

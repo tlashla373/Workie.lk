@@ -13,12 +13,12 @@ class PostService {
       let mediaUrls = [];
       if (files && files.length > 0) {
         console.log('Uploading media files to Cloudinary...');
-        
+
         // Convert file objects to actual files for upload
         const filesToUpload = files.map(fileObj => fileObj.file);
-        
+
         const uploadResult = await mediaService.batchUploadPostMedia(
-          filesToUpload, 
+          filesToUpload,
           userId,
           (progress) => {
             console.log(`Upload progress: ${progress.percentage}% - ${progress.currentFile}`);
@@ -102,7 +102,7 @@ class PostService {
 
       // Delete post from database (backend will handle Cloudinary cleanup)
       const response = await apiService.delete(`/posts/${postId}`);
-      
+
       console.log('Post deleted successfully:', response);
       return response;
     } catch (error) {
@@ -178,6 +178,18 @@ class PostService {
       return response;
     } catch (error) {
       console.error('Error fetching video posts:', error);
+      throw error;
+    }
+  }
+
+  // Report a post
+  async reportPost(postId, reportData) {
+    try {
+      console.log('Reporting post...', { postId, reportData });
+      const response = await apiService.post(`/posts/${postId}/report`, reportData);
+      return response;
+    } catch (error) {
+      console.error('Error reporting post:', error);
       throw error;
     }
   }

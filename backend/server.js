@@ -21,6 +21,7 @@ const mediaRoutes = require('./routes/media');
 const connectionRoutes = require('./routes/connections');
 const analyticsRoutes = require('./routes/analytics');
 const postRoutes = require('./routes/posts'); // New: Posts route
+const complaintRoutes = require('./routes/complaints'); // New: Complaints route
 // Chat routes removed - migrating to WhatsApp integration
 
 // Import middleware
@@ -57,8 +58,8 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   skip: (req) => {
     // Skip rate limiting for health checks and OPTIONS requests in development
-    if (process.env.NODE_ENV === 'development' && 
-        (req.url === '/api/health' || req.method === 'OPTIONS')) {
+    if (process.env.NODE_ENV === 'development' &&
+      (req.url === '/api/health' || req.method === 'OPTIONS')) {
       return true;
     }
     return false;
@@ -90,7 +91,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.header('Access-Control-Allow-Credentials', 'true');
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -110,13 +111,13 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/workie_db
   minPoolSize: 1,                 // Minimum connections
   maxIdleTimeMS: 30000,          // Close connections after 30 seconds of inactivity
 })
-.then(() => {
-  console.log('MongoDB connected successfully');
-})
-.catch(err => {
-  console.error('MongoDB connection failed:', err.message);
-  process.exit(1);
-});
+  .then(() => {
+    console.log('MongoDB connected successfully');
+  })
+  .catch(err => {
+    console.error('MongoDB connection failed:', err.message);
+    process.exit(1);
+  });
 
 // MongoDB connection event handlers
 mongoose.connection.on('connected', () => {
@@ -153,6 +154,7 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/posts', postRoutes); // New: Posts routes
+app.use('/api/complaints', complaintRoutes); // New: Complaints routes
 // Chat routes removed - migrating to WhatsApp integration
 
 // Health check endpoint

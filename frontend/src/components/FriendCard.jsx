@@ -2,7 +2,7 @@ import React from 'react';
 import { Mail, Phone, UserPlus, UserCheck, User, Star } from 'lucide-react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
-const FriendCard = ({ friend, onEmailClick, onCallClick, onConnectClick, onViewProfileClick, isConnected, showConnectButton = false }) => {
+const FriendCard = ({ friend, onEmailClick, onCallClick, onViewProfileClick, showConnectButton = false }) => {
   const { isDarkMode } = useDarkMode();
 
   const handleEmailClick = () => {
@@ -18,14 +18,6 @@ const FriendCard = ({ friend, onEmailClick, onCallClick, onConnectClick, onViewP
       onCallClick(friend);
     } else {
       console.log(`Calling ${friend.name}`);
-    }
-  };
-
-  const handleConnectClick = () => {
-    if (onConnectClick) {
-      onConnectClick(friend);
-    } else {
-      console.log(`Connecting with ${friend.name}`);
     }
   };
 

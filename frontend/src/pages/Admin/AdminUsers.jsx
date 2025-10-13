@@ -128,7 +128,7 @@ const AdminUsers = () => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="fixed inset-0  bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-xs">
         <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex items-center justify-between">
@@ -166,7 +166,7 @@ const AdminUsers = () => {
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto flex-1 p-6">
+          <div className="overflow-y-auto no-scrollbar flex-1 p-6">
             {/* Status Badges */}
             <div className="flex flex-wrap gap-3 mb-6">
               <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
