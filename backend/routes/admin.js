@@ -4,6 +4,7 @@ const Job = require('../models/Job');
 const Application = require('../models/Application');
 const Review = require('../models/Review');
 const Notification = require('../models/Notification');
+const Profile = require('../models/Profile');
 const { auth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -261,7 +262,7 @@ router.get('/applications', async (req, res) => {
 });
 
 // @route   GET /api/admin/reviews
-// @desc    Get all reviews with pagination and filtering
+// @desc    Get all reviews with pagination and filtering (from both Review collection and Application.review)
 // @access  Admin only
 router.get('/reviews', async (req, res) => {
   try {
@@ -270,29 +271,67 @@ router.get('/reviews', async (req, res) => {
     const skip = (page - 1) * limit;
     const rating = req.query.rating || '';
 
-    // Build query
-    let query = {};
+    // Build query for rating filter
+    let ratingQuery = {};
     if (rating && rating !== 'all') {
-      query.rating = parseInt(rating);
+      ratingQuery = { rating: parseInt(rating) };
     }
 
-    const [reviews, total] = await Promise.all([
-      Review.find(query)
-        .populate('reviewer', 'firstName lastName')
-        .populate('reviewee', 'firstName lastName')
-        .populate('job', 'title budget')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      Review.countDocuments(query)
-    ]);
+    // Fetch from Review collection
+    const reviewsFromCollection = await Review.find(ratingQuery)
+      .populate('reviewer', 'firstName lastName email profilePicture')
+      .populate('reviewee', 'firstName lastName email profilePicture')
+      .populate('job', 'title budget')
+      .sort({ createdAt: -1 })
+      .lean();
 
+    // Fetch from Application.review (embedded reviews)
+    let applicationQuery = { 'review.rating': { $exists: true, $ne: null } };
+    if (rating && rating !== 'all') {
+      applicationQuery['review.rating'] = parseInt(rating);
+    }
+
+    const applicationsWithReviews = await Application.find(applicationQuery)
+      .populate('worker', 'firstName lastName email profilePicture')
+      .populate('job', 'title budget')
+      .sort({ 'review.submittedAt': -1 })
+      .lean();
+
+    // Transform application reviews to match Review format
+    const reviewsFromApplications = applicationsWithReviews.map(app => {
+      // Get client info from job
+      return {
+        _id: `app_${app._id}`,
+        job: app.job,
+        reviewer: null, // Client info not populated in application, will show "Client"
+        reviewee: app.worker,
+        rating: app.review.rating,
+        comment: app.review.comment || '',
+        createdAt: app.review.submittedAt || app.updatedAt,
+        reviewType: 'client-to-worker',
+        isReported: false,
+        source: 'application' // Add source identifier
+      };
+    });
+
+    // Combine both sources
+    const allReviews = [
+      ...reviewsFromCollection.map(r => ({ ...r, source: 'review' })),
+      ...reviewsFromApplications
+    ];
+
+    // Sort by date
+    allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Apply pagination
+    const total = allReviews.length;
     const totalPages = Math.ceil(total / limit);
+    const paginatedReviews = allReviews.slice(skip, skip + limit);
 
     res.json({
       success: true,
       data: {
-        reviews,
+        reviews: paginatedReviews,
         totalPages,
         currentPage: page,
         total
@@ -300,6 +339,103 @@ router.get('/reviews', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin reviews error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/reviews/:id
+// @desc    Get review details
+// @access  Admin only
+router.get('/reviews/:id', async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id)
+      .populate('reviewer', 'firstName lastName email profilePicture')
+      .populate('reviewee', 'firstName lastName email profilePicture')
+      .populate('job', 'title budget category');
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        review
+      }
+    });
+  } catch (error) {
+    console.error('Admin get review details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   DELETE /api/admin/reviews/:id
+// @desc    Delete a review (admin only)
+// @access  Admin only
+router.delete('/reviews/:id', async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+
+    await Review.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Review deleted successfully'
+    });
+  } catch (error) {
+    console.error('Admin delete review error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PATCH /api/admin/reviews/:id/report
+// @desc    Toggle review reported status
+// @access  Admin only
+router.patch('/reviews/:id/report', async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+
+    review.isReported = !review.isReported;
+    await review.save();
+
+    res.json({
+      success: true,
+      message: `Review ${review.isReported ? 'reported' : 'unreported'} successfully`,
+      data: {
+        review
+      }
+    });
+  } catch (error) {
+    console.error('Admin report review error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -486,6 +622,9 @@ router.get('/workers/pending-verification', async (req, res) => {
     // Calculate average rating for each worker and filter by rating > 3
     const workersWithRatings = await Promise.all(
       allWorkers.map(async (worker) => {
+        // Get worker's profile to fetch categories
+        const profile = await Profile.findOne({ user: worker._id }).select('workerCategories');
+
         // Get ratings from Review collection (if any)
         const reviews = await Review.find({
           reviewee: worker._id,
@@ -512,7 +651,8 @@ router.get('/workers/pending-verification', async (req, res) => {
         return {
           ...worker.toObject(),
           avgRating: parseFloat(avgRating.toFixed(1)),
-          reviewCount
+          reviewCount,
+          profession: profile?.workerCategories?.join(', ') || 'No profession'
         };
       })
     );
@@ -581,6 +721,9 @@ router.get('/workers/:id/verification-details', async (req, res) => {
       });
     }
 
+    // Get worker's profile to fetch categories
+    const profile = await Profile.findOne({ user: worker._id }).select('workerCategories');
+
     // Get worker's reviews from Review collection
     const reviews = await Review.find({
       reviewee: worker._id,
@@ -638,7 +781,10 @@ router.get('/workers/:id/verification-details', async (req, res) => {
     res.json({
       success: true,
       data: {
-        worker: worker.toObject(),
+        worker: {
+          ...worker.toObject(),
+          profession: profile?.workerCategories?.join(', ') || 'No profession'
+        },
         averageRating: parseFloat(avgRating.toFixed(1)),
         totalReviews: reviewCount,
         completedJobs,
@@ -737,11 +883,11 @@ router.post('/workers/:id/verify', async (req, res) => {
 
     // Create notification for the worker
     await Notification.create({
-      user: worker._id,
+      recipient: worker._id,
+      sender: req.user._id,
       title: '✅ Verification Approved!',
       message: `Congratulations! Your account has been verified. You can now display the verified badge on your profile.${notes ? ` Note: ${notes}` : ''}`,
-      type: 'success',
-      createdBy: req.user.id
+      type: 'system_update'
     });
 
     res.json({
@@ -805,11 +951,11 @@ router.post('/workers/:id/reject-verification', async (req, res) => {
 
     // Create notification for the worker
     await Notification.create({
-      user: worker._id,
+      recipient: worker._id,
+      sender: req.user._id,
       title: '❌ Verification Not Approved',
       message: `Your verification request has been reviewed. Reason: ${reason}. Please update your documents and resubmit.`,
-      type: 'warning',
-      createdBy: req.user.id
+      type: 'system_update'
     });
 
     res.json({
@@ -871,11 +1017,11 @@ router.post('/workers/:id/revoke-verification', async (req, res) => {
 
     // Create notification for the worker
     await Notification.create({
-      user: worker._id,
+      recipient: worker._id,
+      sender: req.user._id,
       title: '⚠️ Verification Revoked',
       message: `Your verification status has been revoked. Reason: ${reason}. Please contact support if you believe this is an error.`,
-      type: 'error',
-      createdBy: req.user.id
+      type: 'system_update'
     });
 
     res.json({

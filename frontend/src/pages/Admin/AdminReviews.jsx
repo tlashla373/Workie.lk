@@ -27,7 +27,7 @@ const AdminReviews = () => {
         rating: filterRating !== 'all' ? filterRating : ''
       });
 
-      const response = await apiService.request(`/reviews?${queryParams}`);
+      const response = await apiService.request(`/admin/reviews?${queryParams}`);
       setReviews(response.data?.reviews || []);
       setTotalPages(response.data?.totalPages || 1);
     } catch (error) {
@@ -40,16 +40,22 @@ const AdminReviews = () => {
 
   const handleReviewAction = async (reviewId, action) => {
     try {
+      // Check if this is an application review (cannot be deleted/reported)
+      if (reviewId.startsWith('app_')) {
+        toast.warning('Reviews from job applications cannot be modified. They are part of the application record.');
+        return;
+      }
+
       let endpoint = '';
       let message = '';
       
       switch (action) {
         case 'delete':
-          endpoint = `/reviews/${reviewId}`;
+          endpoint = `/admin/reviews/${reviewId}`;
           message = 'Review deleted successfully';
           break;
         case 'report':
-          endpoint = `/reviews/${reviewId}/report`;
+          endpoint = `/admin/reviews/${reviewId}/report`;
           message = 'Review reported successfully';
           break;
         default:
@@ -72,7 +78,21 @@ const AdminReviews = () => {
 
   const viewReviewDetails = async (reviewId) => {
     try {
-      const response = await apiService.request(`/reviews/${reviewId}`);
+      // Check if this is an application review
+      if (reviewId.startsWith('app_')) {
+        // Find the review in the current list (it's already loaded)
+        const review = reviews.find(r => r._id === reviewId);
+        if (review) {
+          setSelectedReview(review);
+          setShowReviewModal(true);
+        } else {
+          toast.error('Review not found');
+        }
+        return;
+      }
+
+      // Fetch from API for regular reviews
+      const response = await apiService.request(`/admin/reviews/${reviewId}`);
       setSelectedReview(response.data?.review);
       setShowReviewModal(true);
     } catch (error) {
@@ -118,7 +138,9 @@ const AdminReviews = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700">Reviewer</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {selectedReview.reviewer?.firstName} {selectedReview.reviewer?.lastName}
+                  {selectedReview.reviewer?.firstName ? 
+                    `${selectedReview.reviewer.firstName} ${selectedReview.reviewer.lastName}` : 
+                    'Client (Anonymous)'}
                 </p>
               </div>
               
@@ -168,22 +190,33 @@ const AdminReviews = () => {
               {selectedReview.job && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Job Budget</label>
-                  <p className="mt-1 text-sm text-gray-900">${selectedReview.job.budget}</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedReview.job.budget?.amount 
+                      ? `${selectedReview.job.budget.currency || 'LKR'} ${selectedReview.job.budget.amount}` 
+                      : 'N/A'}
+                  </p>
                 </div>
               )}
             </div>
           </div>
           
           <div className="mt-6 flex justify-end space-x-3">
-            <button
-              onClick={() => {
-                handleReviewAction(selectedReview._id, 'delete');
-                setShowReviewModal(false);
-              }}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-            >
-              Delete Review
-            </button>
+            {selectedReview.source !== 'application' && (
+              <button
+                onClick={() => {
+                  handleReviewAction(selectedReview._id, 'delete');
+                  setShowReviewModal(false);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                Delete Review
+              </button>
+            )}
+            {selectedReview.source === 'application' && (
+              <div className="flex-1 text-sm text-gray-500 flex items-center">
+                <span>Reviews from job applications cannot be deleted</span>
+              </div>
+            )}
             <button
               onClick={() => setShowReviewModal(false)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
@@ -282,7 +315,9 @@ const AdminReviews = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {review.reviewer?.firstName} {review.reviewer?.lastName}
+                            {review.reviewer?.firstName ? 
+                              `${review.reviewer.firstName} ${review.reviewer.lastName}` : 
+                              'Client'}
                           </div>
                           <div className="text-sm text-gray-500">
                             reviewed {review.reviewee?.firstName} {review.reviewee?.lastName}
@@ -290,6 +325,11 @@ const AdminReviews = () => {
                           {review.isReported && (
                             <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                               Reported
+                            </span>
+                          )}
+                          {review.source === 'application' && (
+                            <span className="inline-flex px-2 py-1 ml-2 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                              From Job
                             </span>
                           )}
                         </div>
@@ -321,8 +361,9 @@ const AdminReviews = () => {
                           {!review.isReported && (
                             <button
                               onClick={() => handleReviewAction(review._id, 'report')}
-                              className="text-yellow-600 hover:text-yellow-900"
-                              title="Report Review"
+                              className={`${review.source === 'application' ? 'text-gray-400 cursor-not-allowed' : 'text-yellow-600 hover:text-yellow-900'}`}
+                              title={review.source === 'application' ? 'Cannot report job reviews' : 'Report Review'}
+                              disabled={review.source === 'application'}
                             >
                               <Flag className="w-4 h-4" />
                             </button>
@@ -330,8 +371,9 @@ const AdminReviews = () => {
                           
                           <button
                             onClick={() => handleReviewAction(review._id, 'delete')}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete Review"
+                            className={`${review.source === 'application' ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900'}`}
+                            title={review.source === 'application' ? 'Cannot delete job reviews' : 'Delete Review'}
+                            disabled={review.source === 'application'}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
