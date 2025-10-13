@@ -4,6 +4,7 @@ const Job = require('../models/Job');
 const Application = require('../models/Application');
 const Review = require('../models/Review');
 const Notification = require('../models/Notification');
+const Profile = require('../models/Profile');
 const { auth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -261,7 +262,7 @@ router.get('/applications', async (req, res) => {
 });
 
 // @route   GET /api/admin/reviews
-// @desc    Get all reviews with pagination and filtering
+// @desc    Get all reviews with pagination and filtering (from both Review collection and Application.review)
 // @access  Admin only
 router.get('/reviews', async (req, res) => {
   try {
@@ -270,29 +271,67 @@ router.get('/reviews', async (req, res) => {
     const skip = (page - 1) * limit;
     const rating = req.query.rating || '';
 
-    // Build query
-    let query = {};
+    // Build query for rating filter
+    let ratingQuery = {};
     if (rating && rating !== 'all') {
-      query.rating = parseInt(rating);
+      ratingQuery = { rating: parseInt(rating) };
     }
 
-    const [reviews, total] = await Promise.all([
-      Review.find(query)
-        .populate('reviewer', 'firstName lastName')
-        .populate('reviewee', 'firstName lastName')
-        .populate('job', 'title budget')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      Review.countDocuments(query)
-    ]);
+    // Fetch from Review collection
+    const reviewsFromCollection = await Review.find(ratingQuery)
+      .populate('reviewer', 'firstName lastName email profilePicture')
+      .populate('reviewee', 'firstName lastName email profilePicture')
+      .populate('job', 'title budget')
+      .sort({ createdAt: -1 })
+      .lean();
 
+    // Fetch from Application.review (embedded reviews)
+    let applicationQuery = { 'review.rating': { $exists: true, $ne: null } };
+    if (rating && rating !== 'all') {
+      applicationQuery['review.rating'] = parseInt(rating);
+    }
+
+    const applicationsWithReviews = await Application.find(applicationQuery)
+      .populate('worker', 'firstName lastName email profilePicture')
+      .populate('job', 'title budget')
+      .sort({ 'review.submittedAt': -1 })
+      .lean();
+
+    // Transform application reviews to match Review format
+    const reviewsFromApplications = applicationsWithReviews.map(app => {
+      // Get client info from job
+      return {
+        _id: `app_${app._id}`,
+        job: app.job,
+        reviewer: null, // Client info not populated in application, will show "Client"
+        reviewee: app.worker,
+        rating: app.review.rating,
+        comment: app.review.comment || '',
+        createdAt: app.review.submittedAt || app.updatedAt,
+        reviewType: 'client-to-worker',
+        isReported: false,
+        source: 'application' // Add source identifier
+      };
+    });
+
+    // Combine both sources
+    const allReviews = [
+      ...reviewsFromCollection.map(r => ({ ...r, source: 'review' })),
+      ...reviewsFromApplications
+    ];
+
+    // Sort by date
+    allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Apply pagination
+    const total = allReviews.length;
     const totalPages = Math.ceil(total / limit);
+    const paginatedReviews = allReviews.slice(skip, skip + limit);
 
     res.json({
       success: true,
       data: {
-        reviews,
+        reviews: paginatedReviews,
         totalPages,
         currentPage: page,
         total
@@ -300,6 +339,103 @@ router.get('/reviews', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin reviews error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/reviews/:id
+// @desc    Get review details
+// @access  Admin only
+router.get('/reviews/:id', async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id)
+      .populate('reviewer', 'firstName lastName email profilePicture')
+      .populate('reviewee', 'firstName lastName email profilePicture')
+      .populate('job', 'title budget category');
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        review
+      }
+    });
+  } catch (error) {
+    console.error('Admin get review details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   DELETE /api/admin/reviews/:id
+// @desc    Delete a review (admin only)
+// @access  Admin only
+router.delete('/reviews/:id', async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+
+    await Review.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Review deleted successfully'
+    });
+  } catch (error) {
+    console.error('Admin delete review error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PATCH /api/admin/reviews/:id/report
+// @desc    Toggle review reported status
+// @access  Admin only
+router.patch('/reviews/:id/report', async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: 'Review not found'
+      });
+    }
+
+    review.isReported = !review.isReported;
+    await review.save();
+
+    res.json({
+      success: true,
+      message: `Review ${review.isReported ? 'reported' : 'unreported'} successfully`,
+      data: {
+        review
+      }
+    });
+  } catch (error) {
+    console.error('Admin report review error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -325,7 +461,7 @@ router.get('/reports/:type', async (req, res) => {
         const totalUsers = await User.countDocuments();
         const newUsers = await User.countDocuments({ createdAt: { $gte: startDate } });
         const activeUsers = await User.countDocuments({ isActive: true });
-        
+
         data = {
           totalUsers,
           newUsersThisMonth: newUsers,
@@ -338,7 +474,7 @@ router.get('/reports/:type', async (req, res) => {
         const totalJobs = await Job.countDocuments();
         const recentJobs = await Job.countDocuments({ createdAt: { $gte: startDate } });
         const completedJobs = await Job.countDocuments({ status: 'completed' });
-        
+
         data = {
           totalJobs,
           jobsThisMonth: recentJobs,
@@ -454,6 +590,455 @@ router.get('/notifications', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin get notifications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// ============= WORKER VERIFICATION ENDPOINTS =============
+
+// @route   GET /api/admin/workers/pending-verification
+// @desc    Get all workers pending verification
+// @access  Admin only
+router.get('/workers/pending-verification', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // Find workers with ID documents but not verified
+    const query = {
+      userType: 'worker',
+      isVerified: false,
+      'verificationDocuments.idPhotoFront': { $exists: true, $ne: '' },
+      'verificationDocuments.idPhotoBack': { $exists: true, $ne: '' }
+    };
+
+    // Get all workers matching the query (without pagination first)
+    const allWorkers = await User.find(query).select('-password');
+
+    // Calculate average rating for each worker and filter by rating > 3
+    const workersWithRatings = await Promise.all(
+      allWorkers.map(async (worker) => {
+        // Get worker's profile to fetch categories
+        const profile = await Profile.findOne({ user: worker._id }).select('workerCategories');
+
+        // Get ratings from Review collection (if any)
+        const reviews = await Review.find({
+          reviewee: worker._id,
+          reviewType: 'client-to-worker'
+        });
+
+        // Get ratings from Application collection (embedded reviews)
+        const applications = await Application.find({
+          worker: worker._id,
+          'review.rating': { $exists: true, $ne: null }
+        });
+
+        // Combine ratings from both sources
+        const allRatings = [
+          ...reviews.map(r => r.rating),
+          ...applications.map(a => a.review.rating)
+        ];
+
+        const avgRating = allRatings.length > 0
+          ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
+          : 0;
+        const reviewCount = allRatings.length;
+
+        return {
+          ...worker.toObject(),
+          avgRating: parseFloat(avgRating.toFixed(1)),
+          reviewCount,
+          profession: profile?.workerCategories?.join(', ') || 'No profession'
+        };
+      })
+    );
+
+    // Filter workers with average rating > 3 OR no reviews yet (new workers)
+    const eligibleWorkers = workersWithRatings.filter(worker => {
+      // If worker has reviews, rating must be > 3
+      if (worker.reviewCount > 0) {
+        return worker.avgRating > 3;
+      }
+      // If worker has no reviews yet, include them (give new workers a chance)
+      return true;
+    });
+
+    // Sort by rating (highest first) and then by creation date
+    eligibleWorkers.sort((a, b) => {
+      if (b.avgRating !== a.avgRating) {
+        return b.avgRating - a.avgRating;
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    // Apply pagination to filtered results
+    const total = eligibleWorkers.length;
+    const totalPages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+    const paginatedWorkers = eligibleWorkers.slice(skip, skip + limit);
+
+    res.json({
+      success: true,
+      data: {
+        workers: paginatedWorkers,
+        totalPages,
+        currentPage: page,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Admin pending verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/workers/:id/verification-details
+// @desc    Get worker verification details including ID photos and rating
+// @access  Admin only
+router.get('/workers/:id/verification-details', async (req, res) => {
+  try {
+    const worker = await User.findById(req.params.id).select('-password');
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Get worker's profile to fetch categories
+    const profile = await Profile.findOne({ user: worker._id }).select('workerCategories');
+
+    // Get worker's reviews from Review collection
+    const reviews = await Review.find({
+      reviewee: worker._id,
+      reviewType: 'client-to-worker'
+    })
+      .populate('reviewer', 'firstName lastName')
+      .populate('job', 'title')
+      .sort({ createdAt: -1 });
+
+    // Get ratings from Application collection (embedded reviews)
+    const applicationsWithReviews = await Application.find({
+      worker: worker._id,
+      'review.rating': { $exists: true, $ne: null }
+    })
+      .populate('job', 'title')
+      .sort({ 'review.submittedAt': -1 });
+
+    // Combine ratings from both sources
+    const allRatings = [
+      ...reviews.map(r => r.rating),
+      ...applicationsWithReviews.map(a => a.review.rating)
+    ];
+
+    const avgRating = allRatings.length > 0
+      ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
+      : 0;
+
+    const reviewCount = allRatings.length;
+
+    // Combine all reviews for display
+    const combinedReviews = [
+      ...reviews.map(r => ({
+        rating: r.rating,
+        comment: r.comment,
+        reviewer: r.reviewer,
+        job: r.job,
+        createdAt: r.createdAt,
+        source: 'review'
+      })),
+      ...applicationsWithReviews.map(a => ({
+        rating: a.review.rating,
+        comment: a.review.comment,
+        job: a.job,
+        createdAt: a.review.submittedAt || a.updatedAt,
+        source: 'application'
+      }))
+    ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Get completed jobs count (using correct field name 'worker', not 'applicant')
+    const completedJobs = await Application.countDocuments({
+      worker: worker._id,
+      status: { $in: ['completed', 'payment-released', 'payment-confirmed', 'reviewed', 'closed'] }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        worker: {
+          ...worker.toObject(),
+          profession: profile?.workerCategories?.join(', ') || 'No profession'
+        },
+        averageRating: parseFloat(avgRating.toFixed(1)),
+        totalReviews: reviewCount,
+        completedJobs,
+        reviews: combinedReviews.slice(0, 10), // Latest 10 reviews
+        verificationDocuments: {
+          idPhotoFront: worker.verificationDocuments?.idPhotoFront,
+          idPhotoBack: worker.verificationDocuments?.idPhotoBack
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin verification details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/workers/:id/verify
+// @desc    Verify a worker (approve verification)
+// @access  Admin only
+router.post('/workers/:id/verify', async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    const worker = await User.findById(req.params.id);
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Check if worker has uploaded ID documents
+    if (!worker.verificationDocuments?.idPhotoFront || !worker.verificationDocuments?.idPhotoBack) {
+      return res.status(400).json({
+        success: false,
+        message: 'Worker has not uploaded ID documents'
+      });
+    }
+
+    // Get worker's average rating from BOTH Review collection and Application.review
+    const reviews = await Review.find({
+      reviewee: worker._id,
+      reviewType: 'client-to-worker'
+    });
+
+    const applications = await Application.find({
+      worker: worker._id,
+      'review.rating': { $exists: true, $ne: null }
+    });
+
+    // Combine ratings from both sources
+    const allRatings = [
+      ...reviews.map(r => r.rating),
+      ...applications.map(a => a.review.rating)
+    ];
+
+    const avgRating = allRatings.length > 0
+      ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
+      : 0;
+    const reviewCount = allRatings.length;
+
+    // REQUIRE rating > 3.0 for verification (no exceptions)
+    if (reviewCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Worker has no ratings yet. Cannot verify without customer reviews.',
+        avgRating: 0,
+        reviewCount: 0
+      });
+    }
+
+    if (avgRating <= 3) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient rating for verification. Worker's rating (${avgRating.toFixed(1)}) must be greater than 3.0`,
+        avgRating: avgRating.toFixed(1),
+        reviewCount: reviewCount
+      });
+    }
+
+    // Verify the worker
+    worker.isVerified = true;
+    await worker.save();
+
+    // Create notification for the worker
+    await Notification.create({
+      recipient: worker._id,
+      sender: req.user._id,
+      title: '✅ Verification Approved!',
+      message: `Congratulations! Your account has been verified. You can now display the verified badge on your profile.${notes ? ` Note: ${notes}` : ''}`,
+      type: 'system_update'
+    });
+
+    res.json({
+      success: true,
+      message: 'Worker verified successfully',
+      data: {
+        worker: {
+          _id: worker._id,
+          firstName: worker.firstName,
+          lastName: worker.lastName,
+          email: worker.email,
+          isVerified: worker.isVerified,
+          avgRating: avgRating.toFixed(1),
+          reviewCount: reviewCount
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin verify worker error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/workers/:id/reject-verification
+// @desc    Reject a worker's verification request
+// @access  Admin only
+router.post('/workers/:id/reject-verification', async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rejection reason is required'
+      });
+    }
+
+    const worker = await User.findById(req.params.id);
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Ensure worker remains unverified
+    worker.isVerified = false;
+    await worker.save();
+
+    // Create notification for the worker
+    await Notification.create({
+      recipient: worker._id,
+      sender: req.user._id,
+      title: '❌ Verification Not Approved',
+      message: `Your verification request has been reviewed. Reason: ${reason}. Please update your documents and resubmit.`,
+      type: 'system_update'
+    });
+
+    res.json({
+      success: true,
+      message: 'Verification request rejected',
+      data: {
+        worker: {
+          _id: worker._id,
+          firstName: worker.firstName,
+          lastName: worker.lastName,
+          email: worker.email,
+          isVerified: worker.isVerified
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin reject verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/workers/:id/revoke-verification
+// @desc    Revoke a worker's verification status
+// @access  Admin only
+router.post('/workers/:id/revoke-verification', async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        message: 'Revocation reason is required'
+      });
+    }
+
+    const worker = await User.findById(req.params.id);
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Worker not found'
+      });
+    }
+
+    if (worker.userType !== 'worker') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a worker'
+      });
+    }
+
+    // Revoke verification
+    worker.isVerified = false;
+    await worker.save();
+
+    // Create notification for the worker
+    await Notification.create({
+      recipient: worker._id,
+      sender: req.user._id,
+      title: '⚠️ Verification Revoked',
+      message: `Your verification status has been revoked. Reason: ${reason}. Please contact support if you believe this is an error.`,
+      type: 'system_update'
+    });
+
+    res.json({
+      success: true,
+      message: 'Worker verification revoked successfully',
+      data: {
+        worker: {
+          _id: worker._id,
+          firstName: worker.firstName,
+          lastName: worker.lastName,
+          email: worker.email,
+          isVerified: worker.isVerified
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Admin revoke verification error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
