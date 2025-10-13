@@ -13,6 +13,8 @@ const AdminUsers = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // Debounce search term
   useEffect(() => {
@@ -273,16 +275,16 @@ const AdminUsers = () => {
               </div>
             </div>
 
-            {/* Profile Pictures Section */}
-            {(selectedUser.profilePicture || selectedUser.coverPhoto) && (
+            {/* Profile Pictures & Verification Documents Section */}
+            {(selectedUser.profilePicture || selectedUser.coverPhoto || (selectedUser.userType === 'worker' && selectedUser.verificationDocuments)) && (
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Media
+                  Media & Verification Documents
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {selectedUser.profilePicture && (
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Profile Picture</label>
@@ -290,12 +292,14 @@ const AdminUsers = () => {
                         <img 
                           src={selectedUser.profilePicture} 
                           alt="Profile" 
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => { setSelectedImage(selectedUser.profilePicture); setShowImageModal(true); }}
                           onError={(e) => { e.target.style.display = 'none'; }}
                         />
                       </div>
                     </div>
                   )}
+
                   {selectedUser.coverPhoto && (
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Cover Photo</label>
@@ -303,9 +307,44 @@ const AdminUsers = () => {
                         <img 
                           src={selectedUser.coverPhoto} 
                           alt="Cover" 
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => { setSelectedImage(selectedUser.coverPhoto); setShowImageModal(true); }}
                           onError={(e) => { e.target.style.display = 'none'; }}
                         />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show ID photos only for workers */}
+                  {selectedUser.userType === 'worker' && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Verification ID Photos</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {selectedUser.verificationDocuments?.idPhotoFront ? (
+                          <div className="relative aspect-square w-full bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 cursor-pointer" onClick={() => { setSelectedImage(selectedUser.verificationDocuments.idPhotoFront); setShowImageModal(true); }}>
+                            <img
+                              src={selectedUser.verificationDocuments.idPhotoFront}
+                              alt="ID Front"
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="relative aspect-square w-full bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-sm text-gray-500">No front ID</div>
+                        )}
+
+                        {selectedUser.verificationDocuments?.idPhotoBack ? (
+                          <div className="relative aspect-square w-full bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300 cursor-pointer" onClick={() => { setSelectedImage(selectedUser.verificationDocuments.idPhotoBack); setShowImageModal(true); }}>
+                            <img
+                              src={selectedUser.verificationDocuments.idPhotoBack}
+                              alt="ID Back"
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="relative aspect-square w-full bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-sm text-gray-500">No back ID</div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -328,8 +367,26 @@ const AdminUsers = () => {
     );
   };
 
+  // Image modal (lightbox)
+  const ImageModal = () => {
+    if (!showImageModal || !selectedImage) return null;
+    return (
+      <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-70" onClick={() => { setShowImageModal(false); setSelectedImage(null); }}>
+        <div className="relative max-w-4xl w-full mx-4">
+          <button onClick={(e) => { e.stopPropagation(); setShowImageModal(false); setSelectedImage(null); }} className="absolute right-2 top-2 z-70 bg-white rounded-full p-2 shadow">
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img src={selectedImage} alt="Enlarged" className="w-full max-h-[80vh] object-contain rounded-lg shadow-lg" onClick={(e) => e.stopPropagation()} />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      <ImageModal />
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
