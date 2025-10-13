@@ -275,6 +275,45 @@ export const getWorkHistory = async (userType) => {
 };
 
 /**
+ * Fetch worker applications for a specific worker by their ID (for public viewing)
+ * This returns the actual applications array
+ */
+export const getWorkerApplicationsById = async (workerId) => {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    console.log(`Fetching worker applications for worker ID: ${workerId}`);
+
+    // Use the endpoint to get applications for a specific worker
+    const response = await axios.get(API_ENDPOINTS.APPLICATIONS.BY_WORKER(workerId), {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    console.log('Worker applications response:', response.data);
+
+    if (response.data && response.data.success) {
+      const applications = response.data.data.applications || response.data.data;
+      console.log('Applications for worker:', applications);
+      
+      return applications;
+    } else {
+      // If the API call fails, return empty array
+      console.warn('Unable to fetch worker applications, returning empty array');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching worker applications by ID:', error);
+    // Return empty array on error instead of throwing
+    return [];
+  }
+};
+
+/**
  * Fetch worker statistics for a specific worker by their ID
  * This can be used to get ratings for other users' profiles
  */

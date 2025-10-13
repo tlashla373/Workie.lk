@@ -192,18 +192,13 @@ const JobDetailsPage = ({ job: initialJob, onBack, isDarkMode }) => {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Job Icon/Image */}
           <div className="w-24 h-24 flex-shrink-0">
-            {console.log('Rendering image section. jobData:', jobData)}
-            {console.log('Images array:', jobData?.images)}
-            {console.log('First image URL:', jobData?.images?.[0]?.url)}
-            {jobData?.images?.[0]?.url ? (
+            {(jobData?.images?.[0]?.url || initialJob?.logo) ? (
               <img 
-                src={jobData.images[0].url} 
-                alt={jobData.title}
+                src={jobData?.images?.[0]?.url || initialJob?.logo} 
+                alt={jobData?.title || initialJob?.title}
                 className="w-full h-full object-cover rounded-lg"
                 onError={(e) => {
-                  console.error('Image failed to load:', jobData.images[0].url);
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
+                  console.error('Image failed to load:', e.target.src);
                 }}
               />
             ) : (
