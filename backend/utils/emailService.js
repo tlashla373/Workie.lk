@@ -11,13 +11,15 @@ const createTransporter = () => {
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: process.env.EMAIL_PORT || 587,
     user: process.env.EMAIL_USER ? '***configured***' : 'missing',
-    passwordConfigured: !!cleanPassword
+    passwordConfigured: !!cleanPassword,
+    passwordLength: cleanPassword ? cleanPassword.length : 0
   });
 
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: false, // true for 465, false for other ports
+    // Enable TLS automatically when using port 465
+    secure: (parseInt(process.env.EMAIL_PORT) || 587) === 465, // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: cleanPassword

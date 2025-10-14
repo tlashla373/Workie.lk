@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, ChevronRight, Send, ChevronUp, ChevronDown  } from "lucide-react";
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -17,6 +18,7 @@ import Mechanic from '../../assets/Mechanic.svg'
 const DEFAULT_AVATAR = 'https://via.placeholder.com/40x40?text=User';
 
 export default function MainFeed() {
+  const navigate = useNavigate();
   const [selectedPost, setSelectedPost] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [newComment, setNewComment] = useState('');
@@ -236,6 +238,30 @@ export default function MainFeed() {
     setShowReportModal(true);
   };
 
+  // Handle view profile click
+  const handleViewProfileClick = (post) => {
+    // Navigate to profile page with a robustly-resolved user ID
+    const userId =
+      // If transformed post has userId as string
+      (typeof post?.userId === 'string' && post.userId) ||
+      // If transformed post has populated userId object
+      (post?.userId && (post.userId._id || post.userId.id)) ||
+      // If userInfo carries the id
+      (post?.userInfo && (post.userInfo._id || post.userInfo.id)) ||
+      // Fallback to originalPost if present
+      (post?.originalPost &&
+        ((typeof post.originalPost.userId === 'string' && post.originalPost.userId) ||
+          (post.originalPost.userId && (post.originalPost.userId._id || post.originalPost.userId.id)) ||
+          (post.originalPost.userInfo && (post.originalPost.userInfo._id || post.originalPost.userInfo.id)))) ||
+      null;
+
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    } else {
+      console.error('User ID not found for profile:', post);
+      alert('Unable to view profile: User ID not found');
+    }
+  };
 
 
   // Handle share post
@@ -701,12 +727,17 @@ export default function MainFeed() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <img
+              onClick={() => handleViewProfileClick(post)}
               src={post.avatar}
               alt={post.author}
-              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover cursor-pointer"
             />
             <div>
-              <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-xs md:text-sm`}>{post.author}</h3>
+              <h3
+               onClick={() => handleViewProfileClick(post)}
+               className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} text-xs md:text-sm cursor-pointer`}>
+                {post.author}
+              </h3>
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-xs`}>{post.profession} • {post.location} • {post.timeAgo}</p>
             </div>
           </div>
