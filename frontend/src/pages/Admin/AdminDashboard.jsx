@@ -21,6 +21,7 @@ const AdminDashboard = () => {
     completedJobs: 0,
     pendingApplications: 0,
     totalApplications: 0,
+    pendingComplaints: 0,
     monthlyRevenue: 0,
     recentUsers: [],
     recentJobs: [],
@@ -36,33 +37,23 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch various statistics in parallel
-      const [usersResponse, jobsResponse, applicationsResponse] = await Promise.all([
-        apiService.request('/users/stats/overview'),
-        apiService.request('/jobs/stats/overview'),
-        apiService.request('/applications/stats/overview')
-      ]);
-
-      // Fetch recent data
-      const [recentUsersResponse, recentJobsResponse, recentAppsResponse] = await Promise.all([
-        apiService.request('/users?limit=5&sort=-createdAt'),
-        apiService.request('/jobs?limit=5&sort=-createdAt'),
-        apiService.request('/applications?limit=5&sort=-createdAt')
-      ]);
+      // Fetch admin dashboard data
+      const response = await apiService.request('/admin/dashboard');
 
       setStats({
-        totalUsers: usersResponse.data?.totalUsers || 0,
-        totalWorkers: usersResponse.data?.totalWorkers || 0,
-        totalClients: usersResponse.data?.totalClients || 0,
-        totalJobs: jobsResponse.data?.totalJobs || 0,
-        activeJobs: jobsResponse.data?.activeJobs || 0,
-        completedJobs: jobsResponse.data?.completedJobs || 0,
-        pendingApplications: applicationsResponse.data?.pendingApplications || 0,
-        totalApplications: applicationsResponse.data?.totalApplications || 0,
-        monthlyRevenue: jobsResponse.data?.monthlyRevenue || 0,
-        recentUsers: recentUsersResponse.data?.users || [],
-        recentJobs: recentJobsResponse.data?.jobs || [],
-        recentApplications: recentAppsResponse.data?.applications || []
+        totalUsers: response.data?.totalUsers || 0,
+        totalWorkers: response.data?.totalWorkers || 0,
+        totalClients: response.data?.totalClients || 0,
+        totalJobs: response.data?.totalJobs || 0,
+        activeJobs: response.data?.activeJobs || 0,
+        completedJobs: response.data?.completedJobs || 0,
+        pendingApplications: response.data?.pendingApplications || 0,
+        totalApplications: response.data?.totalApplications || 0,
+        pendingComplaints: response.data?.pendingComplaints || 0,
+        monthlyRevenue: response.data?.monthlyRevenue || 0,
+        recentUsers: response.data?.recentUsers || [],
+        recentJobs: response.data?.recentJobs || [],
+        recentApplications: response.data?.recentApplications || []
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -128,13 +119,13 @@ const AdminDashboard = () => {
           color="bg-green-500"
           change={8}
         />
-        <StatCard
-          title="Applications"
-          value={stats.totalApplications}
-          icon={FileText}
-          color="bg-purple-500"
-          change={-3}
-        />
+          <StatCard
+            title="Pending Complaints"
+            value={stats.pendingComplaints}
+            icon={AlertCircle}
+            color="bg-orange-500"
+            change={0} // Assuming no change percentage is provided
+          />
         <StatCard
           title="Monthly Revenue"
           value={`$${stats.monthlyRevenue.toLocaleString()}`}

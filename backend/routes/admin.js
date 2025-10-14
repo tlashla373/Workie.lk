@@ -28,6 +28,7 @@ router.get('/dashboard', async (req, res) => {
       completedJobs,
       totalApplications,
       pendingApplications,
+      pendingComplaints,
       recentUsers,
       recentJobs,
       recentApplications
@@ -40,6 +41,7 @@ router.get('/dashboard', async (req, res) => {
       Job.countDocuments({ status: 'completed' }),
       Application.countDocuments(),
       Application.countDocuments({ status: 'pending' }),
+      Complaint.countDocuments({ status: 'pending' }),
       User.find().sort({ createdAt: -1 }).limit(5).select('firstName lastName userType createdAt'),
       Job.find().sort({ createdAt: -1 }).limit(5).populate('client', 'firstName lastName').select('title status createdAt'),
       Application.find().sort({ createdAt: -1 }).limit(5).select('status createdAt')
@@ -59,6 +61,7 @@ router.get('/dashboard', async (req, res) => {
         completedJobs,
         totalApplications,
         pendingApplications,
+        pendingComplaints,
         monthlyRevenue,
         recentUsers,
         recentJobs,
