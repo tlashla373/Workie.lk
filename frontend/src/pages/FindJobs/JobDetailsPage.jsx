@@ -218,7 +218,7 @@ const JobDetailsPage = ({ job: initialJob, onBack, isDarkMode }) => {
             
             {/* Category Badge */}
             <div className="flex items-center gap-3 mb-4">
-              <span className="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium capitalize">
+              <span className="px-4 py-2 bg-blue-400 dark:bg-blue-900/30 text-blue-100 dark:text-blue-100 rounded-full text-sm font-medium capitalize">
                 {jobData?.category || 'General'}
               </span>
               
@@ -226,9 +226,9 @@ const JobDetailsPage = ({ job: initialJob, onBack, isDarkMode }) => {
               {jobData?.status && (
                 <span className={`px-4 py-2 rounded-full text-sm font-medium capitalize ${
                   jobData.status === 'open' 
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-white dark:text-white'
                     : jobData.status === 'in-progress'
-                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-white dark:text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                 }`}>
                   {jobData.status}
@@ -509,8 +509,8 @@ const JobDetailsPage = ({ job: initialJob, onBack, isDarkMode }) => {
                 <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Status</span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
                   jobData?.status === 'open' 
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white'
                 }`}>
                   {jobData?.status || 'Open'}
                 </span>
@@ -542,8 +542,8 @@ const JobDetailsPage = ({ job: initialJob, onBack, isDarkMode }) => {
                   <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Priority</span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
                     jobData.urgency === 'urgent'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                      : 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300'
+                      ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300'
+                      : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
                   }`}>
                     {jobData.urgency}
                   </span>
