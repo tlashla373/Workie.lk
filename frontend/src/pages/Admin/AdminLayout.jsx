@@ -60,7 +60,7 @@ const AdminLayout = () => {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 backdrop-blur-xs bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -77,7 +77,9 @@ const AdminLayout = () => {
         {/* Header - Fixed height */}
         <div className={`flex items-center justify-between h-16 px-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex-shrink-0`}>
           <div className="flex items-center space-x-2">
-            <img src={Logo} alt="Workie.LK" className="w-8 h-8 bg-white rounded-lg" />
+            {!isCollapsed && (
+              <img src={Logo} alt="Workie.LK" className="w-8 h-8 bg-white rounded-lg" />
+            )}
             {!isCollapsed && (
               <span className="text-xl audiowide-regular font-bold text-white">Workie.LK</span>
             )}
