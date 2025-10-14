@@ -67,6 +67,7 @@ const FindJobs = () => {
       if (response.data && response.data.success) {
         const jobsData = response.data.data.jobs.map(job => ({
           id: job._id,
+          _id: job._id, // Keep both for compatibility
           title: job.title,
           company: job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : 'Unknown Client',
           location: `${job.location?.city || ''}, ${job.location?.state || ''}`.trim() || 'Location not specified',
@@ -78,6 +79,7 @@ const FindJobs = () => {
           fullDescription: job.description,
           tags: job.skills || [],
           logo: categoryIcons[job.category] || Mason,
+          images: job.images || [], // Add images array
           clientName: job.client?.firstName ? `${job.client.firstName} ${job.client.lastName}` : 'Unknown Client',
           clientType: 'Client',
           memberSince: job.client?.createdAt ? new Date(job.client.createdAt).getFullYear().toString() : 'Unknown',
