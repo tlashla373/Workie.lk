@@ -13,7 +13,8 @@ import {
   Home,
   Star,
   Bell,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquareWarning
 } from 'lucide-react';
 import Logo from '../../assets/Logo.png';
 import { toast } from 'react-toastify';
@@ -32,6 +33,7 @@ const AdminLayout = () => {
     { name: 'Reviews', path: '/admin/reviews', icon: Star },
     { name: 'Reports', path: '/admin/reports', icon: BarChart3 },
     { name: 'Notifications', path: '/admin/notifications', icon: Bell },
+    { name: 'Complaints', path: '/admin/complaints', icon: MessageSquareWarning },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 

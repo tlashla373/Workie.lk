@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal, Bookmark, EyeOff, Flag, Share, Copy, X } from 'lucide-react';
+import { MoreHorizontal, Flag, Share, Copy } from 'lucide-react';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import { useAuth } from '../../hooks/useAuth';
 
-const PostDropdown = ({ post, onSavePost, onHidePost, onReportPost, onSharePost }) => {
+const PostDropdown = ({ post, onReportPost, onSharePost }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { isDarkMode } = useDarkMode();
+  const { user } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -37,6 +39,21 @@ const PostDropdown = ({ post, onSavePost, onHidePost, onReportPost, onSharePost 
     }
   }, [isOpen]);
 
+  // Check if the post belongs to the current user
+  const isCurrentUserPost = user && post && (
+    // Check if post.userId matches current user
+    (post.userId?._id || post.userId) === user._id ||
+    // Check if post.userInfo matches current user  
+    (post.userInfo?._id || post.userInfo?.userId) === user._id ||
+    // Check if original post data matches current user
+    (post.originalPost?.userId?._id || post.originalPost?.userId) === user._id
+  );
+
+  // Don't render dropdown for current user's posts
+  if (isCurrentUserPost) {
+    return null;
+  }
+
   const handleToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -49,19 +66,13 @@ const PostDropdown = ({ post, onSavePost, onHidePost, onReportPost, onSharePost 
     setIsOpen(false);
     
     switch (action) {
-      case 'save':
-        onSavePost && onSavePost(post);
-        break;
-      case 'hide':
-        onHidePost && onHidePost(post);
-        break;
       case 'report':
         onReportPost && onReportPost(post);
         break;
       case 'share':
         onSharePost && onSharePost(post);
         break;
-      case 'copyLink':
+      case 'copyLink': {
         // Copy post link to clipboard
         const postUrl = `${window.location.origin}/post/${post.id}`;
         navigator.clipboard.writeText(postUrl).then(() => {
@@ -71,30 +82,13 @@ const PostDropdown = ({ post, onSavePost, onHidePost, onReportPost, onSharePost 
           console.error('Failed to copy link:', err);
         });
         break;
+      }
       default:
         break;
     }
   };
 
   const menuItems = [
-    {
-      id: 'save',
-      label: 'Save post',
-      icon: Bookmark,
-      action: 'save',
-      className: 'hover:bg-gray-50 dark:hover:bg-gray-700'
-    },
-    {
-      id: 'hide',
-      label: 'Hide post',
-      icon: EyeOff,
-      action: 'hide',
-      className: 'hover:bg-gray-50 dark:hover:bg-gray-700'
-    },
-    {
-      id: 'divider1',
-      type: 'divider'
-    },
     {
       id: 'copyLink',
       label: 'Copy link',

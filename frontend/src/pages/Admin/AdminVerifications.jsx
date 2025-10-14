@@ -58,8 +58,8 @@ const AdminVerifications = () => {
 
       const result = await response.json();
 
-      console.log('✅ API Response:', result);
-      console.log('📊 Workers received:', result.data?.workers?.length || 0);
+      console.log('API Response:', result);
+      console.log('Workers received:', result.data?.workers?.length || 0);
 
       if (result.success) {
         setWorkers(result.data.workers);
@@ -438,7 +438,7 @@ const AdminVerifications = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            <div className="p-6 overflow-y-auto no-scrollbar max-h-[calc(90vh-180px)]">
               {loadingDetails ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader className="w-8 h-8 text-blue-500 animate-spin" />

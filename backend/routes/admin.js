@@ -5,6 +5,7 @@ const Application = require('../models/Application');
 const Review = require('../models/Review');
 const Notification = require('../models/Notification');
 const Profile = require('../models/Profile');
+const Complaint = require('../models/Complaint');
 const { auth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -293,7 +294,14 @@ router.get('/reviews', async (req, res) => {
 
     const applicationsWithReviews = await Application.find(applicationQuery)
       .populate('worker', 'firstName lastName email profilePicture')
-      .populate('job', 'title budget')
+      .populate({
+        path: 'job',
+        select: 'title budget client',
+        populate: {
+          path: 'client',
+          select: 'firstName lastName email profilePicture'
+        }
+      })
       .sort({ 'review.submittedAt': -1 })
       .lean();
 
@@ -303,7 +311,7 @@ router.get('/reviews', async (req, res) => {
       return {
         _id: `app_${app._id}`,
         job: app.job,
-        reviewer: null, // Client info not populated in application, will show "Client"
+        reviewer: app.job?.client || null, // Use client from job
         reviewee: app.worker,
         rating: app.review.rating,
         comment: app.review.comment || '',
@@ -352,6 +360,52 @@ router.get('/reviews', async (req, res) => {
 // @access  Admin only
 router.get('/reviews/:id', async (req, res) => {
   try {
+    const reviewId = req.params.id;
+
+    // Check if it's an application review
+    if (reviewId.startsWith('app_')) {
+      const applicationId = reviewId.replace('app_', '');
+      const application = await Application.findById(applicationId)
+        .populate('worker', 'firstName lastName email profilePicture')
+        .populate({
+          path: 'job',
+          select: 'title budget category client',
+          populate: {
+            path: 'client',
+            select: 'firstName lastName email profilePicture'
+          }
+        });
+
+      if (!application || !application.review?.rating) {
+        return res.status(404).json({
+          success: false,
+          message: 'Review not found'
+        });
+      }
+
+      // Transform application review to match Review format
+      const reviewData = {
+        _id: `app_${application._id}`,
+        job: application.job,
+        reviewer: application.job?.client || null,
+        reviewee: application.worker,
+        rating: application.review.rating,
+        comment: application.review.comment || '',
+        createdAt: application.review.submittedAt || application.updatedAt,
+        reviewType: 'client-to-worker',
+        isReported: false,
+        source: 'application'
+      };
+
+      return res.json({
+        success: true,
+        data: {
+          review: reviewData
+        }
+      });
+    }
+
+    // Handle regular reviews
     const review = await Review.findById(req.params.id)
       .populate('reviewer', 'firstName lastName email profilePicture')
       .populate('reviewee', 'firstName lastName email profilePicture')
@@ -367,7 +421,7 @@ router.get('/reviews/:id', async (req, res) => {
     res.json({
       success: true,
       data: {
-        review
+        review: { ...review.toObject(), source: 'review' }
       }
     });
   } catch (error) {
@@ -1039,6 +1093,367 @@ router.post('/workers/:id/revoke-verification', async (req, res) => {
     });
   } catch (error) {
     console.error('Admin revoke verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// ==========================================
+// COMPLAINT MANAGEMENT ROUTES
+// ==========================================
+
+// @route   GET /api/admin/complaints
+// @desc    Get all complaints with filtering and pagination
+// @access  Admin only
+router.get('/complaints', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build filter object
+    const filter = {};
+
+    if (req.query.status && req.query.status !== 'all') {
+      filter.status = req.query.status;
+    }
+
+    if (req.query.priority && req.query.priority !== 'all') {
+      filter.priority = req.query.priority;
+    }
+
+    if (req.query.reason && req.query.reason !== 'all') {
+      filter.reason = req.query.reason;
+    }
+
+    if (req.query.contentType && req.query.contentType !== 'all') {
+      filter['reportedContent.contentType'] = req.query.contentType;
+    }
+
+    // Search functionality
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      filter.$or = [
+        { reason: searchRegex },
+        { description: searchRegex },
+        { customReason: searchRegex }
+      ];
+    }
+
+    const complaints = await Complaint.find(filter)
+      .populate('reporter', 'firstName lastName email profilePicture userType')
+      .populate('reportedUser', 'firstName lastName email profilePicture userType')
+      .populate('assignedTo', 'firstName lastName email')
+      .populate('reportedContentDetails')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Complaint.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
+
+    // Get statistics
+    const statistics = await Complaint.getStatistics();
+
+    res.json({
+      success: true,
+      data: {
+        complaints,
+        pagination: {
+          current: page,
+          pages: totalPages,
+          total
+        },
+        statistics
+      }
+    });
+  } catch (error) {
+    console.error('Admin get complaints error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   GET /api/admin/complaints/:id
+// @desc    Get complaint details
+// @access  Admin only
+router.get('/complaints/:id', async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id)
+      .populate('reporter', 'firstName lastName email profilePicture userType phone createdAt')
+      .populate('reportedUser', 'firstName lastName email profilePicture userType phone createdAt')
+      .populate('assignedTo', 'firstName lastName email profilePicture')
+      .populate('reportedContentDetails')
+      .populate('resolution.resolvedBy', 'firstName lastName email')
+      .populate('adminNotes.admin', 'firstName lastName email');
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        complaint
+      }
+    });
+  } catch (error) {
+    console.error('Admin get complaint details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/admin/complaints/:id/status
+// @desc    Update complaint status
+// @access  Admin only
+router.put('/complaints/:id/status', async (req, res) => {
+  try {
+    const { status, adminNote } = req.body;
+
+    const validStatuses = ['pending', 'under-review', 'resolved', 'dismissed', 'escalated'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status'
+      });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found'
+      });
+    }
+
+    // Update status
+    complaint.status = status;
+
+    if (status === 'under-review' && !complaint.assignedTo) {
+      complaint.assignedTo = req.user.id;
+    }
+
+    if (['resolved', 'dismissed'].includes(status)) {
+      complaint.reviewedAt = new Date();
+      complaint.isResolved = true;
+    }
+
+    // Add admin note if provided
+    if (adminNote && adminNote.trim()) {
+      complaint.adminNotes.push({
+        admin: req.user.id,
+        note: adminNote.trim(),
+        timestamp: new Date()
+      });
+    }
+
+    await complaint.save();
+
+    await complaint.populate([
+      {
+        path: 'reporter',
+        select: 'firstName lastName email profilePicture'
+      },
+      {
+        path: 'reportedUser',
+        select: 'firstName lastName email profilePicture'
+      },
+      {
+        path: 'assignedTo',
+        select: 'firstName lastName email'
+      }
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Complaint status updated successfully',
+      data: {
+        complaint
+      }
+    });
+  } catch (error) {
+    console.error('Admin update complaint status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/admin/complaints/:id/resolve
+// @desc    Resolve complaint with action
+// @access  Admin only
+router.put('/complaints/:id/resolve', async (req, res) => {
+  try {
+    const { action, details } = req.body;
+
+    const validActions = ['no-action', 'warning', 'content-removed', 'user-suspended', 'user-banned', 'other'];
+    if (!validActions.includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid resolution action'
+      });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found'
+      });
+    }
+
+    // Resolve the complaint
+    await complaint.resolve(action, details, req.user.id);
+
+    await complaint.populate([
+      {
+        path: 'reporter',
+        select: 'firstName lastName email profilePicture'
+      },
+      {
+        path: 'reportedUser',
+        select: 'firstName lastName email profilePicture'
+      },
+      {
+        path: 'resolution.resolvedBy',
+        select: 'firstName lastName email'
+      }
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Complaint resolved successfully',
+      data: {
+        complaint
+      }
+    });
+  } catch (error) {
+    console.error('Admin resolve complaint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   PUT /api/admin/complaints/:id/assign
+// @desc    Assign complaint to admin
+// @access  Admin only
+router.put('/complaints/:id/assign', async (req, res) => {
+  try {
+    const { adminId } = req.body;
+
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found'
+      });
+    }
+
+    // Verify the admin exists
+    if (adminId) {
+      const admin = await User.findById(adminId);
+      if (!admin || admin.role !== 'admin') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid admin ID'
+        });
+      }
+    }
+
+    complaint.assignedTo = adminId || null;
+
+    // Add note about assignment
+    complaint.adminNotes.push({
+      admin: req.user.id,
+      note: adminId ? `Assigned to admin ${adminId}` : 'Assignment removed',
+      timestamp: new Date()
+    });
+
+    await complaint.save();
+
+    await complaint.populate('assignedTo', 'firstName lastName email profilePicture');
+
+    res.json({
+      success: true,
+      message: adminId ? 'Complaint assigned successfully' : 'Assignment removed successfully',
+      data: {
+        complaint
+      }
+    });
+  } catch (error) {
+    console.error('Admin assign complaint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// @route   POST /api/admin/complaints/:id/notes
+// @desc    Add admin note to complaint
+// @access  Admin only
+router.post('/complaints/:id/notes', async (req, res) => {
+  try {
+    const { note } = req.body;
+
+    if (!note || !note.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Note content is required'
+      });
+    }
+
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found'
+      });
+    }
+
+    complaint.adminNotes.push({
+      admin: req.user.id,
+      note: note.trim(),
+      timestamp: new Date()
+    });
+
+    await complaint.save();
+
+    await complaint.populate('adminNotes.admin', 'firstName lastName email profilePicture');
+
+    res.json({
+      success: true,
+      message: 'Admin note added successfully',
+      data: {
+        complaint
+      }
+    });
+  } catch (error) {
+    console.error('Admin add note error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

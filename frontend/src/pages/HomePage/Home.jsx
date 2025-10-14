@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MoreHorizontal, MessageSquare, MapPin, Heart, Share2, X, ChevronLeft, ChevronRight, Send, ChevronUp, ChevronDown  } from "lucide-react";
 import { useDarkMode } from '../../contexts/DarkModeContext';
 import { useAuth } from '../../hooks/useAuth';
 import postService from '../../services/postService';
 import PostDropdown from './Dropdown';
+import ReportPost from './ReportPost';
 import Welder from '../../assets/welder.svg'
 import Plumber from '../../assets/plumber.svg'
 import Carpenter from '../../assets/carpenter.svg'
@@ -29,6 +30,8 @@ export default function MainFeed() {
   const [hasMore, setHasMore] = useState(true);
   const [likedPosts, setLikedPosts] = useState(new Set()); // Track liked posts
   const [showCategories, setShowCategories] = useState(true); // Control category visibility
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingPost, setReportingPost] = useState(null);
   const { isDarkMode } = useDarkMode();
   const { user } = useAuth();
 
@@ -60,7 +63,10 @@ export default function MainFeed() {
             likes: post.engagement?.likesCount || post.likes?.length || 0,
             comments: post.engagement?.commentsCount || post.comments?.length || 0,
             timeAgo: getTimeAgo(post.createdAt),
-            originalPost: post // Keep original data for comments API
+            originalPost: post, // Keep original data for comments API
+            // Keep user data for dropdown component
+            userId: post.userId,
+            userInfo: post.userInfo
           }));
           
           // Initialize liked posts set based on user's likes in fetched posts
@@ -95,10 +101,10 @@ export default function MainFeed() {
     };
 
     fetchInitialPosts();
-  }, []);
+  }, [user]);
 
   // Function to load more posts
-  const loadMorePosts = async () => {
+  const loadMorePosts = useCallback(async () => {
     if (loadingMore || !hasMore) return;
 
     try {
@@ -131,7 +137,10 @@ export default function MainFeed() {
           likes: post.engagement?.likesCount || post.likes?.length || 0,
           comments: post.engagement?.commentsCount || post.comments?.length || 0,
           timeAgo: getTimeAgo(post.createdAt),
-          originalPost: post // Keep original data for comments API
+          originalPost: post, // Keep original data for comments API
+          // Keep user data for dropdown component
+          userId: post.userId,
+          userInfo: post.userInfo
         }));
         
         // Update liked posts for new posts
@@ -162,7 +171,7 @@ export default function MainFeed() {
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [loadingMore, hasMore, page, user, likedPosts]);
 
   // Scroll detection for infinite scrolling
   useEffect(() => {
@@ -183,7 +192,7 @@ export default function MainFeed() {
       scrollContainer.addEventListener('scroll', handleScroll);
       return () => scrollContainer.removeEventListener('scroll', handleScroll);
     }
-  }, [page, hasMore, loadingMore]);
+  }, [page, hasMore, loadingMore, loadMorePosts]);
 
   // Helper function to format time ago
   const getTimeAgo = (dateString) => {
@@ -207,8 +216,6 @@ export default function MainFeed() {
 
   // State for managing expanded posts
   const [expandedPosts, setExpandedPosts] = useState(new Set());
-  const [savedPosts, setSavedPosts] = useState(new Set()); // Track saved posts
-  const [hiddenPosts, setHiddenPosts] = useState(new Set()); // Track hidden posts
 
   // Function to toggle post expansion
   const togglePostExpansion = (postId) => {
@@ -223,65 +230,13 @@ export default function MainFeed() {
     });
   };
 
-  // Handle save post
-  const handleSavePost = async (post) => {
-    try {
-      const newSavedPosts = new Set(savedPosts);
-      
-      if (savedPosts.has(post.id)) {
-        // Unsave post
-        newSavedPosts.delete(post.id);
-        console.log('Post unsaved:', post.id);
-        // Here you would typically make an API call to unsave the post
-        // await postService.unsavePost(post.id);
-      } else {
-        // Save post
-        newSavedPosts.add(post.id);
-        console.log('Post saved:', post.id);
-        // Here you would typically make an API call to save the post
-        // await postService.savePost(post.id);
-      }
-      
-      setSavedPosts(newSavedPosts);
-    } catch (error) {
-      console.error('Error saving/unsaving post:', error);
-    }
-  };
-
-  // Handle hide post
-  const handleHidePost = async (post) => {
-    try {
-      const newHiddenPosts = new Set(hiddenPosts);
-      newHiddenPosts.add(post.id);
-      setHiddenPosts(newHiddenPosts);
-      console.log('Post hidden:', post.id);
-      
-      // Here you would typically make an API call to hide the post
-      // await postService.hidePost(post.id);
-      
-      // Optionally show a toast notification
-      // showToast('Post hidden successfully');
-    } catch (error) {
-      console.error('Error hiding post:', error);
-      // Revert if API call fails
-      const revertedHiddenPosts = new Set(hiddenPosts);
-      revertedHiddenPosts.delete(post.id);
-      setHiddenPosts(revertedHiddenPosts);
-    }
-  };
-
   // Handle report post
   const handleReportPost = async (post) => {
-    try {
-      console.log('Reporting post:', post.id);
-      // Here you would typically show a report modal or make an API call
-      // await postService.reportPost(post.id, reason);
-      alert('Thank you for reporting this post. We will review it shortly.');
-    } catch (error) {
-      console.error('Error reporting post:', error);
-      alert('Failed to report post. Please try again.');
-    }
+    setReportingPost(post);
+    setShowReportModal(true);
   };
+
+
 
   // Handle share post
   const handleSharePost = async (post) => {
@@ -318,13 +273,13 @@ export default function MainFeed() {
     
     // Convert hashtags to styled elements
     const hashtagRegex = /#(\w+)/g;
-    formattedText = formattedText.replace(hashtagRegex, (hashtag, tag) => {
+    formattedText = formattedText.replace(hashtagRegex, (hashtag) => {
       return `<span class="${isDarkMode ? 'text-blue-400' : 'text-blue-600'} font-semibold cursor-pointer hover:underline">${hashtag}</span>`;
     });
     
     // Convert @mentions to styled elements
     const mentionRegex = /@(\w+)/g;
-    formattedText = formattedText.replace(mentionRegex, (mention, username) => {
+    formattedText = formattedText.replace(mentionRegex, (mention) => {
       return `<span class="${isDarkMode ? 'text-green-400' : 'text-green-600'} font-semibold cursor-pointer hover:underline">${mention}</span>`;
     });
     
@@ -757,8 +712,6 @@ export default function MainFeed() {
           </div>
           <PostDropdown
             post={post}
-            onSavePost={handleSavePost}
-            onHidePost={handleHidePost}
             onReportPost={handleReportPost}
             onSharePost={handleSharePost}
           />
@@ -959,12 +912,9 @@ export default function MainFeed() {
         ) : (
           <>
             {/* Posts list */}
-            {posts
-              .filter(post => !hiddenPosts.has(post.id)) // Filter out hidden posts
-              .map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))
-            }
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
             
             {/* Loading more indicator */}
             {loadingMore && (
@@ -1257,6 +1207,16 @@ export default function MainFeed() {
           </div>
         </div>
       )}
+
+      {/* Report Post Modal */}
+      <ReportPost
+        isOpen={showReportModal}
+        onClose={() => {
+          setShowReportModal(false);
+          setReportingPost(null);
+        }}
+        post={reportingPost}
+      />
     </div>
   );
 }
