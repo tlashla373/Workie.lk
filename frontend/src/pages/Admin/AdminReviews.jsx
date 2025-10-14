@@ -535,27 +535,7 @@ const AdminReviews = () => {
                             className="text-blue-600 hover:text-blue-900"
                             title="View Details"
                           >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          
-                          {!review.isReported && (
-                            <button
-                              onClick={() => handleReviewAction(review._id, 'report')}
-                              className={`${review.source === 'application' ? 'text-gray-400 cursor-not-allowed' : 'text-yellow-600 hover:text-yellow-900'}`}
-                              title={review.source === 'application' ? 'Cannot report job reviews' : 'Report Review'}
-                              disabled={review.source === 'application'}
-                            >
-                              <Flag className="w-4 h-4" />
-                            </button>
-                          )}
-                          
-                          <button
-                            onClick={() => handleReviewAction(review._id, 'delete')}
-                            className={`${review.source === 'application' ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900'}`}
-                            title={review.source === 'application' ? 'Cannot delete job reviews' : 'Delete Review'}
-                            disabled={review.source === 'application'}
-                          >
-                            <Trash2 className="w-4 h-4" />
+                            <Eye className="w-6 h-5" />
                           </button>
                         </div>
                       </td>

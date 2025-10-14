@@ -533,7 +533,7 @@ const AdminUsers = () => {
                             className="text-blue-600 hover:text-blue-900"
                             title="View Details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-5 h-6" />
                           </button>
                           
                           {user.isActive ? (
@@ -542,7 +542,7 @@ const AdminUsers = () => {
                               className="text-red-600 hover:text-red-900"
                               title="Deactivate User"
                             >
-                              <UserX className="w-4 h-4" />
+                              <UserX className="w-5 h-6" />
                             </button>
                           ) : (
                             <button

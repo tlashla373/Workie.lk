@@ -110,28 +110,27 @@ const AdminDashboard = () => {
           value={stats.totalUsers}
           icon={Users}
           color="bg-blue-500"
-          change={12}
+          
         />
         <StatCard
           title="Active Jobs"
           value={stats.activeJobs}
           icon={Briefcase}
           color="bg-green-500"
-          change={8}
+          
         />
           <StatCard
             title="Pending Complaints"
             value={stats.pendingComplaints}
             icon={AlertCircle}
             color="bg-orange-500"
-            change={0} // Assuming no change percentage is provided
           />
         <StatCard
           title="Monthly Revenue"
           value={`$${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="bg-yellow-500"
-          change={15}
+          
         />
       </div>
 
