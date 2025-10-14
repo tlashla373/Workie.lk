@@ -24,9 +24,15 @@ router.get('/', auth, authorize('admin'), async (req, res) => {
 
     // Build filter
     const filter = {};
-    if (userType) filter.userType = userType;
+    // Exclude admin users from the list
+    if (userType) {
+      filter.userType = userType;
+    } else {
+      filter.userType = { $ne: 'admin' };
+    }
+
     if (isActive !== undefined) filter.isActive = isActive === 'true';
-    
+
     if (search) {
       filter.$or = [
         { firstName: new RegExp(search, 'i') },
@@ -125,7 +131,7 @@ router.get('/search', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,

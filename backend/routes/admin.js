@@ -33,7 +33,7 @@ router.get('/dashboard', async (req, res) => {
       recentJobs,
       recentApplications
     ] = await Promise.all([
-      User.countDocuments(),
+      User.countDocuments({ userType: { $ne: 'admin' } }),
       User.countDocuments({ userType: 'worker' }),
       User.countDocuments({ userType: 'client' }),
       Job.countDocuments(),
@@ -42,7 +42,7 @@ router.get('/dashboard', async (req, res) => {
       Application.countDocuments(),
       Application.countDocuments({ status: 'pending' }),
       Complaint.countDocuments({ status: 'pending' }),
-      User.find().sort({ createdAt: -1 }).limit(5).select('firstName lastName userType createdAt'),
+      User.find({ userType: { $ne: 'admin' } }).sort({ createdAt: -1 }).limit(5).select('firstName lastName userType createdAt'),
       Job.find().sort({ createdAt: -1 }).limit(5).populate('client', 'firstName lastName').select('title status createdAt'),
       Application.find().sort({ createdAt: -1 }).limit(5).select('status createdAt')
     ]);
@@ -91,6 +91,9 @@ router.get('/users', async (req, res) => {
 
     // Build query
     let query = {};
+    // Exclude admin users from the list
+    query.userType = { $ne: 'admin' };
+
     if (search) {
       query.$or = [
         { firstName: { $regex: search, $options: 'i' } },
@@ -99,7 +102,10 @@ router.get('/users', async (req, res) => {
       ];
     }
     if (userType && userType !== 'all') {
-      query.userType = userType;
+      // If a specific userType is provided, use it (only if it's not 'admin')
+      if (userType !== 'admin') {
+        query.userType = userType;
+      }
     }
 
     const [users, total] = await Promise.all([
