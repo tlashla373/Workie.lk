@@ -315,9 +315,9 @@ export default function MainFeed() {
   const CategoryCard = ({ category, index }) => (
     <div
       key={index}
-      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} lg:ml-10 items-center p-1 md:p-1 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group w-14 md:w-12 lg:w-18`}
+      className={`flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-[#FFFFF]'} lg:ml-10 items-center p-1 md:p-1 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group w-14 md:w-12 lg:w-18`}
     >
-      <div className={`w-10 h-8 md:w-8 md:h-8 lg:w-14 lg:h-14 ${category.color} rounded-xl flex items-center shadow-sm justify-center mb-1 md:mb-1 group-hover:scale-110 transition-transform duration-300`}>
+      <div className={`w-8 h-8 md:w-8 md:h-8 lg:w-14 lg:h-14 ${category.color} rounded-lg flex items-center shadow-sm justify-center mb-1 md:mb-1 group-hover:scale-110 transition-transform duration-300`}>
         <img src={category.icon} alt={category.name} className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10" />
       </div>
       <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} transition-colors duration-300 text-xs md:text-sm text-center leading-tight`}>{category.name}</span>
