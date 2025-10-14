@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, Phone, Globe, Star, Mail, Edit } from 'lucide-react';
+import { Briefcase, MapPin, Phone, Globe, Star, Mail, Edit, CheckCircle, MessageSquare, Calendar } from 'lucide-react';
 import profileService from '../../services/profileService';
-import { getWorkerApplications, calculateWorkerStats, getWorkerStatsById } from '../../services/workHistoryService';
+import { getWorkerApplications, calculateWorkerStats, getWorkerStatsById, getWorkerApplicationsById } from '../../services/workHistoryService';
+import { getUserReviews } from '../../services/reviewService';
 import EditProfileModal from './EditProfileModal';
 
 const ProfileAbout = ({ 
@@ -20,6 +21,10 @@ const ProfileAbout = ({
     completedJobs: 0,
     totalRatings: 0
   });
+  const [recentReviews, setRecentReviews] = useState([]);
+  const [completedJobsList, setCompletedJobsList] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [loadingJobs, setLoadingJobs] = useState(false);
 
   // Use external edit modal state if provided, otherwise use internal state
   const modalOpen = isEditModalOpen !== undefined ? isEditModalOpen : false;
@@ -126,6 +131,73 @@ const ProfileAbout = ({
     };
 
     handleWorkerStats();
+  }, [aboutData, profileData, isOwnProfile]);
+
+  // Fetch recent reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const userData = aboutData?.user || profileData?.user;
+      if (!userData?._id) return;
+
+      try {
+        setLoadingReviews(true);
+        const response = await getUserReviews(userData._id, { 
+          limit: 3, 
+          type: 'received',
+          sortBy: 'createdAt' 
+        });
+        
+        if (response?.success && response?.data?.reviews) {
+          setRecentReviews(response.data.reviews);
+        }
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+
+    if (aboutData || profileData) {
+      fetchReviews();
+    }
+  }, [aboutData, profileData]);
+
+  // Fetch completed jobs
+  useEffect(() => {
+    const fetchCompletedJobs = async () => {
+      const userData = aboutData?.user || profileData?.user;
+      if (!userData?._id || userData?.userType !== 'worker') return;
+
+      try {
+        setLoadingJobs(true);
+        // Fetch applications - use appropriate function based on profile ownership
+        const applications = isOwnProfile 
+          ? await getWorkerApplications() 
+          : await getWorkerApplicationsById(userData._id);
+        
+        console.log('Fetched applications for completed jobs:', applications);
+        
+        // Filter for completed jobs
+        const completed = Array.isArray(applications) 
+          ? applications.filter(app => 
+              app.status === 'completed' || 
+              app.status === 'reviewed' || 
+              app.status === 'closed'
+            ).slice(0, 3)
+          : [];
+        
+        console.log('Completed jobs to display:', completed);
+        setCompletedJobsList(completed);
+      } catch (error) {
+        console.error('Error fetching completed jobs:', error);
+      } finally {
+        setLoadingJobs(false);
+      }
+    };
+
+    if ((aboutData || profileData) && (aboutData?.user?.userType === 'worker' || profileData?.user?.userType === 'worker')) {
+      fetchCompletedJobs();
+    }
   }, [aboutData, profileData, isOwnProfile]);
 
   if (loading) {
@@ -245,6 +317,116 @@ const ProfileAbout = ({
             </div>
           </div>
         </div>
+
+        {/* Recent Reviews */}
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-3 sm:p-3 border transition-colors duration-300`}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className={`text-base sm:text-lg font-semibold google-sans-h ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Recent Reviews
+            </h3>
+            <MessageSquare className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          
+          {loadingReviews ? (
+            <div className="space-y-3">
+              {[1, 2].map(i => (
+                <div key={i} className="animate-pulse">
+                  <div className={`h-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-3/4 mb-2`}></div>
+                  <div className={`h-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-full`}></div>
+                </div>
+              ))}
+            </div>
+          ) : recentReviews.length > 0 ? (
+            <div className="space-y-3">
+              {recentReviews.map((review, index) => (
+                <div key={review._id || index} className={`pb-3 ${index !== recentReviews.length - 1 ? 'border-b' : ''} ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i} 
+                          className={`w-3 h-3 ${i < review.rating ? 'text-yellow-500 fill-current' : isDarkMode ? 'text-gray-600' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
+                    <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} line-clamp-2`}>
+                    {review.comment || 'No comment provided'}
+                  </p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
+                    by {review.reviewer?.firstName || 'Anonymous'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <MessageSquare className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                No reviews yet
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Completed Jobs - Only show for workers */}
+        {(user?.userType === 'worker' || profileData?.user?.userType === 'worker') && (
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-3 sm:p-3 border transition-colors duration-300`}>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className={`text-base sm:text-lg font-semibold google-sans-h ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Completed Jobs
+              </h3>
+              <CheckCircle className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+            </div>
+            
+            {loadingJobs ? (
+              <div className="space-y-3">
+                {[1, 2].map(i => (
+                  <div key={i} className="animate-pulse">
+                    <div className={`h-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-3/4 mb-2`}></div>
+                    <div className={`h-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-1/2`}></div>
+                  </div>
+                ))}
+              </div>
+            ) : completedJobsList.length > 0 ? (
+              <div className="space-y-3">
+                {completedJobsList.map((job, index) => (
+                  <div key={job._id || index} className={`pb-3 ${index !== completedJobsList.length - 1 ? 'border-b' : ''} ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <div className="flex items-start space-x-2">
+                      <CheckCircle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDarkMode ? 'text-green-400' : 'text-green-500'}`} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+                          {job.job?.title || job.jobTitle || 'Completed Job'}
+                        </h4>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                          {job.job?.client?.firstName || 'Client'} • {new Date(job.updatedAt || job.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        </p>
+                        {job.review?.rating && (
+                          <div className="flex items-center space-x-1 mt-1">
+                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {job.review.rating.toFixed(1)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <CheckCircle className={`w-8 h-8 mx-auto mb-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                  No completed jobs yet
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right Column */}
