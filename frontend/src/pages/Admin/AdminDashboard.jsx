@@ -3,13 +3,14 @@ import {
   Users, 
   Briefcase, 
   FileText, 
-  TrendingUp,
   DollarSign,
   Clock,
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
 import apiService from '../../services/apiService';
+
+
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
           />
         <StatCard
           title="Monthly Revenue"
-          value={`$${stats.monthlyRevenue.toLocaleString()}`}
+          value={`Rs. ${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           color="bg-yellow-500"
           

@@ -465,7 +465,6 @@ const AdminJobs = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
-                          <DollarSign className="w-4 h-4 mr-1" />
                           {formatBudget(job.budget)}
                         </div>
                       </td>
