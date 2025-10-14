@@ -17,7 +17,6 @@ const AdminSettings = () => {
       emailVerification: true,
       twoFactorAuth: false,
       googleSignIn: true,
-      facebookSignIn: false,
       videoChat: true,
       fileUpload: true,
       notifications: true
