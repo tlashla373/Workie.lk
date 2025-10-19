@@ -1,0 +1,94 @@
+========================================
+COPY THESE TO RAILWAY ENVIRONMENT VARIABLES
+========================================
+
+Go to Railway Dashboard → Your Service → Variables Tab
+Click "New Variable" for each one below:
+
+1. NODE_ENV
+   Value: production
+
+2. PORT
+   Value: ${{PORT}}
+   ⚠️ IMPORTANT: Type exactly ${{PORT}} including the dollar signs and braces
+
+3. MONGODB_URI
+   Value: mongodb+srv://Ravindu:backendTest001@cluster0.xt37rvq.mongodb.net/workie_production?retryWrites=true&w=majority&appName=Cluster0
+   ⚠️ NOTE: Using "workie_production" as database name for production. Change if needed.
+
+4. JWT_SECRET
+   Value: b3fb9801418e9bad1ee239ab03866e6a4db6be2f7b5b20645b41395f273d2a7ae32501c7ef8b3fb9801418e9bad1ee239ab03866e6
+
+5. JWT_EXPIRE
+   Value: 30d
+
+6. EMAIL_HOST
+   Value: smtp.gmail.com
+
+7. EMAIL_PORT
+   Value: 587
+
+8. EMAIL_USER
+   Value: workielk@gmail.com
+
+9. EMAIL_PASS
+   Value: trjxgpszhnhsdaqp
+   ⚠️ NOTE: I removed the spaces from your app password. Your code uses EMAIL_PASS (not EMAIL_PASSWORD)
+
+10. EMAIL_FROM
+    Value: workielk@gmail.com
+
+11. CLOUDINARY_CLOUD_NAME
+    Value: workielk
+
+12. CLOUDINARY_API_KEY
+    Value: 829338243353594
+
+13. CLOUDINARY_API_SECRET
+    Value: NJjQY1cTXf3d64WDL37pWBtPzb0
+
+14. FRONTEND_URL
+    Value: http://localhost:5173
+    ⚠️ NOTE: Update this to your Vercel URL after frontend deployment
+
+========================================
+IMPORTANT MONGODB ATLAS SETUP
+========================================
+
+Your MongoDB connection will fail unless you:
+
+1. Go to MongoDB Atlas (https://cloud.mongodb.com)
+2. Click on "Network Access" in the left sidebar
+3. Click "Add IP Address"
+4. Click "ALLOW ACCESS FROM ANYWHERE"
+5. Enter 0.0.0.0/0
+6. Click "Confirm"
+
+This allows Railway to connect to your database.
+
+========================================
+AFTER ADDING ALL VARIABLES
+========================================
+
+1. Railway will automatically redeploy
+2. Go to Deployments tab
+3. Click on the new deployment
+4. Click "View Logs"
+5. Look for these success messages:
+   - "MongoDB connected successfully"
+   - "Server running in production mode on port XXXX"
+6. Healthcheck should pass!
+7. Get your Railway URL from Settings → Generate Domain
+
+========================================
+TEST MONGODB CONNECTION LOCALLY FIRST
+========================================
+
+Before deploying, test your MongoDB connection:
+
+1. Open terminal in backend folder
+2. Run: node test-mongo-connection.js
+3. If it says "SUCCESS", your MongoDB URI is working
+4. If it fails, fix the MongoDB connection before deploying
+
+========================================
