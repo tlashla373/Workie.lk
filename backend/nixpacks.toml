@@ -1,0 +1,17 @@
+# Nixpacks Configuration for Backend
+# This helps Railway properly detect and build your Node.js app
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm"]
+
+[phases.install]
+cmds = ["npm ci --production=false"]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "node server.js"
+
+[variables]
+NODE_ENV = "production"
