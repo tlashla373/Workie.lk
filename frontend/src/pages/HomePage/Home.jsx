@@ -11,7 +11,7 @@ import Plumber from '../../assets/plumber.svg'
 import Carpenter from '../../assets/carpenter.svg'
 import Painter from '../../assets/painter.svg'
 import Mason from '../../assets/mason.svg'
-import Cleaner from '../../assets/cleaner.svg'
+import Cleaner from '../../assets/Cleaner.svg'
 import Mechanic from '../../assets/Mechanic.svg'
 
 // Default avatar for users without profile pictures
