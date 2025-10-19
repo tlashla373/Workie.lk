@@ -408,15 +408,15 @@ const JobDetailsPage = ({ job: initialJob, onBack, isDarkMode }) => {
         </div>
 
         {/* Right Column - Client Info & Job Meta */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Client Information Card */}
-          <div className={`rounded-xl p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white shadow-lg'}`}>
+          <div className={`rounded-xl p-2 ${isDarkMode ? 'bg-gray-800' : 'bg-white shadow-lg'}`}>
             <h3 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Posted By
             </h3>
             
             {/* Client Profile */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-2">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
                 {clientData?.profilePicture ? (
                   <img 
