@@ -25,8 +25,13 @@ const createTransporter = () => {
       pass: cleanPassword
     },
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      ciphers: 'SSLv3'
     },
+    // Increase timeout for slow connections
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
     debug: process.env.NODE_ENV === 'development', // Enable debug in development
     logger: process.env.NODE_ENV === 'development' // Enable logging in development
   });
