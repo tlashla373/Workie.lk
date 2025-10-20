@@ -45,8 +45,8 @@ class SocketService {
         userName: user?.firstName 
       });
 
-      // Socket.IO server URL - use the same host as the current page
-      const SOCKET_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
+      // Socket.IO server URL - use environment variable or fallback to localhost
+      const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
       console.log('🌐 Connecting to Socket.IO server:', SOCKET_URL);
 
       this.socket = io(SOCKET_URL, {

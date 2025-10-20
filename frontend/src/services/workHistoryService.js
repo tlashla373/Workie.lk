@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
 
-// Set up axios defaults
-axios.defaults.baseURL = 'http://localhost:5000';
+// Set up axios defaults - use environment variable
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+axios.defaults.baseURL = API_BASE;
 
 /**
  * Fetch work history for workers - shows their applications

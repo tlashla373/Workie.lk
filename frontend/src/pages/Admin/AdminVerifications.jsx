@@ -21,6 +21,9 @@ import {
   Award
 } from 'lucide-react';
 
+// Use environment variable for API URL
+const API_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
 const AdminVerifications = () => {
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +51,7 @@ const AdminVerifications = () => {
       }
       
       const response = await fetch(
-        `http://localhost:5000/api/admin/workers/pending-verification?page=${currentPage}&limit=10`,
+        `${API_BASE_URL}/api/admin/workers/pending-verification?page=${currentPage}&limit=10`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -85,7 +88,7 @@ const AdminVerifications = () => {
       setLoadingDetails(true);
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `http://localhost:5000/api/admin/workers/${workerId}/verification-details`,
+        `${API_BASE_URL}/api/admin/workers/${workerId}/verification-details`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -120,7 +123,7 @@ const AdminVerifications = () => {
         setActionLoading(true);
         const token = localStorage.getItem('auth_token');
         const response = await fetch(
-          `http://localhost:5000/api/admin/workers/${workerId}/verify`,
+          `${API_BASE_URL}/api/admin/workers/${workerId}/verify`,
           {
             method: 'POST',
             headers: {
@@ -159,7 +162,7 @@ const AdminVerifications = () => {
       setActionLoading(true);
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `http://localhost:5000/api/admin/workers/${selectedWorker._id}/reject-verification`,
+        `${API_BASE_URL}/api/admin/workers/${selectedWorker._id}/reject-verification`,
         {
           method: 'POST',
           headers: {
