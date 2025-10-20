@@ -13,7 +13,8 @@ import {
   MoreHorizontal,
   Menu,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from 'lucide-react';
 import profileImage from '../../assets/profile.jpeg';
 import Logo from '../../assets/Logo.png';
@@ -22,9 +23,10 @@ import { useDarkMode } from '../../contexts/DarkModeContext';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import profileService from '../../services/profileService';
-import notificationService from '../../services/notificationService';
+import { useNotifications } from '../../hooks/useNotifications';
 import Search from './Search';
 import Notification from './Notification';
+import { formatDistanceToNow } from 'date-fns';
 
 const UpperNavbar = ({ isCollapsed = false }) => {
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
@@ -35,43 +37,86 @@ const UpperNavbar = ({ isCollapsed = false }) => {
     profileImage: null,
     isActive: false
   });
-  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const { isDarkMode } = useDarkMode();
   const { user, authenticated } = useAuth() || {};
+  
+  // Use the same notification hook as desktop
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    loading: notificationsLoading
+  } = useNotifications();
 
-  // Helper function to get notification type icon
-  const getNotificationTypeIcon = (type) => {
-    switch(type) {
-      case 'like':
-      case 'post_like':
-        return Heart;
-      case 'comment':
-      case 'post_comment':
-        return MessageSquare;
+  const toggleNotificationDropdown = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+  const toggleMobileSearch = () => setIsMobileSearchOpen(!isMobileSearchOpen);
+
+  // Get user profile image or fallback
+  const getUserProfileImage = (notification) => {
+    if (notification.sender?.profileImage || notification.sender?.profilePicture) {
+      return notification.sender.profileImage || notification.sender.profilePicture;
+    }
+    if (notification.userInfo?.profileImage || notification.userInfo?.profilePicture) {
+      return notification.userInfo.profileImage || notification.userInfo.profilePicture;
+    }
+    if (notification.metadata?.senderProfileImage) {
+      return notification.metadata.senderProfileImage;
+    }
+    return profileImage;
+  };
+
+  // Get user name for notification
+  const getUserName = (notification) => {
+    if (notification.sender) {
+      return `${notification.sender.firstName || ''} ${notification.sender.lastName || ''}`.trim();
+    }
+    if (notification.userInfo) {
+      return `${notification.userInfo.firstName || ''} ${notification.userInfo.lastName || ''}`.trim();
+    }
+    return 'User';
+  };
+
+  // Get notification icon based on type
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'job_application':
       case 'job':
       case 'job_match':
-      case 'job_application':
-        return Briefcase;
+        return '💼';
+      case 'job_posted':
+        return '📝';
+      case 'message':
+      case 'comment':
+      case 'post_comment':
+        return '💬';
+      case 'connection':
       case 'friend':
       case 'friend_request':
-      case 'connection':
-        return UserPlus;
+        return '👥';
+      case 'review':
+        return '⭐';
+      case 'payment':
+        return '💰';
+      case 'system':
+        return '⚙️';
+      case 'like':
+      case 'post_like':
+        return '❤️';
       case 'share':
       case 'post_share':
-        return Share2;
+        return '🔄';
       default:
-        return Bell;
+        return '🔔';
     }
   };
 
-  const toggleNotificationDropdown = () => setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
-   const toggleMobileSearch = () => setIsMobileSearchOpen(!isMobileSearchOpen);
-
-  // Fetch user data and notifications from database
+  // Fetch user data from database
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -122,31 +167,7 @@ const UpperNavbar = ({ isCollapsed = false }) => {
       }
     };
 
-  const fetchNotifications = async () => {
-    try {
-      const response = await notificationService.getNotifications();
-      if (response.success) {
-        // Map backend notification data to frontend format
-        const mappedNotifications = response.data.notifications.map(notification => ({
-          id: notification._id,
-          type: notification.type,
-          user: notification.sender ? `${notification.sender.firstName} ${notification.sender.lastName}` : 'System',
-          action: notification.title,
-          content: notification.message,
-          time: new Date(notification.createdAt).toLocaleString(),
-          unread: !notification.read && !notification.isRead, // Handle both field names
-          avatar: notification.sender?.profilePicture || profileImage,
-          icon: getNotificationTypeIcon(notification.type)
-        }));
-        setNotifications(mappedNotifications);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      // Keep empty notifications array on error
-      setNotifications([]);
-    }
-  };    fetchUserData();
-    fetchNotifications();
+    fetchUserData();
   }, [refreshTrigger]);
 
   // Listen for profile updates
@@ -183,37 +204,27 @@ const UpperNavbar = ({ isCollapsed = false }) => {
                               (user?.profilePicture) || 
                               profileImage;
 
-  const unreadCount = notifications.filter(n => n.unread).length;
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      const response = await notificationService.markAllAsRead();
-      if (response.success) {
-        // Update local state to reflect changes
-        const updatedNotifications = notifications.map(n => ({ ...n, unread: false }));
-        setNotifications(updatedNotifications);
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read) {
+      try {
+        await markAsRead(notification.id);
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
       }
-    } catch (error) {
-      console.error('Error marking notifications as read:', error);
-      // Fallback: still update UI for better UX
-      const updatedNotifications = notifications.map(n => ({ ...n, unread: false }));
-      setNotifications(updatedNotifications);
+    }
+    // Close mobile dropdown and navigate if there's an action URL
+    setIsNotificationDropdownOpen(false);
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
     }
   };
 
-  const handleNotificationClick = async (notificationId) => {
+  const handleDeleteNotification = async (e, notificationId) => {
+    e.stopPropagation();
     try {
-      const notification = notifications.find(n => n.id === notificationId);
-      if (notification && notification.unread) {
-        await notificationService.markAsRead(notificationId);
-        // Update local state
-        const updatedNotifications = notifications.map(n => 
-          n.id === notificationId ? { ...n, unread: false } : n
-        );
-        setNotifications(updatedNotifications);
-      }
+      await deleteNotification(notificationId);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Failed to delete notification:', error);
     }
   };
 
@@ -234,25 +245,6 @@ const UpperNavbar = ({ isCollapsed = false }) => {
   };
   
   const currentPageTitle = pageTitles[location.pathname] || 'Dashboard';
-
-  const getNotificationIcon = (type) => {
-    const iconClass = `w-4 h-4 ${
-      type === 'like' ? 'text-red-500' :
-      type === 'comment' ? 'text-blue-500' :
-      type === 'job' ? 'text-green-500' :
-      type === 'friend' ? 'text-purple-500' :
-      'text-gray-500'
-    }`;
-    
-    switch(type) {
-      case 'like': return <Heart className={iconClass} fill="currentColor" />;
-      case 'comment': return <MessageSquare className={iconClass} />;
-      case 'job': return <Briefcase className={iconClass} />;
-      case 'friend': return <UserPlus className={iconClass} />;
-      case 'share': return <Share2 className={iconClass} />;
-      default: return <Bell className={iconClass} />;
-    }
-  };
 
   return (
     <>
@@ -374,10 +366,6 @@ const UpperNavbar = ({ isCollapsed = false }) => {
               {/* Messages and Notifications - Only show when authenticated */}
               {authenticated && (
                 <>
-                  {/* Messages Button */}
-                  <button className={`p-2 rounded-lg ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
-                    <MessageCircle className="w-5 h-5" />
-                  </button>
 
                   {/* Notifications Button */}
                   <button 
@@ -442,60 +430,116 @@ const UpperNavbar = ({ isCollapsed = false }) => {
             </div>
 
             {/* Notifications List */}
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`px-4 py-4 border-l-4 transition-colors ${
-                    notification.unread 
-                      ? (isDarkMode ? 'bg-gray-700/30 border-blue-500' : 'bg-blue-50 border-blue-500') 
-                      : (isDarkMode ? 'border-transparent hover:bg-gray-700/30' : 'border-transparent hover:bg-gray-50')
-                  }`}
-                >
-                  <div className="flex items-start space-x-3">
-                    {/* Avatar with Icon Badge */}
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={notification.avatar}
-                        alt={notification.user}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'} ring-2 ${isDarkMode ? 'ring-gray-800' : 'ring-white'}`}>
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                        <span className="font-semibold">{notification.user}</span>
-                        <span className="ml-1">{notification.action}</span>
-                      </div>
-                      {notification.content && (
-                        <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {notification.content}
-                        </p>
-                      )}
-                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                        {notification.time}
-                      </p>
-                    </div>
-
-                    {/* Unread Indicator */}
-                    {notification.unread && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                    )}
-                  </div>
+            <div className="flex-1 overflow-y-auto no-scrollbar" style={{ maxHeight: 'calc(100vh - 140px)' }}>
+              {notificationsLoading ? (
+                <div className="p-4 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Loading notifications...
+                  </p>
                 </div>
-              ))}
+              ) : notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4">
+                  <Bell className={`w-16 h-16 mb-3 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    No notifications yet
+                  </p>
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`px-4 py-4 border-l-4 transition-colors cursor-pointer ${
+                      !notification.read 
+                        ? (isDarkMode ? 'bg-gray-700/30 border-blue-500' : 'bg-blue-50 border-blue-500') 
+                        : (isDarkMode ? 'border-transparent hover:bg-gray-700/30' : 'border-transparent hover:bg-gray-50')
+                    }`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      {/* Avatar with Icon Badge */}
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={getUserProfileImage(notification)}
+                          alt={getUserName(notification)}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                          onError={(e) => {
+                            e.target.src = profileImage;
+                          }}
+                        />
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs ${isDarkMode ? 'bg-gray-800' : 'bg-white'} ring-2 ${isDarkMode ? 'ring-gray-800' : 'ring-white'}`}>
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} ${!notification.read ? 'font-semibold' : ''}`}>
+                          {notification.title}
+                        </div>
+                        {notification.message && (
+                          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {notification.message}
+                          </p>
+                        )}
+                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+
+                      {/* Unread Indicator & Delete Button */}
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                        <button
+                          onClick={(e) => handleDeleteNotification(e, notification.id)}
+                          className={`p-1 rounded transition-colors ${
+                            isDarkMode 
+                              ? 'hover:bg-gray-600 text-gray-500' 
+                              : 'hover:bg-gray-200 text-gray-400'
+                          }`}
+                          title="Delete notification"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Footer */}
-            <div className={`px-4 py-3 border-t text-center ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <button className={`text-sm font-medium ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors`}>
-                See all notifications
-              </button>
-            </div>
+            {notifications.length > 0 && (
+              <div className={`px-4 py-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await markAllAsRead();
+                        } catch (error) {
+                          console.error('Failed to mark all as read:', error);
+                        }
+                      }}
+                      className={`text-sm font-medium ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'} transition-colors`}
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => {
+                      navigate('/notifications');
+                      setIsNotificationDropdownOpen(false);
+                    }}
+                    className={`text-sm font-medium ${isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors ml-auto`}
+                  >
+                    View All
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
