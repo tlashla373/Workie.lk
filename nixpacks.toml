@@ -1,0 +1,24 @@
+# Nixpacks Configuration for Root Directory
+# This tells Railway to build from the backend subdirectory
+
+[variables]
+NIXPACKS_BUILD_TIME_ONLY_PKGS = "nodejs_18 npm"
+NIXPACKS_PKGS = "nodejs_18"
+NODE_ENV = "production"
+
+[phases.setup]
+nixPkgs = ["nodejs_18"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = [
+  "cd backend",
+  "npm ci --production=false"
+]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = []
+
+[start]
+cmd = "cd backend && node server.js"

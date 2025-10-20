@@ -1,14 +1,11 @@
-# Nixpacks Configuration for Backend
-# This helps Railway properly detect and build your Node.js app
+# Nixpacks Configuration for Backend Directory
+# This is used when Railway detects package.json in backend/
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm"]
+nixPkgs = ["nodejs_18"]
 
 [phases.install]
 cmds = ["npm ci --production=false"]
-
-[phases.build]
-cmds = []
 
 [start]
 cmd = "node server.js"

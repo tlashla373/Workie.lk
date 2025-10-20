@@ -3,7 +3,7 @@
 
 [build]
 builder = "NIXPACKS"
-buildCommand = "cd backend && npm install"
+watchPatterns = ["backend/**"]
 
 [deploy]
 startCommand = "cd backend && node server.js"
@@ -11,6 +11,3 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[build.env]
-NODE_VERSION = "18"

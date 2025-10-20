@@ -1,0 +1,39 @@
+# Railway Ignore File
+# Don't upload these to Railway to speed up builds
+
+# Frontend files (not needed for backend deployment)
+frontend/
+frontend/**
+
+# Documentation
+*.md
+!backend/**/*.md
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules (will be installed by Railway)
+node_modules/
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# Environment files
+.env.local
+.env.development
+.env.test
+
+# Build artifacts
+dist/
+build/
