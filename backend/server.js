@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
+// Railway deployment configured
 
 // Import routes
 const authRoutes = require('./routes/auth');
